@@ -4,8 +4,26 @@ import Dashboard from "./pages/Dashboard"
 import Transactions from "./pages/Transactions"
 import Positions from "./pages/Positions"
 import PositionDetails from "./pages/PositionDetails"
+import Settings from "./pages/Settings"
+import { useEffect } from "react"
+import { useSettingsStore } from "./store/useSettingsStore"
 
 function App() {
+  const { theme } = useSettingsStore()
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    root.classList.add(theme);
+  }, [theme]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -14,6 +32,7 @@ function App() {
           <Route path="/positions" element={<Positions />} />
           <Route path="/positions/:id" element={<PositionDetails />} />
           <Route path="/transactions" element={<Transactions />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -26,8 +26,11 @@ export interface PositionJournal {
 export interface Position {
     id: string;
     symbol: string;
-    strategyName: string;
+    strategyName?: string;
     status: "OPEN" | "CLOSED";
     entries: PositionEntry[];
     journal?: PositionJournal;
+    notes?: string;
+    startDate: number; // Unix timestamp
+    endDate?: number; // Unix timestamp
 }

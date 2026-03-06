@@ -2,20 +2,60 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle } from "lucide-react"
+import { useSettingsStore } from "@/store/useSettingsStore"
+import { differenceInDays, format } from "date-fns"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { getAveragePrice, mul, sub, add, div } from "@/lib/math"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { PositionEditForm } from "@/components/positions/PositionEditForm"
+import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
+import { useState } from "react"
+import { getPositionMetrics } from "@/lib/metrics"
 
 export default function PositionDetails() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const addTransactionToPosition = usePositionStore(state => state.addTransactionToPosition)
     const removeTransactionFromPosition = usePositionStore(state => state.removeTransactionFromPosition)
-    // const closePosition = usePositionStore(state => state.closePosition)
+    const closePosition = usePositionStore(state => state.closePosition)
+    const openPosition = usePositionStore(state => state.openPosition)
+    const { prices, fetchPrices } = useSettingsStore()
+
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+    const [editingTxId, setEditingTxId] = useState<string | null>(null)
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
+    const allPositions = useLiveQuery(() => db.positions.toArray())
+
+    // Fetch live price for the current symbol if OPEN (every 5 mins)
+    useState(() => {
+        const interval = setInterval(() => {
+            if (position?.status === 'OPEN') {
+                fetchPrices([position.symbol]);
+            }
+        }, 300000);
+        return () => clearInterval(interval);
+    });
+
+    if (position?.status === 'OPEN') {
+        const cached = prices[position.symbol];
+        if (!cached || (Date.now() - cached.timestamp > 300000)) {
+            fetchPrices([position.symbol]);
+        }
+    }
 
     if (position === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (position === null) return <div className="p-8 text-center text-foreground">Position not found.</div>
@@ -25,7 +65,7 @@ export default function PositionDetails() {
     const linkedTxs = allTransactions?.filter(tx => linkedTxIds.has(tx.id)) || []
 
     // Available transactions matching symbol that can be linked
-    const availableTxs = allTransactions?.filter(tx => tx.symbol === position.symbol && !linkedTxIds.has(tx.id)) || []
+    const availableTxs = allTransactions?.filter(tx => tx.symbol === position.symbol && !linkedTxIds.has(tx.id)).sort((a, b) => b.date - a.date) || []
 
     // Handlers
     const handleLink = async (txId: string, quantity: number) => {
@@ -38,65 +78,124 @@ export default function PositionDetails() {
         await removeTransactionFromPosition(id, txId);
     }
 
-    // Calculate Metrics
-    let totalBought = 0;
-    let totalSold = 0;
-    let totalCost = 0;
-    let totalRevenue = 0;
-
-    linkedTxs.forEach(tx => {
-        const allocated = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount || 0;
-        if (tx.type === 'BUY') {
-            totalBought = add(totalBought, allocated);
-            totalCost = add(totalCost, mul(allocated, tx.price));
+    const toggleStatus = async () => {
+        if (!id || !position) return;
+        if (position.status === 'OPEN') {
+            await closePosition(id);
         } else {
-            totalSold = add(totalSold, allocated);
-            totalRevenue = add(totalRevenue, mul(allocated, tx.price));
+            await openPosition(id);
         }
-    });
+    }
 
-    const avgBuyPrice = totalBought > 0 ? getAveragePrice(totalCost, totalBought) : 0;
-    const avgSellPrice = totalSold > 0 ? getAveragePrice(totalRevenue, totalSold) : 0;
-
-    // Realized PnL = (Avg Sell - Avg Buy) * Total Sold
-    const realizedPnL = totalSold > 0 ? mul(sub(avgSellPrice, avgBuyPrice), totalSold) : 0;
-    const roi = totalCost > 0 ? mul(div(realizedPnL, totalCost), 100) : 0;
+    // Calculate Metrics
+    const {
+        realizedPnL, unrealizedPnL, roi,
+        totalRemaining, currentPrice, positionType, derivedStartDate,
+        derivedEndDate, avgBuyPrice, avgSellPrice
+    } = getPositionMetrics(position, linkedTxs, prices);
 
     return (
         <div className="p-8 max-w-6xl mx-auto space-y-8">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/positions')}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold tracking-tight">{position.strategyName}</h1>
-                        <Badge variant={position.status === 'OPEN' ? 'default' : 'secondary'}>{position.status}</Badge>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/positions')}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl font-bold tracking-tight">{position.strategyName || "Unnamed Position"}</h1>
+                            <div className="flex items-center gap-2">
+                                <Badge variant={positionType === 'LONG' ? 'default' : 'destructive'} className="text-xs px-2 py-0.5">
+                                    {positionType}
+                                </Badge>
+                                <Badge variant={position.status === 'OPEN' ? 'secondary' : 'outline'} className="text-xs px-2 py-0.5 whitespace-nowrap">
+                                    {position.status}
+                                </Badge>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <p className="text-muted-foreground font-mono font-medium">{position.symbol}</p>
+                            {position.status === 'OPEN' && currentPrice > 0 && (
+                                <Badge variant="secondary" className="font-mono font-normal">
+                                    ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                                </Badge>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground font-mono">
+                            <div className="flex items-center gap-1.5 bg-background/50 rounded-md px-2 py-1 border border-border/50">
+                                <Calendar className="h-4 w-4" />
+                                <span>Opened: {derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-background/50 rounded-md px-2 py-1 border border-border/50">
+                                <Clock className="h-4 w-4" />
+                                <span>Duration: {differenceInDays(derivedEndDate || Date.now(), derivedStartDate || Date.now())} days</span>
+                            </div>
+                        </div>
+
+                        {position.notes && (
+                            <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/50 text-sm text-muted-foreground w-full max-w-2xl">
+                                <span className="font-semibold text-foreground/80 mr-2">Notes:</span>
+                                {position.notes}
+                            </div>
+                        )}
                     </div>
-                    <p className="text-muted-foreground mt-1 font-mono font-medium">{position.symbol}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <Button variant={position.status === 'OPEN' ? 'secondary' : 'default'} onClick={toggleStatus} className="gap-2">
+                        {position.status === 'OPEN' ? <><Square className="h-4 w-4" /> Close Position</> : <><Play className="h-4 w-4" /> Re-open Position</>}
+                    </Button>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Edit Position details</DialogTitle>
+                            </DialogHeader>
+                            <PositionEditForm position={position} onSuccess={() => setIsEditDialogOpen(false)} />
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
                     <p className="text-sm text-muted-foreground mb-1">Realized PnL</p>
                     <p className={`text-2xl font-bold ${realizedPnL > 0 ? 'text-green-500' : realizedPnL < 0 ? 'text-destructive' : ''}`}>
                         ${realizedPnL > 0 ? '+' : ''}{realizedPnL.toFixed(2)}
                     </p>
                 </div>
+                {position.status === 'OPEN' && totalRemaining > 0 && (
+                    <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
+                        <p className="text-sm text-muted-foreground mb-1">Unrealized PnL</p>
+                        <p className={`text-2xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            ${unrealizedPnL > 0 ? '+' : ''}{unrealizedPnL.toFixed(2)}
+                        </p>
+                    </div>
+                )}
                 <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
-                    <p className="text-sm text-muted-foreground mb-1">ROI (Return)</p>
+                    <p className="text-sm text-muted-foreground mb-1">Total Return (ROI)</p>
                     <p className={`text-2xl font-bold ${roi > 0 ? 'text-green-500' : roi < 0 ? 'text-destructive' : ''}`}>
                         {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
                     </p>
                 </div>
                 <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
                     <p className="text-sm text-muted-foreground mb-1">Avg. Entry Price</p>
-                    <p className="text-2xl font-mono">${avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
+                    <p className="text-2xl font-mono">${(positionType === 'LONG' ? avgBuyPrice : avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
                 </div>
                 <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
                     <p className="text-sm text-muted-foreground mb-1">Current Holding</p>
-                    <p className="text-2xl font-mono">{sub(totalBought, totalSold)} <span className="text-base text-muted-foreground ml-1">{position.symbol.split('/')[0]}</span></p>
+                    <div className="flex flex-col">
+                        <p className="text-2xl font-mono">{totalRemaining} <span className="text-base text-muted-foreground ml-1">{position.symbol.split('/')[0]}</span></p>
+                        {position.status === 'OPEN' && currentPrice > 0 && (
+                            <p className="text-sm text-muted-foreground font-mono">@ ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -116,8 +215,23 @@ export default function PositionDetails() {
                                                 <p className="font-mono">${tx.price} <span className="text-muted-foreground mx-1">×</span> {tx.quantity}</p>
                                             </div>
                                         </div>
-                                        <div className="text-sm font-medium flex items-center gap-4">
-                                            <span className="text-muted-foreground">Allocated:</span> {position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount}
+                                        <div className="text-sm font-medium flex items-center gap-2">
+                                            <span className="text-muted-foreground pr-2">Allocated: {position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount}</span>
+
+                                            <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-[425px]">
+                                                    <DialogHeader>
+                                                        <DialogTitle>View / Edit Details</DialogTitle>
+                                                    </DialogHeader>
+                                                    <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                                </DialogContent>
+                                            </Dialog>
+
                                             <Button variant="ghost" size="icon" onClick={() => handleRemove(tx.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -142,12 +256,55 @@ export default function PositionDetails() {
                                 availableTxs.map(tx => (
                                     <div key={tx.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background/50">
                                         <div className="flex justify-between items-center mb-2">
-                                            <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>{tx.type}</Badge>
-                                            <Button size="sm" variant="secondary" onClick={() => handleLink(tx.id, tx.quantity)} className="h-7 text-xs gap-1">
-                                                <LinkIcon className="h-3 w-3" /> Link 100%
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>{tx.type}</Badge>
+                                                {tx.associatedPositionIds?.length > 0 && (
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Badge variant="outline" className="cursor-pointer hover:bg-muted text-xs px-1.5 py-0">
+                                                                Linked ({tx.associatedPositionIds.length})
+                                                            </Badge>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-64 p-3" align="start">
+                                                            <p className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Used by Strategies</p>
+                                                            <div className="flex flex-col gap-1">
+                                                                {tx.associatedPositionIds.map((pid: string) => {
+                                                                    const pInfo = allPositions?.find(p => p.id === pid)
+                                                                    return (
+                                                                        <div key={pid} className="text-sm bg-muted/50 rounded-sm p-1.5 flex justify-between items-center group cursor-pointer hover:bg-muted" onClick={() => navigate(`/positions/${pid}`)}>
+                                                                            <span className="truncate mr-2" title={pInfo?.strategyName || 'Unnamed'}>{pInfo?.strategyName || 'Unnamed Strategy'}</span>
+                                                                            <Badge variant="secondary" className="text-[9px] px-1 h-4">{pInfo?.status || '?'}</Badge>
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                                            <Edit className="h-3 w-3" />
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-[425px]">
+                                                        <DialogHeader>
+                                                            <DialogTitle>View / Edit Details</DialogTitle>
+                                                        </DialogHeader>
+                                                        <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                                    </DialogContent>
+                                                </Dialog>
+                                                <Button size="sm" variant="secondary" onClick={() => handleLink(tx.id, tx.quantity)} className="h-7 text-xs gap-1">
+                                                    <LinkIcon className="h-3 w-3" /> Link 100%
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <p className="font-mono text-muted-foreground">${tx.price} × {tx.quantity}</p>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <p className="font-mono text-muted-foreground">${tx.price} × {tx.quantity}</p>
+                                            <span className="text-xs text-muted-foreground/70 font-mono">{format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}</span>
+                                        </div>
                                     </div>
                                 ))
                             )}

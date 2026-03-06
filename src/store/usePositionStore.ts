@@ -20,6 +20,7 @@ export const usePositionStore = create<PositionState>(() => ({
             id,
             status: 'OPEN',
             entries: [],
+            startDate: pos.startDate || Date.now()
         });
         return id;
     },
@@ -91,10 +92,10 @@ export const usePositionStore = create<PositionState>(() => ({
     },
 
     closePosition: async (id) => {
-        return db.positions.update(id, { status: 'CLOSED' });
+        return db.positions.update(id, { status: 'CLOSED', endDate: Date.now() });
     },
 
     openPosition: async (id) => {
-        return db.positions.update(id, { status: 'OPEN' });
+        return db.positions.update(id, { status: 'OPEN', endDate: undefined });
     }
 }));

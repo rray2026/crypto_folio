@@ -5,17 +5,25 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { Transaction } from "@/lib/types"
 
-export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
-    const addTransaction = useTransactionStore((state) => state.addTransaction)
+export function TransactionEditForm({ transaction, onSuccess }: { transaction: Transaction, onSuccess: () => void }) {
+    const updateTransaction = useTransactionStore((state) => state.updateTransaction)
     const predefinedPairs = useSettingsStore((state) => state.predefinedPairs)
-    const [symbol, setSymbol] = useState("")
-    const [type, setType] = useState<"BUY" | "SELL">("BUY")
-    const [price, setPrice] = useState("")
-    const [quantity, setQuantity] = useState("")
-    const [amount, setAmount] = useState("")
-    const [fee, setFee] = useState("0")
-    const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16))
+
+    // Initial State using existing transaction data
+    const [symbol, setSymbol] = useState(transaction.symbol)
+    const [type, setType] = useState<"BUY" | "SELL">(transaction.type)
+    const [price, setPrice] = useState(transaction.price.toString())
+    const [quantity, setQuantity] = useState(transaction.quantity.toString())
+    const [amount, setAmount] = useState(transaction.amount.toString())
+    const [fee, setFee] = useState(transaction.fee.toString())
+
+    // Format timestamp back to HTML datetime-local string (YYYY-MM-DDThh:mm)
+    const [date, setDate] = useState(() => {
+        const d = new Date(transaction.date);
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    })
 
     // Handlers for dynamic math
     const handlePriceChange = (val: string) => {
@@ -43,7 +51,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
         e.preventDefault()
         if (!symbol || !price || !quantity || !amount) return
 
-        await addTransaction({
+        await updateTransaction(transaction.id, {
             symbol: symbol.toUpperCase(),
             type,
             price: parseFloat(price),
@@ -58,22 +66,23 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
             <div className="space-y-2">
-                <Label>Pair / Symbol</Label>
+                <Label>Pair / Symbol <span className="text-muted-foreground text-xs ml-2">(Locked: Cannot change symbol on existing items)</span></Label>
                 <Input
                     placeholder="e.g. BTC/USDT"
                     value={symbol}
                     onChange={e => setSymbol(e.target.value)}
-                    list="transaction-symbols-list"
+                    list="edit-transaction-symbols-list"
                     required
+                    disabled={true}
                 />
-                <datalist id="transaction-symbols-list">
+                <datalist id="edit-transaction-symbols-list">
                     {predefinedPairs.map(p => <option key={p} value={p} />)}
                 </datalist>
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Type</Label>
-                    <Select value={type} onValueChange={(val: "BUY" | "SELL") => setType(val)}>
+                    <Label>Type <span className="text-muted-foreground text-xs ml-2">(Locked)</span></Label>
+                    <Select value={type} onValueChange={(val: "BUY" | "SELL") => setType(val)} disabled={true}>
                         <SelectTrigger>
                             <SelectValue placeholder="Type" />
                         </SelectTrigger>
@@ -109,7 +118,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                 </div>
             </div>
             <div className="pt-4 text-right">
-                <Button type="submit" className="w-full">Save Transaction</Button>
+                <Button type="submit" className="w-full">Update Transaction</Button>
             </div>
         </form>
     )
