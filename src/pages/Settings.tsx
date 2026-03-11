@@ -144,9 +144,9 @@ export default function Settings() {
 
                             return (
                                 <div key={pair} className="flex flex-col p-3.5 sm:p-3 border rounded-xl bg-background/50 group">
-                                    <div className="flex items-start sm:items-center justify-between mb-2">
-                                        <span className="font-mono text-sm md:text-base font-bold tracking-tight truncate pr-2">{pair}</span>
-                                        <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex shrink-0 gap-0.5 -mr-1 sm:mr-0 -mt-1 sm:mt-0">
+                                    <div className="flex items-start sm:items-center justify-between mb-2 gap-2">
+                                        <span className="font-mono text-sm md:text-base font-bold tracking-tight break-words">{pair}</span>
+                                        <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex shrink-0 gap-0.5 -mt-1 sm:mt-0">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
