@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 
 export default function Transactions() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -126,8 +125,7 @@ export default function Transactions() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[40px] px-2 md:px-4"></TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead className="pl-4 md:pl-6">Date</TableHead>
                                 <TableHead>Pair</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead className="text-right">Price</TableHead>
@@ -140,7 +138,7 @@ export default function Transactions() {
                         <TableBody>
                             {!transactions?.length ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="h-48 text-center text-muted-foreground">
+                                    <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center justify-center gap-2">
                                             <p>No transactions recorded yet.</p>
                                             <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
@@ -153,20 +151,10 @@ export default function Transactions() {
                                 transactions.map((tx) => (
                                     <TableRow 
                                         key={tx.id} 
-                                        className={`group cursor-pointer transition-colors ${selectedIds.has(tx.id) ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20' : ''}`} 
+                                        className={`group cursor-pointer transition-all duration-200 border-l-[3px] md:border-l-[4px] ${selectedIds.has(tx.id) ? 'bg-primary/10 hover:bg-primary/15 dark:bg-primary/20 dark:hover:bg-primary/25 border-l-primary' : 'border-l-transparent hover:border-l-primary/30'}`} 
                                         onClick={() => toggleSelection(tx.id)}
                                     >
-                                        <TableCell className="pl-2 pr-0 md:pl-4 md:pr-2" onClick={(e) => e.stopPropagation()}>
-                                            <div className={`flex items-center justify-center transition-all duration-200 ${selectedIds.size > 0 || selectedIds.has(tx.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                                <Checkbox
-                                                    checked={selectedIds.has(tx.id)}
-                                                    onCheckedChange={() => toggleSelection(tx.id)}
-                                                    className={`rounded-full transition-transform ${selectedIds.has(tx.id) ? 'scale-110 shadow-md' : ''}`}
-                                                    aria-label={`Select transaction ${tx.id}`}
-                                                />
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="font-medium whitespace-nowrap">
+                                        <TableCell className="font-medium whitespace-nowrap pl-4 md:pl-6">
                                             {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
                                         </TableCell>
                                         <TableCell className="font-bold">{tx.symbol}</TableCell>
