@@ -6,7 +6,7 @@ import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -119,30 +119,14 @@ export default function Transactions() {
                 </div>
             </div>
 
-            {selectedIds.size > 0 && (
-                <div className="mb-4 p-4 border rounded-md bg-secondary flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                        {selectedIds.size} transaction(s) selected
-                    </span>
-                    <Button variant="destructive" onClick={confirmBulkDelete} className="gap-2 shrink-0">
-                        <Trash2 className="h-4 w-4" />
-                        Delete Selected
-                    </Button>
-                </div>
-            )}
+            {/* FAB replaces the top selection bar */}
 
             <Card>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50px]">
-                                    <Checkbox
-                                        checked={transactions && transactions.length > 0 && selectedIds.size === transactions.length}
-                                        onCheckedChange={toggleAll}
-                                        aria-label="Select all"
-                                    />
-                                </TableHead>
+                                <TableHead className="w-[40px] px-2 md:px-4"></TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Pair</TableHead>
                                 <TableHead>Type</TableHead>
@@ -167,13 +151,20 @@ export default function Transactions() {
                                 </TableRow>
                             ) : (
                                 transactions.map((tx) => (
-                                    <TableRow key={tx.id} className="group cursor-pointer" onClick={() => toggleSelection(tx.id)}>
-                                        <TableCell onClick={(e) => e.stopPropagation()}>
-                                            <Checkbox
-                                                checked={selectedIds.has(tx.id)}
-                                                onCheckedChange={() => toggleSelection(tx.id)}
-                                                aria-label={`Select transaction ${tx.id}`}
-                                            />
+                                    <TableRow 
+                                        key={tx.id} 
+                                        className={`group cursor-pointer transition-colors ${selectedIds.has(tx.id) ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20' : ''}`} 
+                                        onClick={() => toggleSelection(tx.id)}
+                                    >
+                                        <TableCell className="pl-2 pr-0 md:pl-4 md:pr-2" onClick={(e) => e.stopPropagation()}>
+                                            <div className={`flex items-center justify-center transition-all duration-200 ${selectedIds.size > 0 || selectedIds.has(tx.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                <Checkbox
+                                                    checked={selectedIds.has(tx.id)}
+                                                    onCheckedChange={() => toggleSelection(tx.id)}
+                                                    className={`rounded-full transition-transform ${selectedIds.has(tx.id) ? 'scale-110 shadow-md' : ''}`}
+                                                    aria-label={`Select transaction ${tx.id}`}
+                                                />
+                                            </div>
                                         </TableCell>
                                         <TableCell className="font-medium whitespace-nowrap">
                                             {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
@@ -237,6 +228,38 @@ export default function Transactions() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
+                    <div className="bg-popover text-popover-foreground border shadow-xl rounded-full px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-6 w-max max-w-[90vw]">
+                        <div className="flex items-center gap-2">
+                            <Badge variant="default" className="rounded-full px-2 py-0.5 text-xs shadow-sm">
+                                {selectedIds.size}
+                            </Badge>
+                            <span className="text-sm font-medium hidden sm:inline-block">Selected</span>
+                        </div>
+                        
+                        <div className="h-4 w-[1px] bg-border hidden sm:block"></div>
+                        
+                        <div className="flex items-center gap-1 md:gap-2">
+                            <Button variant="ghost" size="sm" onClick={toggleAll} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-3">
+                                <CheckSquare className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">{selectedIds.size === transactions?.length ? 'Deselect All' : 'Select All'}</span>
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={confirmBulkDelete} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm">
+                                <Trash2 className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">Delete</span>
+                            </Button>
+                        </div>
+                        
+                        <div className="h-4 w-[1px] bg-border"></div>
+                        
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedIds(new Set())} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
