@@ -96,7 +96,7 @@ export default function Transactions() {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                <div className="hidden sm:flex flex-wrap items-center gap-2 md:gap-3">
                     <ImportTransactionsButton />
                     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                         <DialogTrigger asChild>
@@ -326,6 +326,26 @@ export default function Transactions() {
                     </div>
                 </div>
             )}
+
+            {/* Mobile Fixed Action Buttons (bottom-right) */}
+            <div className="sm:hidden fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3">
+                <div className="bg-background rounded-full shadow-lg">
+                    <ImportTransactionsButton 
+                        variant="secondary" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full shadow-md hover:bg-secondary/80 border"
+                        iconOnly={true}
+                    />
+                </div>
+                
+                <Button 
+                    size="icon" 
+                    className="h-14 w-14 rounded-full shadow-lg"
+                    onClick={() => setIsAddDialogOpen(true)}
+                >
+                    <Plus className="h-6 w-6" />
+                </Button>
+            </div>
         </div>
     )
 }

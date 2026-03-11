@@ -4,7 +4,14 @@ import { useTransactionStore } from "@/store/useTransactionStore"
 import { Upload, Loader2 } from "lucide-react"
 import * as xlsx from "xlsx"
 
-export function ImportTransactionsButton() {
+interface ImportTransactionsButtonProps {
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    size?: "default" | "sm" | "lg" | "icon";
+    className?: string;
+    iconOnly?: boolean;
+}
+
+export function ImportTransactionsButton({ variant = "outline", size, className, iconOnly }: ImportTransactionsButtonProps) {
     const [isImporting, setIsImporting] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const bulkAddTransactions = useTransactionStore(state => state.bulkAddTransactions)
@@ -108,9 +115,16 @@ export function ImportTransactionsButton() {
                 accept=".xlsx, .xls, .csv"
                 className="hidden"
             />
-            <Button variant="outline" className="gap-2" onClick={handleImportClick} disabled={isImporting}>
+            <Button 
+                variant={variant} 
+                size={size}
+                className={className || (iconOnly ? "" : "gap-2")} 
+                onClick={handleImportClick} 
+                disabled={isImporting}
+                title="Import Binance Excel"
+            >
                 {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                Import Binance Excel
+                {!iconOnly && "Import Binance Excel"}
             </Button>
         </>
     )

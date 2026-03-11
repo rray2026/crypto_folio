@@ -75,7 +75,7 @@ export default function Positions() {
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="gap-2 self-start sm:self-auto">
+                        <Button className="hidden sm:flex gap-2">
                             <Plus className="h-4 w-4" />
                             New Position
                         </Button>
@@ -193,6 +193,17 @@ export default function Positions() {
                     })}
                 </div>
             )}
+
+            {/* Mobile FAB */}
+            <div className="sm:hidden fixed bottom-20 right-4 z-40">
+                <Button 
+                    size="icon" 
+                    className="h-14 w-14 rounded-full shadow-lg"
+                    onClick={() => setIsDialogOpen(true)}
+                >
+                    <Plus className="h-6 w-6" />
+                </Button>
+            </div>
         </div>
     )
 }
