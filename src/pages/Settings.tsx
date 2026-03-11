@@ -136,17 +136,17 @@ export default function Settings() {
                 {predefinedPairs.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No pre-defined pairs.</p>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                         {predefinedPairs.map(pair => {
                             const priceData = prices[pair];
                             const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
                             const lastSync = priceData ? format(new Date(priceData.timestamp), "HH:mm:ss") : 'Never';
 
                             return (
-                                <div key={pair} className="flex flex-col p-3 border rounded-lg bg-background/50 group">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-mono text-sm font-bold tracking-tight">{pair}</span>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
+                                <div key={pair} className="flex flex-col p-3.5 sm:p-3 border rounded-xl bg-background/50 group">
+                                    <div className="flex items-start sm:items-center justify-between mb-2">
+                                        <span className="font-mono text-sm md:text-base font-bold tracking-tight truncate pr-2">{pair}</span>
+                                        <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex shrink-0 gap-0.5 -mr-1 sm:mr-0 -mt-1 sm:mt-0">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
