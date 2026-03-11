@@ -95,45 +95,45 @@ export default function PositionDetails() {
     } = getPositionMetrics(position, linkedTxs, prices);
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/positions')}>
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">
+                    <Button variant="ghost" size="icon" className="shrink-0 self-start mt-1" onClick={() => navigate('/positions')}>
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-bold tracking-tight">{position.strategyName || "Unnamed Position"}</h1>
-                            <div className="flex items-center gap-2">
-                                <Badge variant={positionType === 'LONG' ? 'default' : 'destructive'} className="text-xs px-2 py-0.5">
+                    <div className="flex-1 w-full min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">{position.strategyName || "Unnamed Position"}</h1>
+                            <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                                <Badge variant={positionType === 'LONG' ? 'default' : 'destructive'} className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                                     {positionType}
                                 </Badge>
-                                <Badge variant={position.status === 'OPEN' ? 'secondary' : 'outline'} className="text-xs px-2 py-0.5 whitespace-nowrap">
+                                <Badge variant={position.status === 'OPEN' ? 'secondary' : 'outline'} className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 whitespace-nowrap">
                                     {position.status}
                                 </Badge>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <p className="text-muted-foreground font-mono font-medium">{position.symbol}</p>
+                        <div className="flex items-center gap-2 mt-1 md:mt-2">
+                            <p className="text-sm md:text-base text-muted-foreground font-mono font-medium">{position.symbol}</p>
                             {position.status === 'OPEN' && currentPrice > 0 && (
-                                <Badge variant="secondary" className="font-mono font-normal">
+                                <Badge variant="secondary" className="font-mono font-normal text-xs md:text-sm">
                                     ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                 </Badge>
                             )}
                         </div>
-                        <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground font-mono">
-                            <div className="flex items-center gap-1.5 bg-background/50 rounded-md px-2 py-1 border border-border/50">
-                                <Calendar className="h-4 w-4" />
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3 text-xs md:text-sm text-muted-foreground font-mono">
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                 <span>Opened: {derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 bg-background/50 rounded-md px-2 py-1 border border-border/50">
-                                <Clock className="h-4 w-4" />
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <Clock className="h-3 w-3 md:h-4 md:w-4" />
                                 <span>Duration: {differenceInDays(derivedEndDate || Date.now(), derivedStartDate || Date.now())} days</span>
                             </div>
                         </div>
 
                         {position.notes && (
-                            <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/50 text-sm text-muted-foreground w-full max-w-2xl">
+                            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-lg border border-border/50 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
                                 <span className="font-semibold text-foreground/80 mr-2">Notes:</span>
                                 {position.notes}
                             </div>
@@ -141,13 +141,13 @@ export default function PositionDetails() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Button variant={position.status === 'OPEN' ? 'secondary' : 'default'} onClick={toggleStatus} className="gap-2">
-                        {position.status === 'OPEN' ? <><Square className="h-4 w-4" /> Close Position</> : <><Play className="h-4 w-4" /> Re-open Position</>}
+                <div className="flex items-center gap-2 self-start w-full md:w-auto">
+                    <Button variant={position.status === 'OPEN' ? 'secondary' : 'default'} onClick={toggleStatus} className="gap-2 flex-1 md:flex-none">
+                        {position.status === 'OPEN' ? <><Square className="h-4 w-4" /> Close</> : <><Play className="h-4 w-4" /> Re-open</>}
                     </Button>
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
+                            <Button variant="outline" size="icon" className="shrink-0">
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>

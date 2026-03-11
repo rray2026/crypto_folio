@@ -12,7 +12,7 @@ export function Sidebar() {
     ]
 
     return (
-        <div className="flex h-full w-64 flex-col border-r bg-card">
+        <div className="hidden md:flex h-full w-64 flex-col border-r bg-card">
             <div className="flex h-16 items-center border-b px-6">
                 <h2 className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
                     CryptoFolio

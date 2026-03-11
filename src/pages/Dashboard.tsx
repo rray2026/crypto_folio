@@ -98,14 +98,14 @@ export default function Dashboard() {
     const globalROI = totalInvestment > 0 ? mul(div(add(totalRealizedPnL, totalUnrealizedPnL), totalInvestment), 100) : 0;
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
-            <div className="flex justify-between items-end">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-muted-foreground mt-2">Overview of your crypto portfolio performance.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Overview of your crypto portfolio performance.</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
-                    <Activity className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border self-start md:self-auto">
+                    <Activity className="h-3 w-3 md:h-4 md:w-4" />
                     <span>Time Filter: <strong className="text-foreground">{dashboardTimeRange === 'ALL' ? 'All Time' : dashboardTimeRange}</strong></span>
                 </div>
             </div>

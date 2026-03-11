@@ -33,6 +33,7 @@ export default function Transactions() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction)
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
@@ -42,24 +43,30 @@ export default function Transactions() {
         () => db.transactions.orderBy("date").reverse().toArray()
     )
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
+    const confirmSingleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (confirm("Are you sure you want to delete this transaction? It will be removed from all associated positions.")) {
-            await deleteTransaction(id)
-            setSelectedIds(prev => {
-                const newSet = new Set(prev)
-                newSet.delete(id)
-                return newSet
-            })
-        }
+        setConfirmDeleteState({ isOpen: true, type: 'single', targetId: id })
     }
 
-    const handleBulkDelete = async () => {
+    const confirmBulkDelete = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         if (selectedIds.size === 0) return;
-        if (confirm(`Are you sure you want to delete ${selectedIds.size} transaction(s)? This will cascade correctly removing them from any associated active position tracking.`)) {
+        setConfirmDeleteState({ isOpen: true, type: 'bulk' })
+    }
+
+    const executeDelete = async () => {
+        if (confirmDeleteState.type === 'single' && confirmDeleteState.targetId) {
+            await deleteTransaction(confirmDeleteState.targetId)
+            setSelectedIds(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(confirmDeleteState.targetId!)
+                return newSet
+            })
+        } else if (confirmDeleteState.type === 'bulk') {
             await bulkDeleteTransactions(Array.from(selectedIds));
             setSelectedIds(new Set());
         }
+        setConfirmDeleteState({ isOpen: false, type: 'single' });
     }
 
     const toggleSelection = (id: string) => {
@@ -84,17 +91,17 @@ export default function Transactions() {
     }
 
     return (
-        <div className="p-8 max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-                    <p className="text-muted-foreground mt-2">Manage your foundational trade records.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
+                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3">
                     <ImportTransactionsButton />
                     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button className="gap-2">
+                            <Button className="gap-2 shrink-0">
                                 <Plus className="h-4 w-4" />
                                 Add Transaction
                             </Button>
@@ -117,7 +124,7 @@ export default function Transactions() {
                     <span className="text-sm font-medium">
                         {selectedIds.size} transaction(s) selected
                     </span>
-                    <Button variant="destructive" onClick={handleBulkDelete} className="gap-2 shrink-0">
+                    <Button variant="destructive" onClick={confirmBulkDelete} className="gap-2 shrink-0">
                         <Trash2 className="h-4 w-4" />
                         Delete Selected
                     </Button>
@@ -196,7 +203,7 @@ export default function Transactions() {
                                                         <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
                                                     </DialogContent>
                                                 </Dialog>
-                                                <Button variant="ghost" size="icon" onClick={(e) => handleDelete(tx.id, e)}>
+                                                <Button variant="ghost" size="icon" onClick={(e) => confirmSingleDelete(tx.id, e)}>
                                                     <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
                                                 </Button>
                                             </div>
@@ -208,6 +215,28 @@ export default function Transactions() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <Dialog open={confirmDeleteState.isOpen} onOpenChange={(isOpen) => setConfirmDeleteState(prev => ({ ...prev, isOpen }))}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                        <DialogDescription className="pt-2">
+                            {confirmDeleteState.type === 'bulk'
+                                ? `Are you sure you want to delete ${selectedIds.size} transaction(s)? This will cascade correctly removing them from any associated active position tracking.`
+                                : `Are you sure you want to delete this transaction? It will be removed from all associated positions.`
+                            }
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={() => setConfirmDeleteState({ isOpen: false, type: 'single' })}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={executeDelete}>
+                            Delete
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -67,15 +67,15 @@ export default function Positions() {
     }
 
     return (
-        <div className="p-8 max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Positions</h1>
-                    <p className="text-muted-foreground mt-2">Manage your trading strategies and group trades.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
+                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="gap-2">
+                        <Button className="gap-2 self-start sm:self-auto">
                             <Plus className="h-4 w-4" />
                             New Position
                         </Button>
