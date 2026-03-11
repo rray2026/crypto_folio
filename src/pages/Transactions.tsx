@@ -120,19 +120,96 @@ export default function Transactions() {
 
             {/* FAB replaces the top selection bar */}
 
-            <Card>
+            {/* Mobile Card Layout */}
+            <div className="md:hidden space-y-3">
+                {!transactions?.length ? (
+                    <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground border rounded-lg bg-card/50">
+                        <p>No transactions recorded yet.</p>
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
+                            Record Your First Trade
+                        </Button>
+                    </div>
+                ) : (
+                    transactions.map((tx) => (
+                        <div 
+                            key={tx.id} 
+                            onClick={() => toggleSelection(tx.id)}
+                            className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                                selectedIds.has(tx.id) 
+                                ? 'bg-primary/10 border-primary ring-1 ring-primary/20 shadow-sm' 
+                                : 'bg-card border-border hover:border-primary/30 shadow-sm'
+                            }`}
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-lg">{tx.symbol}</span>
+                                    <Badge variant={tx.type === "BUY" ? "default" : "destructive"} className="text-[10px] h-5 px-1.5 uppercase tracking-wider">
+                                        {tx.type}
+                                    </Badge>
+                                </div>
+                                <div className="flex gap-1 -mr-2 -mt-1">
+                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
+                                                <Edit className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                            <DialogHeader>
+                                                <DialogTitle>Edit Transaction</DialogTitle>
+                                            </DialogHeader>
+                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => confirmSingleDelete(tx.id, e)}>
+                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                                <div>
+                                    <p className="text-muted-foreground text-xs mb-0.5">Price</p>
+                                    <p className="font-mono font-medium">${tx.price.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground text-xs mb-0.5">Quantity</p>
+                                    <p className="font-mono font-medium">{tx.quantity.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground text-xs mb-0.5">Total Value</p>
+                                    <p className="font-mono font-medium">${tx.amount.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground text-xs mb-0.5">Fee</p>
+                                    <p className="font-mono font-medium">${tx.fee.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t flex justify-between items-center">
+                                <span className="text-xs text-muted-foreground">
+                                    {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
+                                </span>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table Layout */}
+            <Card className="hidden md:block">
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="pl-4 md:pl-6">Asset</TableHead>
-                                <TableHead className="hidden sm:table-cell">Date</TableHead>
-                                <TableHead className="hidden md:table-cell">Type</TableHead>
-                                <TableHead className="hidden md:table-cell text-right">Price</TableHead>
-                                <TableHead className="hidden lg:table-cell text-right">Quantity</TableHead>
+                                <TableHead className="pl-6">Asset</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead className="text-right">Price</TableHead>
+                                <TableHead className="text-right">Quantity</TableHead>
                                 <TableHead className="text-right">Value</TableHead>
-                                <TableHead className="hidden lg:table-cell text-right">Fee</TableHead>
-                                <TableHead className="w-[60px]"></TableHead>
+                                <TableHead className="text-right">Fee</TableHead>
+                                <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -151,36 +228,24 @@ export default function Transactions() {
                                 transactions.map((tx) => (
                                     <TableRow 
                                         key={tx.id} 
-                                        className={`group cursor-pointer transition-all duration-200 border-l-[3px] md:border-l-[4px] ${selectedIds.has(tx.id) ? 'bg-primary/10 hover:bg-primary/15 dark:bg-primary/20 dark:hover:bg-primary/25 border-l-primary' : 'border-l-transparent hover:border-l-primary/30'}`} 
+                                        className={`group cursor-pointer transition-all duration-200 border-l-[4px] ${selectedIds.has(tx.id) ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20 border-l-primary' : 'border-l-transparent hover:border-l-primary/30'}`} 
                                         onClick={() => toggleSelection(tx.id)}
                                     >
-                                        <TableCell className="pl-4 md:pl-6">
-                                            <div className="flex flex-col gap-1 w-max">
-                                                <span className="font-bold">{tx.symbol}</span>
-                                                <Badge className="md:hidden text-[10px] px-1 py-0 uppercase tracking-wider h-4 self-start" variant={tx.type === "BUY" ? "default" : "destructive"}>
-                                                    {tx.type}
-                                                </Badge>
-                                            </div>
+                                        <TableCell className="font-bold pl-6">
+                                            {tx.symbol}
                                         </TableCell>
-                                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground whitespace-nowrap">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                        <TableCell className="text-muted-foreground whitespace-nowrap">
+                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
                                         </TableCell>
-                                        <TableCell className="hidden md:table-cell">
+                                        <TableCell>
                                             <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>
                                                 {tx.type}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="hidden md:table-cell text-right font-mono">${tx.price.toLocaleString()}</TableCell>
-                                        <TableCell className="hidden lg:table-cell text-right font-mono">{tx.quantity.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex flex-col items-end gap-1">
-                                                <span className="font-mono font-bold">${tx.amount.toLocaleString()}</span>
-                                                <span className="sm:hidden text-muted-foreground text-[10px]">
-                                                    {format(new Date(tx.date), "MM/dd HH:mm")}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="hidden lg:table-cell text-right font-mono">${tx.fee.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono">${tx.price.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono">{tx.quantity.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-bold">${tx.amount.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono">${tx.fee.toLocaleString()}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
                                                 <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
