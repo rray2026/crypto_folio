@@ -125,20 +125,20 @@ export default function Transactions() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="pl-4 md:pl-6">Date</TableHead>
-                                <TableHead>Pair</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead className="text-right">Price</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                                <TableHead className="text-right">Fee</TableHead>
-                                <TableHead className="w-[80px]"></TableHead>
+                                <TableHead className="pl-4 md:pl-6">Asset</TableHead>
+                                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                                <TableHead className="hidden md:table-cell">Type</TableHead>
+                                <TableHead className="hidden md:table-cell text-right">Price</TableHead>
+                                <TableHead className="hidden lg:table-cell text-right">Quantity</TableHead>
+                                <TableHead className="text-right">Value</TableHead>
+                                <TableHead className="hidden lg:table-cell text-right">Fee</TableHead>
+                                <TableHead className="w-[60px]"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {!transactions?.length ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
+                                    <TableCell colSpan={8} className="h-48 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center justify-center gap-2">
                                             <p>No transactions recorded yet.</p>
                                             <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
@@ -154,19 +154,33 @@ export default function Transactions() {
                                         className={`group cursor-pointer transition-all duration-200 border-l-[3px] md:border-l-[4px] ${selectedIds.has(tx.id) ? 'bg-primary/10 hover:bg-primary/15 dark:bg-primary/20 dark:hover:bg-primary/25 border-l-primary' : 'border-l-transparent hover:border-l-primary/30'}`} 
                                         onClick={() => toggleSelection(tx.id)}
                                     >
-                                        <TableCell className="font-medium whitespace-nowrap pl-4 md:pl-6">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
+                                        <TableCell className="pl-4 md:pl-6">
+                                            <div className="flex flex-col gap-1 w-max">
+                                                <span className="font-bold">{tx.symbol}</span>
+                                                <Badge className="md:hidden text-[10px] px-1 py-0 uppercase tracking-wider h-4 self-start" variant={tx.type === "BUY" ? "default" : "destructive"}>
+                                                    {tx.type}
+                                                </Badge>
+                                            </div>
                                         </TableCell>
-                                        <TableCell className="font-bold">{tx.symbol}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground whitespace-nowrap">
+                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                        </TableCell>
+                                        <TableCell className="hidden md:table-cell">
                                             <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>
                                                 {tx.type}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-right font-mono">${tx.price.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono">{tx.quantity.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono">${tx.amount.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono">${tx.fee.toLocaleString()}</TableCell>
+                                        <TableCell className="hidden md:table-cell text-right font-mono">${tx.price.toLocaleString()}</TableCell>
+                                        <TableCell className="hidden lg:table-cell text-right font-mono">{tx.quantity.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className="font-mono font-bold">${tx.amount.toLocaleString()}</span>
+                                                <span className="sm:hidden text-muted-foreground text-[10px]">
+                                                    {format(new Date(tx.date), "MM/dd HH:mm")}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden lg:table-cell text-right font-mono">${tx.fee.toLocaleString()}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
                                                 <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
