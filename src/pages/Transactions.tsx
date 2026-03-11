@@ -105,7 +105,7 @@ export default function Transactions() {
                                 Add Transaction
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                             <DialogHeader>
                                 <DialogTitle>Record Transaction</DialogTitle>
                                 <DialogDescription>
@@ -154,7 +154,7 @@ export default function Transactions() {
                                                 <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[425px]">
+                                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                                             <DialogHeader>
                                                 <DialogTitle>Edit Transaction</DialogTitle>
                                             </DialogHeader>
@@ -253,7 +253,7 @@ export default function Transactions() {
                                                             <Edit className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
                                                         </Button>
                                                     </DialogTrigger>
-                                                    <DialogContent className="sm:max-w-[425px]">
+                                                    <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                                                         <DialogHeader>
                                                             <DialogTitle>Edit Transaction</DialogTitle>
                                                         </DialogHeader>
@@ -329,18 +329,18 @@ export default function Transactions() {
 
             {/* Mobile Fixed Action Buttons (bottom-right) */}
             <div className="sm:hidden fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3">
-                <div className="bg-background rounded-full shadow-lg">
+                <div className="bg-background/80 backdrop-blur-md rounded-full shadow-lg border border-border/50">
                     <ImportTransactionsButton 
                         variant="secondary" 
                         size="icon" 
-                        className="h-12 w-12 rounded-full shadow-md hover:bg-secondary/80 border"
+                        className="h-12 w-12 rounded-full opacity-90 transition-opacity bg-transparent hover:bg-secondary/40"
                         iconOnly={true}
                     />
                 </div>
                 
                 <Button 
                     size="icon" 
-                    className="h-14 w-14 rounded-full shadow-lg"
+                    className="h-14 w-14 rounded-full shadow-lg opacity-90 backdrop-blur-md hover:opacity-100 transition-opacity border border-primary/20"
                     onClick={() => setIsAddDialogOpen(true)}
                 >
                     <Plus className="h-6 w-6" />

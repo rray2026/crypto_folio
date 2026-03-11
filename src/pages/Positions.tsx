@@ -80,7 +80,7 @@ export default function Positions() {
                             New Position
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                         <DialogHeader>
                             <DialogTitle>Create Position</DialogTitle>
                             <DialogDescription>
@@ -198,7 +198,7 @@ export default function Positions() {
             <div className="sm:hidden fixed bottom-20 right-4 z-40">
                 <Button 
                     size="icon" 
-                    className="h-14 w-14 rounded-full shadow-lg"
+                    className="h-14 w-14 rounded-full shadow-lg opacity-90 backdrop-blur-md hover:opacity-100 transition-opacity border border-primary/20"
                     onClick={() => setIsDialogOpen(true)}
                 >
                     <Plus className="h-6 w-6" />
