@@ -1,0 +1,11 @@
+name = "crypto-folio"
+compatibility_date = "2024-03-20"
+
+# 使用 Cloudflare Pages 方式托管（现今推荐的单页应用托管方式，底层由 Workers 驱动）
+pages_build_output_dir = "./dist"
+
+# -------------- 或者：如果你坚持使用传统的 Cloudflare Workers Sites 方式，请取消注释以下内容 --------------
+# main = "worker.js" 
+# [site]
+# bucket = "./dist"
+# entry-point = "workers-site"
