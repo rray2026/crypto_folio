@@ -14,13 +14,14 @@ export default function Dashboard() {
     const transactions = useLiveQuery(() => db.transactions.toArray())
     const { prices, fetchPrices, dashboardTimeRange } = useSettingsStore()
 
-    // Fetch prices for all OPEN symbols periodically (every 5 mins)
+    // Fetch prices for all OPEN symbols and PINNED pairs periodically (every 5 mins)
     useState(() => {
         const interval = setInterval(() => {
             if (!positions) return;
             const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
-            if (openSymbols.length > 0) {
-                fetchPrices(openSymbols);
+            const symbolsToFetch = Array.from(new Set([...openSymbols, ...(useSettingsStore.getState().pinnedPairs || [])]));
+            if (symbolsToFetch.length > 0) {
+                fetchPrices(symbolsToFetch);
             }
         }, 300000);
         return () => clearInterval(interval);
@@ -29,8 +30,10 @@ export default function Dashboard() {
     if (positions) {
         // Non-blocking fetch on render if not cached
         const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
-        if (openSymbols.length > 0) {
-            fetchPrices(openSymbols);
+        const pinnedPairs = useSettingsStore.getState().pinnedPairs || [];
+        const symbolsToFetch = Array.from(new Set([...openSymbols, ...pinnedPairs]));
+        if (symbolsToFetch.length > 0) {
+            fetchPrices(symbolsToFetch);
         }
     }
 
@@ -109,6 +112,26 @@ export default function Dashboard() {
                     <span>Time Filter: <strong className="text-foreground">{dashboardTimeRange === 'ALL' ? 'All Time' : dashboardTimeRange}</strong></span>
                 </div>
             </div>
+
+            {useSettingsStore.getState().pinnedPairs?.length > 0 && (
+                <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+                    <div className="flex gap-3 w-max">
+                        {useSettingsStore.getState().pinnedPairs.map(pair => {
+                            const priceData = prices[pair];
+                            const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
+                            
+                            return (
+                                <Card key={pair} className="min-w-[140px] md:min-w-[160px] bg-card/80 backdrop-blur-sm border shadow-sm">
+                                    <CardContent className="p-3 md:p-4 flex flex-col items-center justify-center text-center">
+                                        <span className="text-xs md:text-sm font-bold text-muted-foreground tracking-wider">{pair}</span>
+                                        <span className="text-lg md:text-xl font-mono font-bold mt-1 tracking-tight">{priceDisplay}</span>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <Card className="shadow-sm">

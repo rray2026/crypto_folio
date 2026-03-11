@@ -9,10 +9,12 @@ interface SettingsState {
     prices: Record<string, { price: string; timestamp: number }>;
     dashboardTimeRange: DashboardTimeRange;
     theme: Theme;
+    pinnedPairs: string[];
     setDashboardTimeRange: (range: DashboardTimeRange) => void;
     setTheme: (theme: Theme) => void;
     addPair: (pair: string) => void;
     removePair: (pair: string) => void;
+    togglePinPair: (pair: string) => void;
     fetchPrices: (symbols?: string[], force?: boolean, exactSymbolsOnly?: boolean) => Promise<void>;
 }
 
@@ -23,6 +25,7 @@ export const useSettingsStore = create<SettingsState>()(
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
+            pinnedPairs: [],
             setDashboardTimeRange: (range) => set({ dashboardTimeRange: range }),
             setTheme: (theme) => set({ theme }),
             addPair: (pair) => set((state) => ({
@@ -31,7 +34,13 @@ export const useSettingsStore = create<SettingsState>()(
                     : [...state.predefinedPairs, pair.toUpperCase()]
             })),
             removePair: (pair) => set((state) => ({
-                predefinedPairs: state.predefinedPairs.filter(p => p !== pair.toUpperCase())
+                predefinedPairs: state.predefinedPairs.filter(p => p !== pair.toUpperCase()),
+                pinnedPairs: state.pinnedPairs.filter(p => p !== pair.toUpperCase())
+            })),
+            togglePinPair: (pair) => set((state) => ({
+                pinnedPairs: state.pinnedPairs.includes(pair.toUpperCase()) 
+                    ? state.pinnedPairs.filter(p => p !== pair.toUpperCase())
+                    : [...state.pinnedPairs, pair.toUpperCase()]
             })),
             fetchPrices: async (symbols?: string[], force: boolean = false, exactSymbolsOnly: boolean = false) => {
                 const { predefinedPairs, prices } = get();

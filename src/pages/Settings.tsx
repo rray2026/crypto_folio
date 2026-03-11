@@ -18,11 +18,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Trash2, Plus, RefreshCw, Clock, Palette, BookOpen, Download, Upload, Database, AlertTriangle } from "lucide-react"
+import { Trash2, Plus, RefreshCw, Clock, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin } from "lucide-react"
 import { exportData, importData } from "@/lib/backup"
 
 export default function Settings() {
-    const { predefinedPairs, prices, addPair, removePair, fetchPrices, dashboardTimeRange, setDashboardTimeRange, theme, setTheme } = useSettingsStore()
+    const { predefinedPairs, pinnedPairs, prices, addPair, removePair, togglePinPair, fetchPrices, dashboardTimeRange, setDashboardTimeRange, theme, setTheme } = useSettingsStore()
     const [newPair, setNewPair] = useState("")
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
@@ -146,7 +146,16 @@ export default function Settings() {
                                 <div key={pair} className="flex flex-col p-3 border rounded-lg bg-background/50 group">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="font-mono text-sm font-bold tracking-tight">{pair}</span>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => togglePinPair(pair)}
+                                                className={`h-7 w-7 transition-colors ${pinnedPairs.includes(pair) ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
+                                                title={pinnedPairs.includes(pair) ? "Unpin from Dashboard" : "Pin to Dashboard"}
+                                            >
+                                                <Pin className={`h-3.5 w-3.5 ${pinnedPairs.includes(pair) ? 'fill-current' : ''}`} />
+                                            </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
