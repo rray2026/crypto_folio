@@ -134,24 +134,24 @@ export default function Transactions() {
                         <div 
                             key={tx.id} 
                             onClick={() => toggleSelection(tx.id)}
-                            className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                            className={`p-2.5 sm:p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
                                 selectedIds.has(tx.id) 
                                 ? 'bg-primary/10 border-primary ring-1 ring-primary/20 shadow-sm' 
                                 : 'bg-card border-border hover:border-primary/30 shadow-sm'
                             }`}
                         >
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-lg">{tx.symbol}</span>
-                                    <Badge variant={tx.type === "BUY" ? "default" : "destructive"} className="text-[10px] h-5 px-1.5 uppercase tracking-wider">
+                            <div className="flex justify-between items-start mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-base leading-none">{tx.symbol}</span>
+                                    <Badge variant={tx.type === "BUY" ? "default" : "destructive"} className="text-[9px] h-4 px-1 py-0 uppercase tracking-widest leading-none">
                                         {tx.type}
                                     </Badge>
                                 </div>
-                                <div className="flex gap-1 -mr-2 -mt-1">
+                                <div className="flex gap-0 -mr-2 -mt-2">
                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                         <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
-                                                <Edit className="h-4 w-4 text-muted-foreground" />
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
+                                                <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="sm:max-w-[425px]">
@@ -161,34 +161,33 @@ export default function Transactions() {
                                             <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
                                         </DialogContent>
                                     </Dialog>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => confirmSingleDelete(tx.id, e)}>
-                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => confirmSingleDelete(tx.id, e)}>
+                                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                                     </Button>
                                 </div>
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                                <div>
-                                    <p className="text-muted-foreground text-xs mb-0.5">Price</p>
-                                    <p className="font-mono font-medium">${tx.price.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground text-xs mb-0.5">Quantity</p>
-                                    <p className="font-mono font-medium">{tx.quantity.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground text-xs mb-0.5">Total Value</p>
-                                    <p className="font-mono font-medium">${tx.amount.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground text-xs mb-0.5">Fee</p>
-                                    <p className="font-mono font-medium">${tx.fee.toLocaleString()}</p>
-                                </div>
+                            <div className="grid grid-cols-4 gap-x-2 text-xs items-center">
+                                <span className="text-muted-foreground">Price</span>
+                                <span className="font-mono text-right col-span-3 font-medium">${tx.price.toLocaleString()}</span>
+                                
+                                <span className="text-muted-foreground">Qty</span>
+                                <span className="font-mono text-right col-span-3 font-medium">{tx.quantity.toLocaleString()}</span>
+                                
+                                <span className="text-muted-foreground">Total</span>
+                                <span className="font-mono text-right col-span-3 font-medium">${tx.amount.toLocaleString()}</span>
+                                
+                                {tx.fee > 0 && (
+                                    <>
+                                        <span className="text-muted-foreground">Fee</span>
+                                        <span className="font-mono text-right col-span-3">${tx.fee.toLocaleString()}</span>
+                                    </>
+                                )}
                             </div>
                             
-                            <div className="mt-3 pt-3 border-t flex justify-between items-center">
-                                <span className="text-xs text-muted-foreground">
-                                    {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
+                            <div className="mt-1.5 pt-1.5 border-t flex justify-end">
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                    {format(new Date(tx.date), "yy/MM/dd HH:mm")}
                                 </span>
                             </div>
                         </div>
