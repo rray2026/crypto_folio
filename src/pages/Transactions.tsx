@@ -10,6 +10,13 @@ import { Plus, Trash2, Edit, X, CheckSquare } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -33,14 +40,40 @@ export default function Transactions() {
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
+    
+    const [filterSymbol, setFilterSymbol] = useState<string>("ALL")
+    const [filterTimeRange, setFilterTimeRange] = useState<string>("ALL")
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction)
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
 
-    // Reactively fetch transactions sorted by newest
-    const transactions = useLiveQuery(
+    // Reactively fetch all transactions
+    const allTransactions = useLiveQuery(
         () => db.transactions.orderBy("date").reverse().toArray()
     )
+
+    // Get unique symbols for filter
+    const uniqueSymbols = Array.from(new Set(allTransactions?.map(tx => tx.symbol) || [])).sort();
+
+    // Filter logic
+    const transactions = allTransactions?.filter(tx => {
+        const symbolMatch = filterSymbol === "ALL" || tx.symbol === filterSymbol;
+        
+        let timeMatch = true;
+        if (filterTimeRange !== "ALL") {
+            const now = Date.now();
+            const txDate = new Date(tx.date).getTime();
+            const dayMs = 24 * 60 * 60 * 1000;
+            
+            if (filterTimeRange === "24H") timeMatch = txDate >= now - dayMs;
+            else if (filterTimeRange === "1W") timeMatch = txDate >= now - 7 * dayMs;
+            else if (filterTimeRange === "1M") timeMatch = txDate >= now - 30 * dayMs;
+            else if (filterTimeRange === "3M") timeMatch = txDate >= now - 90 * dayMs;
+            else if (filterTimeRange === "6M") timeMatch = txDate >= now - 180 * dayMs;
+        }
+
+        return symbolMatch && timeMatch;
+    });
 
     const confirmSingleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
@@ -91,30 +124,62 @@ export default function Transactions() {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
                 </div>
-                <div className="hidden sm:flex flex-wrap items-center gap-2 md:gap-3">
-                    <ImportTransactionsButton />
-                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="gap-2 shrink-0">
-                                <Plus className="h-4 w-4" />
-                                Add Transaction
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
-                            <DialogHeader>
-                                <DialogTitle>Record Transaction</DialogTitle>
-                                <DialogDescription>
-                                    Enter the details of your spot trade. This will be available to link to positions.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <TransactionForm onSuccess={() => setIsAddDialogOpen(false)} />
-                        </DialogContent>
-                    </Dialog>
+                
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3">
+                    {/* Filters */}
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Select value={filterSymbol} onValueChange={setFilterSymbol}>
+                            <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/50 rounded-lg border-border/50 text-xs shadow-sm">
+                                <SelectValue placeholder="All Assets" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All Assets</SelectItem>
+                                {uniqueSymbols.map(sym => (
+                                    <SelectItem key={sym} value={sym}>{sym}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={filterTimeRange} onValueChange={setFilterTimeRange}>
+                            <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/50 rounded-lg border-border/50 text-xs shadow-sm">
+                                <SelectValue placeholder="All Time" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="24H">Last 24 Hours</SelectItem>
+                                <SelectItem value="1W">Last 1 Week</SelectItem>
+                                <SelectItem value="1M">Last 1 Month</SelectItem>
+                                <SelectItem value="3M">Last 3 Months</SelectItem>
+                                <SelectItem value="6M">Last 6 Months</SelectItem>
+                                <SelectItem value="ALL">All Time</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <ImportTransactionsButton />
+                        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="gap-2 shrink-0 h-9 rounded-lg shadow-sm">
+                                    <Plus className="h-4 w-4" />
+                                    Add
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
+                                <DialogHeader>
+                                    <DialogTitle>Record Transaction</DialogTitle>
+                                    <DialogDescription>
+                                        Enter the details of your spot trade. This will be available to link to positions.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <TransactionForm onSuccess={() => setIsAddDialogOpen(false)} />
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
             </div>
 
