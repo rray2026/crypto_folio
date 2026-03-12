@@ -16,9 +16,10 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const startY = useRef(0);
   const currentPull = useRef(0);
   const isPulling = useRef(false);
+  const hasVibrated = useRef(false);
   
   const PULL_THRESHOLD = 80;
-  const RESISTANCE = 2.5;
+  const MAX_PULL = 130;
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -30,14 +31,16 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
 
     const updateStyles = (y: number) => {
       const opacity = Math.min(y / PULL_THRESHOLD, 1);
-      const rotation = y * 4;
+      const rotation = y * 5;
+      const isOverThreshold = y >= PULL_THRESHOLD;
       
       indicator.style.height = `${y}px`;
       indicator.style.opacity = `${opacity}`;
       content.style.transform = `translateY(${y}px)`;
       
       if (!isRefreshing) {
-        icon.style.transform = `rotate(${rotation}deg)`;
+        icon.style.transform = `rotate(${rotation}deg) scale(${isOverThreshold ? 1.2 : 1})`;
+        icon.style.color = isOverThreshold ? 'var(--primary)' : 'currentColor';
       }
     };
 
@@ -45,10 +48,11 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       if (container.scrollTop === 0 && !isRefreshing) {
         startY.current = e.touches[0].pageY;
         isPulling.current = true;
+        hasVibrated.current = false;
         
-        // Remove transitions during manual pull
         indicator.style.transition = 'none';
         content.style.transition = 'none';
+        icon.style.transition = 'transform 0.1s ease-out, color 0.1s ease-out';
       }
     };
 
@@ -60,10 +64,21 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       if (diff > 0) {
         if (e.cancelable) e.preventDefault();
         
-        // Apply resistance and limit maximum pull
-        currentPull.current = Math.min(diff / RESISTANCE, PULL_THRESHOLD + 30);
+        // Logarithmic resistance for rubber-band feel: y = K * log(1 + x/R)
+        // Or a simpler power based resistance
+        const resistance = 0.4;
+        currentPull.current = Math.min(Math.pow(diff, 0.85) * resistance, MAX_PULL);
         
-        // Use RequestAnimationFrame for smooth updates
+        // Haptic feedback when threshold is crossed
+        if (currentPull.current >= PULL_THRESHOLD && !hasVibrated.current) {
+          if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+          }
+          hasVibrated.current = true;
+        } else if (currentPull.current < PULL_THRESHOLD) {
+          hasVibrated.current = false;
+        }
+
         requestAnimationFrame(() => updateStyles(currentPull.current));
       } else {
         isPulling.current = false;
@@ -72,26 +87,26 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       }
     };
 
-    const handleTouchEnd = async () => {
+    const handleTouchEnd = () => {
       if (!isPulling.current || isRefreshing) return;
       isPulling.current = false;
 
-      // Add smooth transitions for snapping back or showing refresh state
-      indicator.style.transition = 'all 0.3s cubic-bezier(0.2, 0, 0, 1)';
-      content.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
+      // Premium spring-like snapback curve
+      const snapbackTransition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      indicator.style.transition = snapbackTransition;
+      content.style.transition = snapbackTransition;
 
       if (currentPull.current >= PULL_THRESHOLD) {
-        setIsRefreshing(true);
-        currentPull.current = PULL_THRESHOLD;
-        updateStyles(PULL_THRESHOLD);
+        // Fire-and-forget: Trigger refresh without blocks
+        onRefresh().catch(console.error);
         
-        try {
-          await onRefresh();
-        } finally {
+        // Show brief "refreshing" state before immediate snapback
+        setIsRefreshing(true);
+        setTimeout(() => {
           setIsRefreshing(false);
           currentPull.current = 0;
           updateStyles(0);
-        }
+        }, 600);
       } else {
         currentPull.current = 0;
         updateStyles(0);
@@ -112,7 +127,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   return (
     <div 
       ref={scrollContainerRef}
-      className="relative h-full overflow-y-auto overscroll-none"
+      className="relative h-full overflow-y-auto overscroll-none scroll-smooth touch-pan-y"
+      style={{ overscrollBehaviorY: 'none' }}
     >
       <div 
         ref={pullIndicatorRef}
@@ -122,13 +138,13 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
         <div className="flex items-center justify-center p-4">
           <RefreshCw 
             ref={iconRef}
-            className={`w-6 h-6 text-primary ${isRefreshing ? 'animate-spin' : ''}`}
+            className={`w-6 h-6 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`}
           />
         </div>
       </div>
       <div 
         ref={contentRef}
-        className="will-change-transform"
+        className="will-change-transform h-full"
       >
         {children}
       </div>
