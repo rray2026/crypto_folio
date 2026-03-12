@@ -6,7 +6,6 @@ import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
 import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import {
     Dialog,
@@ -253,7 +252,9 @@ export default function PositionDetails() {
                                     {linkedTxs.map(tx => (
                                         <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg border bg-background/50">
                                             <div className="flex gap-4 items-center">
-                                                <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>{tx.type}</Badge>
+                                                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                                    {tx.type}
+                                                </div>
                                                 <div className="text-sm">
                                                     <p className="font-mono">${tx.price} <span className="text-muted-foreground mx-1">×</span> {tx.quantity}</p>
                                                 </div>
@@ -300,13 +301,15 @@ export default function PositionDetails() {
                                         <div key={tx.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background/50">
                                             <div className="flex justify-between items-center mb-2">
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>{tx.type}</Badge>
+                                                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                                        {tx.type}
+                                                    </div>
                                                     {tx.associatedPositionIds?.length > 0 && (
                                                         <Popover>
                                                             <PopoverTrigger asChild>
-                                                                <Badge variant="outline" className="cursor-pointer hover:bg-muted text-xs px-1.5 py-0">
-                                                                    Linked ({tx.associatedPositionIds.length})
-                                                                </Badge>
+                                                                    <div className="px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-border bg-muted/30 text-muted-foreground hover:bg-muted cursor-pointer transition-colors">
+                                                                        Linked ({tx.associatedPositionIds.length})
+                                                                    </div>
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-64 p-3" align="start">
                                                                 <p className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Used by Strategies</p>
@@ -316,7 +319,9 @@ export default function PositionDetails() {
                                                                         return (
                                                                             <div key={pid} className="text-sm bg-muted/50 rounded-sm p-1.5 flex justify-between items-center group cursor-pointer hover:bg-muted" onClick={() => navigate(`/positions/${pid}`)}>
                                                                                 <span className="truncate mr-2" title={pInfo?.strategyName || 'Unnamed'}>{pInfo?.strategyName || 'Unnamed Strategy'}</span>
-                                                                                <Badge variant="secondary" className="text-[9px] px-1 h-4">{pInfo?.status || '?'}</Badge>
+                                                                                <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${pInfo?.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600' : 'bg-muted text-muted-foreground'}`}>
+                                                                                    {pInfo?.status || '?'}
+                                                                                </div>
                                                                             </div>
                                                                         )
                                                                     })}
