@@ -40,25 +40,21 @@ export default function Dashboard() {
             </div>
 
             {useSettingsStore.getState().pinnedPairs?.length > 0 && (
-                <div className="w-full relative py-4">
-                    <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background z-10 pointer-events-none" />
+                <div className="w-full relative">
                     <div className="w-full overflow-x-auto pb-4 hide-scrollbar">
-                        <div className="flex gap-4 px-4 w-max">
+                        <div className="flex gap-4 px-1 w-max">
                             {useSettingsStore.getState().pinnedPairs.map(pair => {
                                 const priceData = prices[pair];
                                 const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
                                 
                                 return (
-                                    <div key={pair} className="flex flex-col min-w-[160px] p-4 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 hover:border-primary/30 transition-all hover:bg-card/60 group">
+                                    <div key={pair} className="flex flex-col min-w-[140px] md:min-w-[160px] p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em] group-hover:text-primary transition-colors">{pair}</span>
-                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider group-hover:text-primary transition-colors">{pair}</span>
+                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                                         </div>
-                                        <div className="text-xl font-black font-mono tracking-tighter text-foreground group-hover:scale-105 transition-transform origin-left">
+                                        <div className="text-xl font-bold font-mono tracking-tight text-foreground">
                                             {priceDisplay}
-                                        </div>
-                                        <div className="mt-2 h-[2px] w-full bg-border/20 overflow-hidden rounded-full">
-                                            <div className="h-full w-1/3 bg-primary/40 group-hover:w-1/2 transition-all duration-500" />
                                         </div>
                                     </div>
                                 )

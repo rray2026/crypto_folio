@@ -144,59 +144,48 @@ export default function Positions() {
             </div>
 
             {/* Portfolio Summary Card */}
-            <Card className="mb-8 overflow-hidden border-none bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-2xl">
+            <Card className="mb-8 overflow-hidden shadow-sm border bg-card">
                 <CardContent className="p-0">
-                    <div className="grid grid-cols-2 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-border/20">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border/50">
                         <div className="p-4 flex flex-col items-center justify-center text-center">
                             <div className="flex items-center gap-2 mb-2">
-                                <Wallet className="h-4 w-4 text-primary" />
+                                <Wallet className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
                             </div>
-                            <div className={`text-xl md:text-2xl font-black font-mono tracking-tighter ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
                                 ${totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
                             </div>
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
                             <div className="flex items-center gap-2 mb-2">
-                                <LineChart className="h-4 w-4 text-primary" />
+                                <LineChart className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
                             </div>
-                            <div className={`text-xl md:text-2xl font-black font-mono tracking-tighter ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
                                 ${totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
                             </div>
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
                             <div className="flex items-center gap-2 mb-2">
-                                <TrendingUp className="h-4 w-4 text-primary" />
+                                <TrendingUp className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Global ROI</span>
                             </div>
-                            <div className={`text-xl md:text-2xl font-black font-mono tracking-tighter ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
+                            <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
                                 {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
                             </div>
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
                             <div className="flex items-center gap-2 mb-2">
-                                <Target className="h-4 w-4 text-primary" />
+                                <Target className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Win Rate</span>
                             </div>
-                            <div className="text-xl md:text-2xl font-black font-mono tracking-tighter">
+                            <div className="text-xl md:text-2xl font-bold font-mono tracking-tight">
                                 {winRate.toFixed(1)}%
                             </div>
                             <div className="text-[10px] text-muted-foreground mt-1 font-medium">{winningTrades}W / {closedTrades}C</div>
-                        </div>
-
-                        <div className="p-4 flex flex-col items-center justify-center text-center col-span-2 lg:col-span-1 border-t lg:border-t-0">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Activity className="h-4 w-4 text-primary" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Active</span>
-                            </div>
-                            <div className="text-xl md:text-2xl font-black font-mono tracking-tighter">
-                                {activeStrategiesCount}
-                            </div>
-                            <div className="text-[10px] text-muted-foreground mt-1 font-medium">Running Strategies</div>
                         </div>
                     </div>
                 </CardContent>
