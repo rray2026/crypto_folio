@@ -2,11 +2,12 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
+import { mul, add, div } from "@/lib/math"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { PositionForm } from "@/components/positions/PositionForm"
 
-import { Plus, Trash2, ArrowRight, Calendar, Clock } from "lucide-react"
+import { Plus, Trash2, ArrowRight, Calendar, Clock, Wallet, Activity, Target, TrendingUp, LineChart } from "lucide-react"
 import { differenceInDays, format } from "date-fns"
 import { getPositionMetrics } from "@/lib/metrics"
 
@@ -26,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 export default function Positions() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const deletePosition = usePositionStore((state) => state.deletePosition)
-    const { prices, fetchPrices } = useSettingsStore()
+    const { prices, fetchPrices, dashboardTimeRange } = useSettingsStore()
 
     const positions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
@@ -67,6 +68,49 @@ export default function Positions() {
         }
     }
 
+    // Calculate global metrics
+    let totalRealizedPnL = 0;
+    let totalUnrealizedPnL = 0;
+    let totalInvestment = 0;
+    let winningTrades = 0;
+    let closedTrades = 0;
+    let activeStrategiesCount = 0;
+
+    // Time Range Filtering Logic
+    const now = Date.now();
+    let timeThreshold = 0; // 0 means 'ALL'
+    if (dashboardTimeRange === '1M') timeThreshold = now - 30 * 24 * 60 * 60 * 1000;
+    if (dashboardTimeRange === '3M') timeThreshold = now - 90 * 24 * 60 * 60 * 1000;
+    if (dashboardTimeRange === '6M') timeThreshold = now - 180 * 24 * 60 * 60 * 1000;
+    if (dashboardTimeRange === '1Y') timeThreshold = now - 365 * 24 * 60 * 60 * 1000;
+
+    if (positions && transactions) {
+        positions.forEach(pos => {
+            const metrics = getMetrics(pos);
+            const endDate = metrics.derivedEndDate || now;
+            
+            // Only count towards global metrics if it closed within the time range,
+            // or if it's currently open (active).
+            const isWithinRange = timeThreshold === 0 || (pos.status === 'CLOSED' ? endDate >= timeThreshold : true);
+
+            if (isWithinRange) {
+                totalRealizedPnL = add(totalRealizedPnL, metrics.realizedPnL);
+                totalUnrealizedPnL = add(totalUnrealizedPnL, metrics.unrealizedPnL);
+                totalInvestment = add(totalInvestment, metrics.totalInvestment);
+
+                if (pos.status === 'CLOSED') {
+                    closedTrades++;
+                    if (metrics.realizedPnL > 0) winningTrades++;
+                } else if (pos.status === 'OPEN') {
+                    activeStrategiesCount++;
+                }
+            }
+        });
+    }
+
+    const winRate = closedTrades > 0 ? (winningTrades / closedTrades) * 100 : 0;
+    const globalROI = totalInvestment > 0 ? mul(div(add(totalRealizedPnL, totalUnrealizedPnL), totalInvestment), 100) : 0;
+
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
@@ -74,25 +118,89 @@ export default function Positions() {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="hidden sm:flex gap-2">
-                            <Plus className="h-4 w-4" />
-                            New Position
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
-                        <DialogHeader>
-                            <DialogTitle>Create Position</DialogTitle>
-                            <DialogDescription>
-                                Group your trades under a strategy to view its performance.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <PositionForm onSuccess={() => setIsDialogOpen(false)} />
-                    </DialogContent>
-                </Dialog>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
+                        <Activity className="h-3 w-3 md:h-4 md:w-4" />
+                        <span>Filter: <strong className="text-foreground">{dashboardTimeRange === 'ALL' ? 'All Time' : dashboardTimeRange}</strong></span>
+                    </div>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="hidden sm:flex gap-2">
+                                <Plus className="h-4 w-4" />
+                                New Position
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
+                            <DialogHeader>
+                                <DialogTitle>Create Position</DialogTitle>
+                                <DialogDescription>
+                                    Group your trades under a strategy to view its performance.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <PositionForm onSuccess={() => setIsDialogOpen(false)} />
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
+            {/* Global Metrics Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <Card className="shadow-sm col-span-2 lg:col-span-1">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Realized PnL</CardTitle>
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            ${totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Unrealized PnL</CardTitle>
+                        <LineChart className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            ${totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Global ROI</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
+                            {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Win Rate</CardTitle>
+                        <Target className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{winRate.toFixed(1)}%</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm hidden md:block lg:block">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{activeStrategiesCount}</div>
+                    </CardContent>
+                </Card>
+            </div>
             {!positions?.length ? (
                 <Card className="border-dashed shadow-none mt-6">
                     <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
