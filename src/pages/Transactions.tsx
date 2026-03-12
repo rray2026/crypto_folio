@@ -161,7 +161,7 @@ export default function Transactions() {
                         </Select>
                     </div>
 
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="hidden sm:flex items-center gap-2 w-full sm:w-auto">
                         <Dialog 
                             open={isAddDialogOpen} 
                             onOpenChange={(open) => {
