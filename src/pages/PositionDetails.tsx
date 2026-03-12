@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -111,23 +111,38 @@ export default function PositionDetails() {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div className="flex-1 w-full min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                                <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">{position.strategyName || "Unnamed Position"}</h1>
-                                <div className="flex items-center gap-1 md:gap-2 shrink-0">
-                                    <Badge variant={positionType === 'LONG' ? 'default' : 'destructive'} className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">
+                                    {position.strategyName || `${position.symbol.split('/')[0]} Position`}
+                                </h1>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {/* Direction Badge */}
+                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold ${
+                                        positionType === 'LONG' 
+                                        ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                                        : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                    }`}>
+                                        {positionType === 'LONG' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {positionType}
-                                    </Badge>
-                                    <Badge variant={position.status === 'OPEN' ? 'secondary' : 'outline'} className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 whitespace-nowrap">
-                                        {position.status}
-                                    </Badge>
+                                    </div>
+                                    
+                                    {/* Status Badge */}
+                                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold border ${
+                                        position.status === 'OPEN'
+                                        ? 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400'
+                                        : 'bg-muted/50 text-muted-foreground border-border'
+                                    }`}>
+                                        <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
+                                        {position.status === 'OPEN' ? 'ACTIVE' : 'ARCHIVED'}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 md:mt-2">
-                                <p className="text-sm md:text-base text-muted-foreground font-mono font-medium">{position.symbol}</p>
+                            <div className="flex items-center gap-3 mt-1.5 md:mt-2.5">
+                                <span className="text-sm md:text-lg text-muted-foreground font-mono font-bold tracking-wider">{position.symbol}</span>
                                 {position.status === 'OPEN' && currentPrice > 0 && (
-                                    <Badge variant="secondary" className="font-mono font-normal text-xs md:text-sm">
+                                    <span className="text-primary font-mono font-medium text-sm md:text-lg animate-in fade-in slide-in-from-left-2">
                                         ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
-                                    </Badge>
+                                    </span>
                                 )}
                             </div>
                             <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3 text-xs md:text-sm text-muted-foreground font-mono">
