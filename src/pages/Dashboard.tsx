@@ -3,10 +3,6 @@ import { db } from "@/lib/db"
 import { mul, add, div } from "@/lib/math"
 import { Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Wallet, Activity, Target, TrendingUp, LineChart } from "lucide-react"
-import { useSettingsStore } from "@/store/useSettingsStore"
-import { getPositionMetrics } from "@/lib/metrics"
 import { useState } from "react"
 
 export default function Dashboard() {
@@ -204,69 +200,6 @@ export default function Dashboard() {
                         </p>
                     </CardContent>
                 </Card>
-            </div>
-
-            <div className="space-y-4">
-                <h2 className="text-xl font-semibold tracking-tight">Active Positions</h2>
-                {openPositions.length === 0 ? (
-                    <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50">
-                        No active positions. Create one from the Positions tab to track your trades.
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {openPositions.map(pos => {
-                            const metrics = openPositionMetrics.get(pos.id)!;
-                            return (
-                                <Link to={`/positions/${pos.id}`} key={pos.id} className="block transition-transform hover:-translate-y-1">
-                                    <Card className="h-full hover:border-primary/50 transition-colors">
-                                        <CardHeader className="pb-3">
-                                            <div className="flex justify-between items-start">
-                                                <CardTitle className="text-base font-bold truncate">
-                                                    {pos.strategyName}
-                                                </CardTitle>
-                                                <Badge variant={metrics.positionType === 'LONG' ? 'default' : 'destructive'} className="ml-2">{metrics.positionType}</Badge>
-                                            </div>
-                                            <p className="text-sm text-foreground/60 font-mono font-medium">{pos.symbol}</p>
-                                        </CardHeader>
-                                        <CardContent className="pt-2 mb-2">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs text-muted-foreground">Holdings</span>
-                                                    <span className="font-mono text-sm">{metrics.totalRemaining} <span className="text-muted-foreground text-xs">{pos.symbol.split('/')[0]}</span></span>
-                                                </div>
-                                                {metrics.currentPrice > 0 ? (
-                                                    <div className="flex flex-col text-right">
-                                                        <span className="text-xs text-muted-foreground">Price</span>
-                                                        <span className="font-mono text-sm">${metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col text-right">
-                                                        <span className="text-xs text-muted-foreground">Cost</span>
-                                                        <span className="font-mono text-sm">${metrics.totalInvestment.toFixed(2)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex justify-between items-center bg-muted/50 rounded p-2">
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs text-muted-foreground">Unrealized PnL</span>
-                                                    <span className={`font-mono font-bold text-sm ${metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                                        ${metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
-                                                    </span>
-                                                </div>
-                                                <div className="flex flex-col text-right">
-                                                    <span className="text-xs text-muted-foreground">ROI</span>
-                                                    <span className={`font-mono font-bold text-sm ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
-                                                        {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            )
-                        })}
-                    </div>
-                )}
             </div>
         </div>
     )

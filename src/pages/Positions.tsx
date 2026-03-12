@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Positions() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -93,7 +94,7 @@ export default function Positions() {
             </div>
 
             {!positions?.length ? (
-                <Card className="border-dashed shadow-none">
+                <Card className="border-dashed shadow-none mt-6">
                     <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
                         <p>No positions created yet.</p>
                         <Button variant="outline" onClick={() => setIsDialogOpen(true)} className="mt-4">
@@ -102,96 +103,137 @@ export default function Positions() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {positions.map(pos => ({ pos, metrics: getMetrics(pos) })).sort((a, b) => (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0)).map(({ pos, metrics }) => {
-                        const duration = differenceInDays(metrics.derivedEndDate || Date.now(), metrics.derivedStartDate || Date.now());
+                <Tabs defaultValue="active" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
+                        <TabsTrigger value="active">Active ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
+                        <TabsTrigger value="history">History ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
+                        <TabsTrigger value="all">All</TabsTrigger>
+                    </TabsList>
+
+                    {['active', 'history', 'all'].map(tab => {
+                        const filteredPositions = positions.filter(p => {
+                            if (tab === 'active') return p.status === 'OPEN';
+                            if (tab === 'history') return p.status === 'CLOSED';
+                            return true; // all
+                        });
 
                         return (
-                            <Link to={`/positions/${pos.id}`} key={pos.id} className="block transition-transform hover:-translate-y-1">
-                                <Card className="h-full flex flex-col relative group overflow-hidden bg-card/60 hover:bg-card/100 border-border/40 hover:border-border transition-colors">
-                                    <CardHeader className="pb-3">
-                                        <div className="flex justify-between items-start">
-                                            <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || "Unnamed Position"}>
-                                                {pos.strategyName || "Unnamed Position"}
-                                            </CardTitle>
-                                            <div className="flex items-center gap-1 ml-2">
-                                                <Badge variant={metrics.positionType === 'LONG' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 h-5">
-                                                    {metrics.positionType}
-                                                </Badge>
-                                                <Badge variant={pos.status === 'OPEN' ? 'secondary' : 'outline'} className="text-[10px] px-1.5 py-0 h-5 whitespace-nowrap">
-                                                    {pos.status}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <p className="text-sm text-foreground/60 font-mono font-medium">{pos.symbol}</p>
-                                            {pos.status === 'OPEN' && prices[pos.symbol] && (
-                                                <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0 h-4">
-                                                    ${parseFloat(prices[pos.symbol].price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground font-mono bg-background/50 rounded-md p-1.5 border border-border/50">
-                                            <div className="flex items-center gap-1" title="Start Date">
-                                                <Calendar className="h-3 w-3" />
-                                                {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : 'Unknown'}
-                                            </div>
-                                            <div className="flex items-center gap-1" title="Duration">
-                                                <Clock className="h-3 w-3" />
-                                                {duration} {duration === 1 ? 'day' : 'days'}
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="flex-1">
-                                        <div className="text-sm flex flex-col gap-2 text-muted-foreground mt-2">
-                                            <div className="flex justify-between">
-                                                <span>Investment</span>
-                                                <span className="font-mono text-foreground">${metrics.totalInvestment.toFixed(2)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Realized PnL</span>
-                                                <span className={`font-mono font-medium ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                                                    ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
-                                                </span>
-                                            </div>
-                                            {pos.status === 'OPEN' && metrics.totalRemaining > 0 && (
-                                                <div className="flex justify-between">
-                                                    <span>Unrealized PnL</span>
-                                                    <span className={`font-mono font-medium ${metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                                                        ${metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            <div className="flex justify-between font-semibold border-t border-border/50 pt-1 mt-1">
-                                                <span>Total Return</span>
-                                                <span className={`font-mono ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                                                    {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between mt-1 items-center">
-                                                <span>Holding</span>
-                                                <div className="text-right">
-                                                    <div className="font-mono text-foreground">{metrics.totalRemaining} {pos.symbol.split('/')[0]}</div>
-                                                    {pos.status === 'OPEN' && metrics.currentPrice > 0 && (
-                                                        <div className="text-[10px] text-muted-foreground font-mono">@ ${metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="pt-0 flex justify-between items-center opacity-80 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive z-10 -ml-2" onClick={(e) => handleDelete(pos.id, e)}>
-                                            <Trash2 className="h-4 w-4 mr-2" /> Delete
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="gap-1 text-primary">
-                                            Details <ArrowRight className="h-4 w-4" />
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            </Link>
-                        );
+                            <TabsContent value={tab} key={tab}>
+                                {filteredPositions.length === 0 ? (
+                                    <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50">
+                                        No {tab} positions found.
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                        {filteredPositions.map(pos => ({ pos, metrics: getMetrics(pos) }))
+                                            .sort((a, b) => (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0))
+                                            .map(({ pos, metrics }) => {
+                                                const duration = differenceInDays(metrics.derivedEndDate || Date.now(), metrics.derivedStartDate || Date.now());
+                                                const isActive = pos.status === 'OPEN';
+
+                                                return (
+                                                    <Link to={`/positions/${pos.id}`} key={pos.id} className="block transition-transform hover:-translate-y-1">
+                                                        <Card className="h-full flex flex-col relative group overflow-hidden bg-card/60 hover:bg-card/100 border-border/40 hover:border-border transition-colors">
+                                                            <CardHeader className="pb-3 border-b border-border/40">
+                                                                <div className="flex justify-between items-start mb-2">
+                                                                    <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || "Unnamed Position"}>
+                                                                        {pos.strategyName || "Unnamed Position"}
+                                                                    </CardTitle>
+                                                                    <div className="flex justify-end gap-1">
+                                                                        <Badge variant={metrics.positionType === 'LONG' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 h-5">
+                                                                            {metrics.positionType}
+                                                                        </Badge>
+                                                                        <Badge variant={isActive ? 'secondary' : 'outline'} className="text-[10px] px-1.5 py-0 h-5 whitespace-nowrap">
+                                                                            {pos.status}
+                                                                        </Badge>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <p className="text-sm text-foreground/80 font-mono font-medium">{pos.symbol}</p>
+                                                                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
+                                                                        <div className="flex items-center gap-1" title="Start Date">
+                                                                            <Calendar className="h-3 w-3" />
+                                                                            {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : 'Unknown'}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1" title="Duration">
+                                                                            <Clock className="h-3 w-3" />
+                                                                            {duration}d
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </CardHeader>
+                                                            <CardContent className="flex-1 pt-4 pb-2 space-y-4">
+                                                                {/* Holdings and Price / Cost */}
+                                                                <div className="flex justify-between items-center">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs text-muted-foreground mb-1">Holdings</span>
+                                                                        <span className="font-mono text-sm font-medium">
+                                                                            {metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{pos.symbol.split('/')[0]}</span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex flex-col text-right">
+                                                                        <span className="text-xs text-muted-foreground mb-1">{isActive && metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}</span>
+                                                                        <span className="font-mono text-sm font-medium">
+                                                                            ${isActive && metrics.currentPrice > 0 
+                                                                                ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
+                                                                                : (metrics.totalRemaining > 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Investment and Realized PnL */}
+                                                                <div className="flex justify-between items-center pt-3 border-t border-border/30">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs text-muted-foreground mb-1">Total Inv.</span>
+                                                                        <span className="font-mono text-sm">${metrics.totalInvestment.toFixed(2)}</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col text-right">
+                                                                        <span className="text-xs text-muted-foreground mb-1">Realized PnL</span>
+                                                                        <span className={`font-mono text-sm font-medium ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
+                                                                            ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Heavy Highlight: Unrealized PnL and ROI (Inspired by Dashboard) */}
+                                                                <div className={`mt-2 p-3 rounded-lg flex justify-between items-center ${isActive ? 'bg-muted/50 border border-border/50' : 'bg-transparent border-t border-border/30 pt-4 px-0'}`}>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">
+                                                                            {isActive ? 'Unrealized PnL' : 'Final PnL'}
+                                                                        </span>
+                                                                        <span className={`font-mono font-bold text-lg ${isActive ? (metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : '') : (metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : '')}`}>
+                                                                            ${isActive 
+                                                                                ? `${metrics.unrealizedPnL > 0 ? '+' : ''}${metrics.unrealizedPnL.toFixed(2)}`
+                                                                                : `${metrics.realizedPnL > 0 ? '+' : ''}${metrics.realizedPnL.toFixed(2)}`}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex flex-col text-right">
+                                                                        <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Total ROI</span>
+                                                                        <span className={`font-mono font-bold text-lg ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
+                                                                            {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </CardContent>
+                                                            
+                                                            <CardFooter className="pt-2 pb-3 px-4 flex justify-between items-center bg-muted/20 border-t border-border/10 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                                <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-destructive z-10 -ml-2" onClick={(e) => handleDelete(pos.id, e)}>
+                                                                    <Trash2 className="h-3 w-3 mr-1.5" /> Delete
+                                                                </Button>
+                                                                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-primary">
+                                                                    View Details <ArrowRight className="h-3 w-3" />
+                                                                </Button>
+                                                            </CardFooter>
+                                                        </Card>
+                                                    </Link>
+                                                );
+                                            })}
+                                    </div>
+                                )}
+                            </TabsContent>
+                        )
                     })}
-                </div>
+                </Tabs>
             )}
 
             {/* Mobile FAB */}
