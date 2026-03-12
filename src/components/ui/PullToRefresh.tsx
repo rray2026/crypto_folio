@@ -18,8 +18,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const isPulling = useRef(false);
   const hasVibrated = useRef(false);
   
-  const PULL_THRESHOLD = 65;
-  const MAX_PULL = 110;
+  const PULL_THRESHOLD = 50;
+  const MAX_PULL = 90;
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -31,7 +31,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
 
     const updateStyles = (y: number) => {
       const opacity = Math.min(y / PULL_THRESHOLD, 1);
-      const rotation = y * 5;
+      const rotation = y * 6;
       const isOverThreshold = y >= PULL_THRESHOLD;
       
       indicator.style.height = `${y}px`;
@@ -39,7 +39,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       content.style.transform = `translateY(${y}px)`;
       
       if (!isRefreshing) {
-        icon.style.transform = `rotate(${rotation}deg) scale(${isOverThreshold ? 1.2 : 1})`;
+        icon.style.transform = `rotate(${rotation}deg) scale(${isOverThreshold ? 1.25 : 1})`;
         icon.style.color = isOverThreshold ? 'var(--primary)' : 'currentColor';
       }
     };
@@ -64,9 +64,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       if (diff > 0) {
         if (e.cancelable) e.preventDefault();
         
-        // Slightly higher coefficient (0.6 instead of 0.4) for more movement per px dragged
-        const resistance = 0.6;
-        currentPull.current = Math.min(Math.pow(diff, 0.82) * resistance, MAX_PULL);
+        // Very direct response: 1.0 coeff and 0.9 power
+        const resistance = 1.0;
+        currentPull.current = Math.min(Math.pow(diff, 0.9) * resistance, MAX_PULL);
         
         // Haptic feedback when threshold is crossed
         if (currentPull.current >= PULL_THRESHOLD && !hasVibrated.current) {
