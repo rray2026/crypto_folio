@@ -321,8 +321,8 @@ export default function Positions() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Heavy Highlight: Unrealized PnL and ROI (Inspired by Dashboard) */}
-                                                                <div className={`mt-2 p-3 rounded-lg flex justify-between items-center ${isActive ? 'bg-muted/50 border border-border/50' : 'bg-transparent border-t border-border/30 pt-4 px-0'}`}>
+                                                                {/* Primary Metrics: Unrealized PnL and ROI (Cleaner, unboxed version) */}
+                                                                <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
                                                                     <div className="flex flex-col">
                                                                         <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">
                                                                             {isActive ? 'Unrealized PnL' : 'Final PnL'}
