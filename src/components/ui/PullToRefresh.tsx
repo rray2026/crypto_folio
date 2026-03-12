@@ -18,8 +18,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const isPulling = useRef(false);
   const hasVibrated = useRef(false);
   
-  const PULL_THRESHOLD = 80;
-  const MAX_PULL = 130;
+  const PULL_THRESHOLD = 65;
+  const MAX_PULL = 110;
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -64,10 +64,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       if (diff > 0) {
         if (e.cancelable) e.preventDefault();
         
-        // Logarithmic resistance for rubber-band feel: y = K * log(1 + x/R)
-        // Or a simpler power based resistance
-        const resistance = 0.4;
-        currentPull.current = Math.min(Math.pow(diff, 0.85) * resistance, MAX_PULL);
+        // Slightly higher coefficient (0.6 instead of 0.4) for more movement per px dragged
+        const resistance = 0.6;
+        currentPull.current = Math.min(Math.pow(diff, 0.82) * resistance, MAX_PULL);
         
         // Haptic feedback when threshold is crossed
         if (currentPull.current >= PULL_THRESHOLD && !hasVibrated.current) {
