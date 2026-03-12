@@ -143,64 +143,64 @@ export default function Positions() {
                 </div>
             </div>
 
-            {/* Global Metrics Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                <Card className="shadow-sm col-span-2 lg:col-span-1">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Realized PnL</CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                            ${totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
+            {/* Portfolio Summary Card */}
+            <Card className="mb-8 overflow-hidden border-none bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-2xl">
+                <CardContent className="p-0">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-border/20">
+                        <div className="p-4 flex flex-col items-center justify-center text-center">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Wallet className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
+                            </div>
+                            <div className={`text-xl md:text-2xl font-black font-mono tracking-tighter ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                ${totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
 
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Unrealized PnL</CardTitle>
-                        <LineChart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                            ${totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
+                        <div className="p-4 flex flex-col items-center justify-center text-center">
+                            <div className="flex items-center gap-2 mb-2">
+                                <LineChart className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
+                            </div>
+                            <div className={`text-xl md:text-2xl font-black font-mono tracking-tighter ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                ${totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
 
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Global ROI</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
-                            {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
+                        <div className="p-4 flex flex-col items-center justify-center text-center">
+                            <div className="flex items-center gap-2 mb-2">
+                                <TrendingUp className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Global ROI</span>
+                            </div>
+                            <div className={`text-xl md:text-2xl font-black font-mono tracking-tighter ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
+                                {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
 
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Win Rate</CardTitle>
-                        <Target className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{winRate.toFixed(1)}%</div>
-                    </CardContent>
-                </Card>
+                        <div className="p-4 flex flex-col items-center justify-center text-center">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Target className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Win Rate</span>
+                            </div>
+                            <div className="text-xl md:text-2xl font-black font-mono tracking-tighter">
+                                {winRate.toFixed(1)}%
+                            </div>
+                            <div className="text-[10px] text-muted-foreground mt-1 font-medium">{winningTrades}W / {closedTrades}C</div>
+                        </div>
 
-                <Card className="shadow-sm hidden md:block lg:block">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{activeStrategiesCount}</div>
-                    </CardContent>
-                </Card>
-            </div>
+                        <div className="p-4 flex flex-col items-center justify-center text-center col-span-2 lg:col-span-1 border-t lg:border-t-0">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Activity className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Active</span>
+                            </div>
+                            <div className="text-xl md:text-2xl font-black font-mono tracking-tighter">
+                                {activeStrategiesCount}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground mt-1 font-medium">Running Strategies</div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
             {!positions?.length ? (
                 <Card className="border-dashed shadow-none mt-6">
                     <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
