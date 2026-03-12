@@ -25,7 +25,7 @@ export const useSettingsStore = create<SettingsState>()(
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
-            pinnedPairs: [],
+            pinnedPairs: ['BTC/USDT'],
             setDashboardTimeRange: (range) => set({ dashboardTimeRange: range }),
             setTheme: (theme) => set({ theme }),
             addPair: (pair) => set((state) => ({
