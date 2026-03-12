@@ -6,7 +6,7 @@ import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -37,6 +37,7 @@ import { Card, CardContent } from "@/components/ui/card"
 
 export default function Transactions() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const [addMode, setAddMode] = useState<'choice' | 'manual'>('choice')
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
@@ -161,22 +162,63 @@ export default function Transactions() {
                     </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <ImportTransactionsButton />
-                        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                        <Dialog 
+                            open={isAddDialogOpen} 
+                            onOpenChange={(open) => {
+                                setIsAddDialogOpen(open);
+                                if (open) setAddMode('choice');
+                            }}
+                        >
                             <DialogTrigger asChild>
                                 <Button className="gap-2 shrink-0 h-9 rounded-lg shadow-sm">
                                     <Plus className="h-4 w-4" />
                                     Add
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
+                            <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6 overflow-hidden">
                                 <DialogHeader>
-                                    <DialogTitle>Record Transaction</DialogTitle>
-                                    <DialogDescription>
-                                        Enter the details of your spot trade. This will be available to link to positions.
-                                    </DialogDescription>
+                                    <DialogTitle>
+                                        {addMode === 'manual' ? 'Record Transaction' : 'Add Transaction'}
+                                    </DialogTitle>
+                                    {addMode === 'choice' && (
+                                        <DialogDescription>
+                                            Choose how you want to add your trade records.
+                                        </DialogDescription>
+                                    )}
                                 </DialogHeader>
-                                <TransactionForm onSuccess={() => setIsAddDialogOpen(false)} />
+                                
+                                {addMode === 'choice' ? (
+                                    <div className="grid grid-cols-1 gap-4 py-6">
+                                        <Button 
+                                            variant="outline" 
+                                            className="h-24 flex flex-col items-center justify-center gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                                            onClick={() => setAddMode('manual')}
+                                        >
+                                            <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                                <Keyboard className="h-6 w-6 text-primary" />
+                                            </div>
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-semibold">Manual Entry</span>
+                                                <span className="text-xs text-muted-foreground">Type trade details manually</span>
+                                            </div>
+                                        </Button>
+                                        
+                                        <ImportTransactionsButton 
+                                            className="h-24 flex flex-col items-center justify-center gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                                            variant="outline"
+                                        >
+                                            <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                                                <FileUp className="h-6 w-6 text-blue-500" />
+                                            </div>
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-semibold">Import from Binance</span>
+                                                <span className="text-xs text-muted-foreground">Upload exported Excel file</span>
+                                            </div>
+                                        </ImportTransactionsButton>
+                                    </div>
+                                ) : (
+                                    <TransactionForm onSuccess={() => setIsAddDialogOpen(false)} />
+                                )}
                             </DialogContent>
                         </Dialog>
                     </div>
@@ -392,21 +434,15 @@ export default function Transactions() {
                 </div>
             )}
 
-            {/* Mobile Fixed Action Buttons (bottom-right) */}
-            <div className="sm:hidden fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3">
-                <div className="bg-background/80 backdrop-blur-md rounded-full shadow-lg border border-border/50">
-                    <ImportTransactionsButton 
-                        variant="secondary" 
-                        size="icon" 
-                        className="h-12 w-12 rounded-full opacity-90 transition-opacity bg-transparent hover:bg-secondary/40"
-                        iconOnly={true}
-                    />
-                </div>
-                
+            {/* Mobile Fixed Action Button (bottom-right) */}
+            <div className="sm:hidden fixed bottom-20 right-4 z-40">
                 <Button 
                     size="icon" 
                     className="h-14 w-14 rounded-full shadow-lg opacity-90 backdrop-blur-md hover:opacity-100 transition-opacity border border-primary/20"
-                    onClick={() => setIsAddDialogOpen(true)}
+                    onClick={() => {
+                        setAddMode('choice');
+                        setIsAddDialogOpen(true);
+                    }}
                 >
                     <Plus className="h-6 w-6" />
                 </Button>

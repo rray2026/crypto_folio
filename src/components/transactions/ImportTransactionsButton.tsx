@@ -9,9 +9,10 @@ interface ImportTransactionsButtonProps {
     size?: "default" | "sm" | "lg" | "icon";
     className?: string;
     iconOnly?: boolean;
+    children?: React.ReactNode;
 }
 
-export function ImportTransactionsButton({ variant = "outline", size, className, iconOnly }: ImportTransactionsButtonProps) {
+export function ImportTransactionsButton({ variant = "outline", size, className, iconOnly, children }: ImportTransactionsButtonProps) {
     const [isImporting, setIsImporting] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const bulkAddTransactions = useTransactionStore(state => state.bulkAddTransactions)
@@ -123,8 +124,12 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                 disabled={isImporting}
                 title="Import Binance Excel"
             >
-                {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {!iconOnly && "Import Binance Excel"}
+                {children ? children : (
+                    <>
+                        {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {!iconOnly && "Import Binance Excel"}
+                    </>
+                )}
             </Button>
         </>
     )
