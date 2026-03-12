@@ -7,6 +7,7 @@ import { differenceInDays, format } from "date-fns"
 import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Dialog,
     DialogContent,
@@ -171,41 +172,60 @@ export default function PositionDetails() {
 
 
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
-                        <p className="text-sm text-muted-foreground mb-1">Realized PnL</p>
-                        <p className={`text-2xl font-bold ${realizedPnL > 0 ? 'text-green-500' : realizedPnL < 0 ? 'text-destructive' : ''}`}>
-                            ${realizedPnL > 0 ? '+' : ''}{realizedPnL.toFixed(2)}
-                        </p>
-                    </div>
-                    {position.status === 'OPEN' && totalRemaining > 0 && (
-                        <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
-                            <p className="text-sm text-muted-foreground mb-1">Unrealized PnL</p>
-                            <p className={`text-2xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                ${unrealizedPnL > 0 ? '+' : ''}{unrealizedPnL.toFixed(2)}
-                            </p>
+                <Card className="overflow-hidden border-border/50 shadow-sm">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
+                            {/* Realized PnL */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
+                                <span className={`text-base sm:text-xl font-bold ${realizedPnL > 0 ? 'text-green-500' : realizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                    ${realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                            </div>
+
+                            {/* Unrealized PnL */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
+                                <span className={`text-base sm:text-xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                    {totalRemaining > 0 ? `$${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                                </span>
+                            </div>
+
+                            {/* ROI */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Return (ROI)</span>
+                                <span className={`text-base sm:text-xl font-bold ${roi > 0 ? 'text-green-500' : roi < 0 ? 'text-destructive' : ''}`}>
+                                    {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
+                                </span>
+                            </div>
+
+                            {/* Avg Entry Price */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Entry</span>
+                                <span className="text-base sm:text-lg font-mono font-medium truncate">
+                                    ${(positionType === 'LONG' ? avgBuyPrice : avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                                </span>
+                            </div>
+
+                            {/* Current Price */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Current Price</span>
+                                <span className="text-base sm:text-lg font-mono font-medium truncate text-primary">
+                                    {currentPrice > 0 ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                </span>
+                            </div>
+
+                            {/* Current Holding */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
+                                <div className="flex items-baseline gap-1 truncate">
+                                    <span className="text-base sm:text-lg font-mono font-medium">{totalRemaining.toLocaleString()}</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase">{position.symbol.split('/')[0]}</span>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                    <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
-                        <p className="text-sm text-muted-foreground mb-1">Total Return (ROI)</p>
-                        <p className={`text-2xl font-bold ${roi > 0 ? 'text-green-500' : roi < 0 ? 'text-destructive' : ''}`}>
-                            {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
-                        </p>
-                    </div>
-                    <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
-                        <p className="text-sm text-muted-foreground mb-1">Avg. Entry Price</p>
-                        <p className="text-2xl font-mono">${(positionType === 'LONG' ? avgBuyPrice : avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
-                    </div>
-                    <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col justify-center">
-                        <p className="text-sm text-muted-foreground mb-1">Current Holding</p>
-                        <div className="flex flex-col">
-                            <p className="text-2xl font-mono">{totalRemaining} <span className="text-base text-muted-foreground ml-1">{position.symbol.split('/')[0]}</span></p>
-                            {position.status === 'OPEN' && currentPrice > 0 && (
-                                <p className="text-sm text-muted-foreground font-mono">@ ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
