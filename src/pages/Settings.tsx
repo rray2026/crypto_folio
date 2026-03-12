@@ -18,11 +18,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Trash2, Plus, RefreshCw, Clock, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin } from "lucide-react"
+import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin } from "lucide-react"
 import { exportData, importData } from "@/lib/backup"
 
 export default function Settings() {
-    const { predefinedPairs, pinnedPairs, prices, addPair, removePair, togglePinPair, fetchPrices, dashboardTimeRange, setDashboardTimeRange, theme, setTheme } = useSettingsStore()
+    const { predefinedPairs, pinnedPairs, prices, addPair, removePair, togglePinPair, fetchPrices, theme, setTheme } = useSettingsStore()
     const [newPair, setNewPair] = useState("")
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
@@ -194,34 +194,7 @@ export default function Settings() {
                 )}
             </div>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
-                            Dashboard Time Range
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Choose the historical lookback period for calculating metrics (ROI, PnL, Win Rate) on the global Dashboard.
-                        </p>
-                    </div>
-                </div>
 
-                <div className="max-w-[200px]">
-                    <Select value={dashboardTimeRange} onValueChange={(val: any) => setDashboardTimeRange(val)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="1M">Last 1 Month</SelectItem>
-                            <SelectItem value="3M">Last 3 Months</SelectItem>
-                            <SelectItem value="6M">Last 6 Months</SelectItem>
-                            <SelectItem value="1Y">Last 1 Year</SelectItem>
-                            <SelectItem value="ALL">All Time</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
 
             <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
                 <div className="flex items-center justify-between mb-4">

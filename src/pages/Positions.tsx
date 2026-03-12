@@ -13,6 +13,13 @@ import { getPositionMetrics } from "@/lib/metrics"
 
 import { Button } from "@/components/ui/button"
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -27,7 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 export default function Positions() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const deletePosition = usePositionStore((state) => state.deletePosition)
-    const { prices, fetchPrices, dashboardTimeRange } = useSettingsStore()
+    const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange } = useSettingsStore()
 
     const positions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
@@ -119,10 +126,21 @@ export default function Positions() {
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
-                        <Activity className="h-3 w-3 md:h-4 md:w-4" />
-                        <span>Filter: <strong className="text-foreground">{dashboardTimeRange === 'ALL' ? 'All Time' : dashboardTimeRange}</strong></span>
-                    </div>
+                    <Select value={dashboardTimeRange} onValueChange={(val: any) => setDashboardTimeRange(val)}>
+                        <SelectTrigger className="h-8 md:h-9 w-[130px] md:w-[150px] bg-muted/50 rounded-full border border-border/50 text-xs md:text-sm">
+                            <div className="flex items-center gap-2">
+                                <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+                                <SelectValue placeholder="Range" />
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="1M">Last 1 Month</SelectItem>
+                            <SelectItem value="3M">Last 3 Months</SelectItem>
+                            <SelectItem value="6M">Last 6 Months</SelectItem>
+                            <SelectItem value="1Y">Last 1 Year</SelectItem>
+                            <SelectItem value="ALL">All Time</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                             <Button className="hidden sm:flex gap-2">
