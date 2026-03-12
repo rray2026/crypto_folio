@@ -18,8 +18,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const isPulling = useRef(false);
   const hasVibrated = useRef(false);
   
-  const PULL_THRESHOLD = 50;
-  const MAX_PULL = 90;
+  const PULL_THRESHOLD = 54;
+  const MAX_PULL = 95;
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -64,9 +64,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       if (diff > 0) {
         if (e.cancelable) e.preventDefault();
         
-        // Very direct response: 1.0 coeff and 0.9 power
-        const resistance = 1.0;
-        currentPull.current = Math.min(Math.pow(diff, 0.9) * resistance, MAX_PULL);
+        // Balanced resistance: 0.7 coeff and 0.85 power for more "weight"
+        const resistance = 0.7;
+        currentPull.current = Math.min(Math.pow(diff, 0.85) * resistance, MAX_PULL);
         
         // Haptic feedback when threshold is crossed
         if (currentPull.current >= PULL_THRESHOLD && !hasVibrated.current) {
