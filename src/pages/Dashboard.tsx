@@ -40,27 +40,23 @@ export default function Dashboard() {
             </div>
 
             {useSettingsStore.getState().pinnedPairs?.length > 0 && (
-                <div className="w-full relative">
-                    <div className="w-full overflow-x-auto pb-4 hide-scrollbar">
-                        <div className="flex gap-4 px-1 w-max">
-                            {useSettingsStore.getState().pinnedPairs.map(pair => {
-                                const priceData = prices[pair];
-                                const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
-                                
-                                return (
-                                    <div key={pair} className="flex flex-col min-w-[140px] md:min-w-[160px] p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider group-hover:text-primary transition-colors">{pair}</span>
-                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                                        </div>
-                                        <div className="text-xl font-bold font-mono tracking-tight text-foreground">
-                                            {priceDisplay}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
+                <div className="flex flex-col gap-3">
+                    {useSettingsStore.getState().pinnedPairs.map(pair => {
+                        const priceData = prices[pair];
+                        const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
+                        
+                        return (
+                            <div key={pair} className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
+                                </div>
+                                <div className="text-lg font-bold font-mono tracking-tight text-foreground">
+                                    {priceDisplay}
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
             )}
         </div>
