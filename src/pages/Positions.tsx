@@ -7,7 +7,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { PositionForm } from "@/components/positions/PositionForm"
 
-import { Plus, Trash2, ArrowRight, Calendar, Clock, Wallet, Activity, Target, TrendingUp, LineChart } from "lucide-react"
+import { Plus, Trash2, ArrowRight, Calendar, Clock, Wallet, Activity, Target, TrendingUp, TrendingDown, LineChart, Circle } from "lucide-react"
 import { differenceInDays, format } from "date-fns"
 import { getPositionMetrics } from "@/lib/metrics"
 
@@ -251,16 +251,28 @@ export default function Positions() {
                                                         <Card className="h-full flex flex-col relative group overflow-hidden bg-card/60 hover:bg-card/100 border-border/40 hover:border-border transition-colors">
                                                             <CardHeader className="pb-3 border-b border-border/40">
                                                                 <div className="flex justify-between items-start mb-2">
-                                                                    <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || "Unnamed Position"}>
-                                                                        {pos.strategyName || "Unnamed Position"}
+                                                                    <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || `${pos.symbol.split('/')[0]} Position`}>
+                                                                        {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
                                                                     </CardTitle>
-                                                                    <div className="flex justify-end gap-1">
-                                                                        <Badge variant={metrics.positionType === 'LONG' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 h-5">
+                                                                    <div className="flex justify-end gap-1.5 shrink-0">
+                                                                        {/* Direction Badge */}
+                                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                                            metrics.positionType === 'LONG' 
+                                                                            ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                                                                            : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                                        }`}>
+                                                                            {metrics.positionType === 'LONG' ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                                             {metrics.positionType}
-                                                                        </Badge>
-                                                                        <Badge variant={isActive ? 'secondary' : 'outline'} className="text-[10px] px-1.5 py-0 h-5 whitespace-nowrap">
-                                                                            {pos.status}
-                                                                        </Badge>
+                                                                        </div>
+                                                                        {/* Status Badge */}
+                                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                                                            isActive
+                                                                            ? 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400'
+                                                                            : 'bg-muted/50 text-muted-foreground border-border'
+                                                                        }`}>
+                                                                            <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
+                                                                            {isActive ? 'ACTIVE' : 'ARCHIVED'}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center justify-between">
