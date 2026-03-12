@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 
 interface PullToRefreshProps {
@@ -7,104 +7,128 @@ interface PullToRefreshProps {
 }
 
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
-  const [pullProgress, setPullProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isPulling, setIsPulling] = useState(false);
-  const startY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
+  const pullIndicatorRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const iconRef = useRef<SVGSVGElement>(null);
+  
+  const startY = useRef(0);
+  const currentPull = useRef(0);
+  const isPulling = useRef(false);
+  
   const PULL_THRESHOLD = 80;
+  const RESISTANCE = 2.5;
 
   useEffect(() => {
+    const container = scrollContainerRef.current;
+    const indicator = pullIndicatorRef.current;
+    const content = contentRef.current;
+    const icon = iconRef.current;
+
+    if (!container || !indicator || !content || !icon) return;
+
+    const updateStyles = (y: number) => {
+      const opacity = Math.min(y / PULL_THRESHOLD, 1);
+      const rotation = y * 4;
+      
+      indicator.style.height = `${y}px`;
+      indicator.style.opacity = `${opacity}`;
+      content.style.transform = `translateY(${y}px)`;
+      
+      if (!isRefreshing) {
+        icon.style.transform = `rotate(${rotation}deg)`;
+      }
+    };
+
     const handleTouchStart = (e: TouchEvent) => {
-      // Only allow pull if we are at the top of the scroll container
-      if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0) {
+      if (container.scrollTop === 0 && !isRefreshing) {
         startY.current = e.touches[0].pageY;
-        setIsPulling(true);
+        isPulling.current = true;
+        
+        // Remove transitions during manual pull
+        indicator.style.transition = 'none';
+        content.style.transition = 'none';
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling || isRefreshing) return;
+      if (!isPulling.current || isRefreshing) return;
 
-      const currentY = e.touches[0].pageY;
-      const diff = currentY - startY.current;
+      const diff = e.touches[0].pageY - startY.current;
 
       if (diff > 0) {
-        // Prevent default scroll behavior when pulling down at the top
         if (e.cancelable) e.preventDefault();
         
-        // Resistance factor
-        const progress = Math.min(diff / 2.5, PULL_THRESHOLD + 20);
-        setPullProgress(progress);
+        // Apply resistance and limit maximum pull
+        currentPull.current = Math.min(diff / RESISTANCE, PULL_THRESHOLD + 30);
+        
+        // Use RequestAnimationFrame for smooth updates
+        requestAnimationFrame(() => updateStyles(currentPull.current));
       } else {
-        setIsPulling(false);
-        setPullProgress(0);
+        isPulling.current = false;
+        currentPull.current = 0;
+        requestAnimationFrame(() => updateStyles(0));
       }
     };
 
     const handleTouchEnd = async () => {
-      if (!isPulling || isRefreshing) return;
+      if (!isPulling.current || isRefreshing) return;
+      isPulling.current = false;
 
-      if (pullProgress >= PULL_THRESHOLD) {
+      // Add smooth transitions for snapping back or showing refresh state
+      indicator.style.transition = 'all 0.3s cubic-bezier(0.2, 0, 0, 1)';
+      content.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
+
+      if (currentPull.current >= PULL_THRESHOLD) {
         setIsRefreshing(true);
-        setPullProgress(PULL_THRESHOLD);
+        currentPull.current = PULL_THRESHOLD;
+        updateStyles(PULL_THRESHOLD);
         
         try {
           await onRefresh();
         } finally {
           setIsRefreshing(false);
-          setPullProgress(0);
-          setIsPulling(false);
+          currentPull.current = 0;
+          updateStyles(0);
         }
       } else {
-        setPullProgress(0);
-        setIsPulling(false);
+        currentPull.current = 0;
+        updateStyles(0);
       }
     };
 
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('touchstart', handleTouchStart, { passive: false });
-      container.addEventListener('touchmove', handleTouchMove, { passive: false });
-      container.addEventListener('touchend', handleTouchEnd);
-    }
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      if (container) {
-        container.removeEventListener('touchstart', handleTouchStart);
-        container.removeEventListener('touchmove', handleTouchMove);
-        container.removeEventListener('touchend', handleTouchEnd);
-      }
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isPulling, isRefreshing, pullProgress, onRefresh]);
+  }, [onRefresh, isRefreshing]);
 
   return (
     <div 
       ref={scrollContainerRef}
-      className="relative h-full overflow-y-auto"
+      className="relative h-full overflow-y-auto overscroll-none"
     >
       <div 
-        className="absolute left-0 right-0 flex justify-center overflow-hidden transition-all duration-200 pointer-events-none"
-        style={{ 
-          height: `${pullProgress}px`,
-          opacity: pullProgress / PULL_THRESHOLD,
-          top: 0,
-          zIndex: 50
-        }}
+        ref={pullIndicatorRef}
+        className="absolute left-0 right-0 flex justify-center overflow-hidden pointer-events-none z-50 h-0 opacity-0"
+        style={{ top: 0 }}
       >
         <div className="flex items-center justify-center p-4">
           <RefreshCw 
-            className={`w-6 h-6 text-primary transition-transform ${isRefreshing ? 'animate-spin' : ''}`}
-            style={{ 
-              transform: isRefreshing ? undefined : `rotate(${pullProgress * 4}deg)` 
-            }}
+            ref={iconRef}
+            className={`w-6 h-6 text-primary ${isRefreshing ? 'animate-spin' : ''}`}
           />
         </div>
       </div>
       <div 
-        className="transition-transform duration-200"
-        style={{ transform: `translateY(${pullProgress}px)` }}
+        ref={contentRef}
+        className="will-change-transform"
       >
         {children}
       </div>
