@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, BookOpen, Activity, Calculator, Layout, ShieldCheck, TrendingUp, Info } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, Layout, ShieldCheck, TrendingUp, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 

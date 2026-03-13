@@ -19,7 +19,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin } from "lucide-react"
+import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin, ArrowLeft } from "lucide-react"
 import { exportData, importData } from "@/lib/backup"
 import { version } from "../../package.json"
 
