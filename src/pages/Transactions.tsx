@@ -8,6 +8,7 @@ import { ImportTransactionsButton } from "@/components/transactions/ImportTransa
 import { format } from "date-fns"
 import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
+import { getPositionMetrics } from "@/lib/metrics"
 import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
@@ -55,6 +56,7 @@ export default function Transactions() {
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
     const createPosition = usePositionStore((state) => state.createPosition)
     const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
+    const { prices, fetchPrices } = useSettingsStore()
 
     // Reactively fetch all transactions
     const allTransactions = useLiveQuery(
@@ -143,8 +145,11 @@ export default function Transactions() {
         }
 
         const symbol = Array.from(symbols)[0]
-        setNewPositionName(`${symbol} Position`)
+        setNewPositionName("")
         setIsCreatePositionDialogOpen(true)
+        
+        // Ensure price is fresh for the preview
+        fetchPrices([symbol])
     }
 
     const executeCreatePosition = async () => {
@@ -478,10 +483,61 @@ export default function Transactions() {
                     <DialogHeader>
                         <DialogTitle>Create New Position</DialogTitle>
                         <DialogDescription>
-                            Create a managed position for the {selectedIds.size} selected trades.
+                            Review the performance of the {selectedIds.size} selected trades before creating.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    
+                    {/* Performance Preview */}
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                        {(() => {
+                            const selectedTxs = allTransactions?.filter(tx => selectedIds.has(tx.id)) || []
+                            if (selectedTxs.length === 0) return null
+                            
+                            const symbol = selectedTxs[0].symbol
+                            const virtualPos = {
+                                symbol,
+                                status: 'OPEN' as const,
+                                entries: selectedTxs.map(tx => ({ transactionId: tx.id, allocatedAmount: tx.quantity })),
+                                id: 'preview',
+                                startDate: Math.min(...selectedTxs.map(tx => tx.date))
+                            }
+                            
+                            const metrics = getPositionMetrics(virtualPos, selectedTxs, prices)
+                            
+                            return (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-muted-foreground uppercase font-bold tracking-widest">Asset</span>
+                                        <span className="font-mono font-bold text-primary">{symbol}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/30">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">Avg Entry</span>
+                                            <span className="text-sm font-mono font-bold">${(metrics.positionType === 'LONG' ? metrics.avgBuyPrice : metrics.avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Qty</span>
+                                            <span className="text-sm font-mono font-bold text-right">{metrics.totalRemaining.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">PnL (Est.)</span>
+                                            <span className={`text-sm font-mono font-bold ${metrics.totalPnL > 0 ? 'text-green-500' : metrics.totalPnL < 0 ? 'text-red-500' : ''}`}>
+                                                ${metrics.totalPnL > 0 ? '+' : ''}{metrics.totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">ROI</span>
+                                            <span className={`text-sm font-mono font-bold text-right ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-red-500' : ''}`}>
+                                                {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })()}
+                    </div>
+
+                    <div className="space-y-4 py-2">
                         <div className="space-y-2">
                             <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Name / Strategy</Label>
                             <Input 
@@ -489,20 +545,25 @@ export default function Transactions() {
                                 value={newPositionName} 
                                 onChange={(e) => setNewPositionName(e.target.value)}
                                 className="rounded-xl border-border/50 h-11 font-bold"
-                                placeholder="e.g. BTC Long Strategy"
+                                placeholder="Enter strategy name (e.g. Swing Trade)"
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl">
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11 flex-1">
                             Cancel
                         </Button>
-                        <Button onClick={executeCreatePosition} className="rounded-xl font-bold">
+                        <Button 
+                            onClick={executeCreatePosition} 
+                            disabled={!newPositionName.trim()}
+                            className="rounded-xl font-bold h-11 flex-[2]"
+                        >
                             Create Position
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
+
 
 
             {selectedIds.size > 0 && (
