@@ -556,7 +556,6 @@ export default function Transactions() {
                         </Button>
                         <Button 
                             onClick={executeCreatePosition} 
-                            disabled={!newPositionName.trim()}
                             className="rounded-xl font-bold h-11 flex-[2]"
                         >
                             Create Position
