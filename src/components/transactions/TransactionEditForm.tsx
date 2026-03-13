@@ -1,20 +1,18 @@
 import { useState } from "react"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { useSettingsStore } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, Lock } from "lucide-react"
+import { Lock } from "lucide-react"
+import { DateTimePicker } from "@/components/ui/DateTimePicker"
 import type { Transaction } from "@/lib/types"
 
 export function TransactionEditForm({ transaction, onSuccess }: { transaction: Transaction, onSuccess: () => void }) {
     const updateTransaction = useTransactionStore((state) => state.updateTransaction)
-    const predefinedPairs = useSettingsStore((state) => state.predefinedPairs)
 
     // Initial State using existing transaction data
-    const [symbol, setSymbol] = useState(transaction.symbol)
-    const [type, setType] = useState<"BUY" | "SELL">(transaction.type)
+    const symbol = transaction.symbol
+    const type = transaction.type
     const [price, setPrice] = useState(transaction.price.toString())
     const [quantity, setQuantity] = useState(transaction.quantity.toString())
     const [amount, setAmount] = useState(transaction.amount.toString())
@@ -98,17 +96,9 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
                 </div>
                 <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
-                    <div className="relative">
-                        <Input 
-                            type="datetime-local" 
-                            value={date} 
-                            onChange={e => setDate(e.target.value)} 
-                            className="rounded-xl border-border/50 h-11 font-mono text-xs pl-9"
-                            required 
-                        />
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
+                    <DateTimePicker value={date} onChange={setDate} />
                 </div>
+
             </div>
 
             <div className="space-y-4 pt-1">

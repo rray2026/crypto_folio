@@ -1,15 +1,13 @@
 import { useState } from "react"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { useSettingsStore } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, Sparkles } from "lucide-react"
+import { SymbolSelector } from "./SymbolSelector"
+import { DateTimePicker } from "@/components/ui/DateTimePicker"
 
 export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const addTransaction = useTransactionStore((state) => state.addTransaction)
-    const predefinedPairs = useSettingsStore((state) => state.predefinedPairs)
     const [symbol, setSymbol] = useState("")
     const [type, setType] = useState<"BUY" | "SELL">("BUY")
     const [price, setPrice] = useState("")
@@ -18,8 +16,6 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const [fee, setFee] = useState("0")
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16))
 
-    // Common assets for quick access
-    const commonAssets = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"]
 
     // Handlers for dynamic math
     const handlePriceChange = (val: string) => {
@@ -62,38 +58,8 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Trading Pair</Label>
-                    <span className="text-[10px] text-primary flex items-center gap-1 font-medium">
-                        <Sparkles className="h-3 w-3" /> Auto-uppercase
-                    </span>
-                </div>
-                <Input
-                    placeholder="e.g. BTC/USDT"
-                    value={symbol}
-                    onChange={e => setSymbol(e.target.value.toUpperCase())}
-                    className="rounded-xl border-border/50 h-11 text-base font-bold tracking-tight"
-                    required
-                />
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {commonAssets.map(asset => (
-                        <button
-                            key={asset}
-                            type="button"
-                            onClick={() => setSymbol(asset)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${
-                                symbol === asset 
-                                ? "bg-primary text-primary-foreground border-primary" 
-                                : "bg-muted/30 text-muted-foreground border-border/50 hover:border-primary/50 hover:bg-muted/50"
-                            }`}
-                        >
-                            {asset.split('/')[0]}
-                        </button>
-                    ))}
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-muted/10 text-muted-foreground/40 border-dashed border-border/50">
-                        Others
-                    </span>
-                </div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Trading Pair</Label>
+                <SymbolSelector value={symbol} onChange={setSymbol} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -121,19 +87,11 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Time</Label>
-                    <div className="relative">
-                        <Input 
-                            type="datetime-local" 
-                            value={date} 
-                            onChange={e => setDate(e.target.value)} 
-                            className="rounded-xl border-border/50 h-11 font-mono text-xs pl-9"
-                            required 
-                        />
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
+                    <DateTimePicker value={date} onChange={setDate} />
                 </div>
             </div>
+
 
             <div className="space-y-4 pt-1">
                 <div className="grid grid-cols-2 gap-4">
