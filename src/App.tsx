@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard"
 import Transactions from "./pages/Transactions"
 import Positions from "./pages/Positions"
 import PositionDetails from "./pages/PositionDetails"
+import TransactionDetails from "./pages/TransactionDetails"
 import Settings from "./pages/Settings"
 import { useEffect } from "react"
 import { useSettingsStore } from "./store/useSettingsStore"
@@ -32,6 +33,7 @@ function App() {
           <Route path="/positions" element={<Positions />} />
           <Route path="/positions/:id" element={<PositionDetails />} />
           <Route path="/transactions" element={<Transactions />} />
+          <Route path="/transactions/:id" element={<TransactionDetails />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>

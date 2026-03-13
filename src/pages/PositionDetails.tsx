@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -269,6 +269,9 @@ export default function PositionDetails() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-0.5 md:gap-1 shrink-0 ml-2">
+                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
                                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                                         <DialogTrigger asChild>
                                                             <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
@@ -339,6 +342,9 @@ export default function PositionDetails() {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-1">
+                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                                        <Eye className="h-3.5 w-3.5" />
+                                                    </Button>
                                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                                         <DialogTrigger asChild>
                                                             <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">

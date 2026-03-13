@@ -6,7 +6,8 @@ import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -35,6 +36,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function Transactions() {
+    const navigate = useNavigate()
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [addMode, setAddMode] = useState<'choice' | 'manual'>('choice')
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
@@ -258,6 +260,9 @@ export default function Transactions() {
                                     </div>
                                 </div>
                                 <div className="flex gap-1 -mr-2 -mt-1.5">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                         <DialogTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
@@ -368,6 +373,9 @@ export default function Transactions() {
                                         <TableCell className="text-right font-mono text-muted-foreground">${tx.fee.toLocaleString()}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all justify-end -mr-2">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
                                                 <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                                     <DialogTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
