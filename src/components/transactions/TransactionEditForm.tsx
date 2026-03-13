@@ -78,28 +78,27 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
                 />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
-                    <div className="flex p-1 bg-muted/20 rounded-xl border border-border/30 h-11 opacity-70">
-                        <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
-                            type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/40"
-                        }`}>
-                            BUY
-                        </div>
-                        <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
-                            type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/40"
-                        }`}>
-                            SELL
-                        </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
+                <div className="flex p-1 bg-muted/20 rounded-xl border border-border/30 h-11 opacity-70">
+                    <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
+                        type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/40"
+                    }`}>
+                        BUY
+                    </div>
+                    <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
+                        type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/40"
+                    }`}>
+                        SELL
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
-                    <DateTimePicker value={date} onChange={setDate} />
-                </div>
-
             </div>
+
+            <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
+                <DateTimePicker value={date} onChange={setDate} />
+            </div>
+
 
             <div className="space-y-4 pt-1">
                 <div className="grid grid-cols-2 gap-4">

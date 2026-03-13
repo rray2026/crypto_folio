@@ -62,35 +62,35 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                 <SymbolSelector value={symbol} onChange={setSymbol} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
-                    <div className="flex p-1 bg-muted/30 rounded-xl border border-border/50 h-11">
-                        <button
-                            type="button"
-                            onClick={() => setType("BUY")}
-                            className={`flex-1 rounded-lg text-xs font-black transition-all ${
-                                type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
-                            }`}
-                        >
-                            BUY
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setType("SELL")}
-                            className={`flex-1 rounded-lg text-xs font-black transition-all ${
-                                type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
-                            }`}
-                        >
-                            SELL
-                        </button>
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
-                    <DateTimePicker value={date} onChange={setDate} />
+            <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
+                <div className="flex p-1 bg-muted/30 rounded-xl border border-border/50 h-11">
+                    <button
+                        type="button"
+                        onClick={() => setType("BUY")}
+                        className={`flex-1 rounded-lg text-xs font-black transition-all ${
+                            type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
+                        }`}
+                    >
+                        BUY
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setType("SELL")}
+                        className={`flex-1 rounded-lg text-xs font-black transition-all ${
+                            type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
+                        }`}
+                    >
+                        SELL
+                    </button>
                 </div>
             </div>
+
+            <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
+                <DateTimePicker value={date} onChange={setDate} />
+            </div>
+
 
 
             <div className="space-y-4 pt-1">
