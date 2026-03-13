@@ -8,6 +8,7 @@ import { ImportTransactionsButton } from "@/components/transactions/ImportTransa
 import { format } from "date-fns"
 import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
+import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
 import { useNavigate } from "react-router-dom"
 
