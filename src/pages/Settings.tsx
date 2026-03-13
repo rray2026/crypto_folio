@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { Link } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
@@ -282,43 +283,21 @@ export default function Settings() {
                 </DialogContent>
             </Dialog>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
-                <div className="flex items-center justify-between mb-4">
+            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8 group hover:border-primary/30 transition-all">
+                <Link to="/glossary" className="flex items-center justify-between group">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-muted-foreground" />
+                            <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                             Investment Glossary
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">
                             Common terminology and formulas used throughout this application.
                         </p>
                     </div>
-                </div>
-
-                <div className="space-y-4 mt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-muted/30 rounded-lg border">
-                            <h3 className="font-semibold text-sm">Realized PnL (Profit and Loss)</h3>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">The actual profit or loss generated after closing a portion of or an entire position (e.g., selling previously bought assets, or buying back shorted assets). It excludes transaction fees.</p>
-                        </div>
-                        <div className="p-4 bg-muted/30 rounded-lg border">
-                            <h3 className="font-semibold text-sm">Unrealized PnL</h3>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">The theoretical profit or loss of a currently open position based on the live market price. It becomes "Realized" only when you actively close the position.</p>
-                        </div>
-                        <div className="p-4 bg-muted/30 rounded-lg border">
-                            <h3 className="font-semibold text-sm">ROI (Return on Investment)</h3>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Calculated as: <code className="bg-background px-1 py-0.5 rounded text-[10px] ml-1 border border-border/50">(Total Profit / Total Investment) × 100%</code>. It comprehensively measures the efficiency and profitability of your trades relative to the capital deployed.</p>
-                        </div>
-                        <div className="p-4 bg-muted/30 rounded-lg border">
-                            <h3 className="font-semibold text-sm">Long vs. Short</h3>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed"><strong className="text-foreground">Long</strong>: Buying an asset expecting its price to rise. <br /><strong className="text-foreground">Short</strong>: Selling an asset expecting its price to fall, aiming to buy it back cheaper later.</p>
-                        </div>
-                        <div className="p-4 bg-muted/30 rounded-lg border md:col-span-2">
-                            <h3 className="font-semibold text-sm">Average Entry Price</h3>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">The volume-weighted average cost of all your initial build-up transactions (Buys for Long, Sells for Short) for a specific strategy. Used as the mathematical baseline for calculating Unrealized and Realized PnL.</p>
-                        </div>
-                    </div>
-                </div>
+                    <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform">
+                        <ArrowLeft className="h-5 w-5 rotate-180" />
+                    </Button>
+                </Link>
             </div>
 
             <div className="pt-8 pb-4 text-center">
