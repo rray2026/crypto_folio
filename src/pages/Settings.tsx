@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin } from "lucide-react"
 import { exportData, importData } from "@/lib/backup"
+import { version } from "../../package.json"
 
 export default function Settings() {
     const { predefinedPairs, pinnedPairs, prices, addPair, removePair, togglePinPair, fetchPrices, theme, setTheme } = useSettingsStore()
@@ -318,6 +319,12 @@ export default function Settings() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="pt-8 pb-4 text-center">
+                <p className="text-[10px] md:text-xs text-muted-foreground/40 font-mono tracking-widest uppercase">
+                    CryptoFolio Build v{version}
+                </p>
             </div>
         </div>
     )
