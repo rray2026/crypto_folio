@@ -32,7 +32,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function Transactions() {
@@ -241,24 +240,28 @@ export default function Transactions() {
                         <div 
                             key={tx.id} 
                             onClick={() => toggleSelection(tx.id)}
-                            className={`p-2.5 sm:p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+                            className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
                                 selectedIds.has(tx.id) 
-                                ? 'bg-primary/10 border-primary ring-1 ring-primary/20 shadow-sm' 
-                                : 'bg-card border-border hover:border-primary/30 shadow-sm'
+                                ? 'bg-primary/10 border-primary shadow-sm' 
+                                : 'bg-background/40 border-border hover:border-primary/40 hover:bg-background/60 shadow-sm'
                             }`}
                         >
-                            <div className="flex justify-between items-start mb-1.5">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="font-bold text-base leading-none">{tx.symbol}</span>
-                                    <Badge variant={tx.type === "BUY" ? "default" : "destructive"} className="text-[9px] h-4 px-1 py-0 uppercase tracking-widest leading-none">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-lg tracking-tight">{tx.symbol}</span>
+                                    <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                        tx.type === "BUY" 
+                                        ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                                        : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                    }`}>
                                         {tx.type}
-                                    </Badge>
+                                    </div>
                                 </div>
-                                <div className="flex gap-0 -mr-2 -mt-2">
+                                <div className="flex gap-1 -mr-2 -mt-1.5">
                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                         <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
-                                                <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
+                                                <Edit className="h-4 w-4" />
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
@@ -268,33 +271,36 @@ export default function Transactions() {
                                             <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
                                         </DialogContent>
                                     </Dialog>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => confirmSingleDelete(tx.id, e)}>
-                                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors" onClick={(e) => confirmSingleDelete(tx.id, e)}>
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </div>
                             
-                            <div className="grid grid-cols-4 gap-x-2 text-xs items-center">
-                                <span className="text-muted-foreground">Price</span>
-                                <span className="font-mono text-right col-span-3 font-medium">${tx.price.toLocaleString()}</span>
-                                
-                                <span className="text-muted-foreground">Qty</span>
-                                <span className="font-mono text-right col-span-3 font-medium">{tx.quantity.toLocaleString()}</span>
-                                
-                                <span className="text-muted-foreground">Total</span>
-                                <span className="font-mono text-right col-span-3 font-medium">${tx.amount.toLocaleString()}</span>
-                                
+                            <div className="grid grid-cols-2 gap-y-2.5 text-xs">
+                                <div className="flex justify-between items-center pr-4">
+                                    <span className="text-muted-foreground font-medium">Price</span>
+                                    <span className="font-mono font-bold">${tx.price.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">Qty</span>
+                                    <span className="font-mono font-bold">{tx.quantity.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center pr-4">
+                                    <span className="text-muted-foreground font-medium">Value</span>
+                                    <span className="font-mono font-black text-primary/90">${tx.amount.toLocaleString()}</span>
+                                </div>
                                 {tx.fee > 0 && (
-                                    <>
-                                        <span className="text-muted-foreground">Fee</span>
-                                        <span className="font-mono text-right col-span-3">${tx.fee.toLocaleString()}</span>
-                                    </>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground font-medium">Fee</span>
+                                        <span className="font-mono text-muted-foreground font-bold">${tx.fee.toLocaleString()}</span>
+                                    </div>
                                 )}
                             </div>
                             
-                            <div className="mt-1.5 pt-1.5 border-t flex justify-end">
-                                <span className="text-[10px] text-muted-foreground font-mono">
-                                    {format(new Date(tx.date), "yy/MM/dd HH:mm")}
+                            <div className="mt-3 pt-2.5 border-t border-border/20 flex justify-end">
+                                <span className="text-[10px] text-muted-foreground/60 font-mono tracking-tighter">
+                                    {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
                                 </span>
                             </div>
                         </div>
@@ -334,30 +340,38 @@ export default function Transactions() {
                                 transactions.map((tx) => (
                                     <TableRow 
                                         key={tx.id} 
-                                        className={`group cursor-pointer transition-all duration-200 border-l-[4px] ${selectedIds.has(tx.id) ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20 border-l-primary' : 'border-l-transparent hover:border-l-primary/30'}`} 
+                                        className={`group cursor-pointer transition-all duration-200 border-l-[4px] relative ${
+                                            selectedIds.has(tx.id) 
+                                            ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20 border-l-primary' 
+                                            : 'border-l-transparent hover:border-l-primary/30 hover:bg-muted/30'
+                                        }`} 
                                         onClick={() => toggleSelection(tx.id)}
                                     >
-                                        <TableCell className="font-bold pl-6">
+                                        <TableCell className="font-bold pl-6 text-base tracking-tight">
                                             {tx.symbol}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground whitespace-nowrap">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}
+                                        <TableCell className="text-muted-foreground whitespace-nowrap text-xs font-mono">
+                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={tx.type === "BUY" ? "default" : "destructive"}>
+                                            <div className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                tx.type === "BUY" 
+                                                ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                                                : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                            }`}>
                                                 {tx.type}
-                                            </Badge>
+                                            </div>
                                         </TableCell>
-                                        <TableCell className="text-right font-mono">${tx.price.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono">{tx.quantity.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono font-bold">${tx.amount.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono">${tx.fee.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-medium">${tx.price.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-medium">{tx.quantity.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-black text-primary/90">${tx.amount.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-muted-foreground">${tx.fee.toLocaleString()}</TableCell>
                                         <TableCell>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all justify-end -mr-2">
                                                 <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                                     <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
-                                                            <Edit className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
+                                                            <Edit className="h-4 w-4 text-muted-foreground" />
                                                         </Button>
                                                     </DialogTrigger>
                                                     <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
@@ -367,8 +381,8 @@ export default function Transactions() {
                                                         <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
                                                     </DialogContent>
                                                 </Dialog>
-                                                <Button variant="ghost" size="icon" onClick={(e) => confirmSingleDelete(tx.id, e)}>
-                                                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive hover:bg-destructive/5" onClick={(e) => confirmSingleDelete(tx.id, e)}>
+                                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -406,10 +420,10 @@ export default function Transactions() {
                 <div className="fixed bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
                     <div className="bg-popover text-popover-foreground border shadow-xl rounded-full px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-6 w-max max-w-[90vw]">
                         <div className="flex items-center gap-2">
-                            <Badge variant="default" className="rounded-full px-2 py-0.5 text-xs shadow-sm">
+                            <div className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
                                 {selectedIds.size}
-                            </Badge>
-                            <span className="text-sm font-medium hidden sm:inline-block">Selected</span>
+                            </div>
+                            <span className="text-sm font-semibold hidden sm:inline-block">Selected</span>
                         </div>
                         
                         <div className="h-4 w-[1px] bg-border hidden sm:block"></div>
