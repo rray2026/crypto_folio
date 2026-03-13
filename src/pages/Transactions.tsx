@@ -6,10 +6,13 @@ import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus } from "lucide-react"
+import { usePositionStore } from "@/store/usePositionStore"
 import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
     Select,
     SelectContent,
@@ -42,12 +45,16 @@ export default function Transactions() {
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
+    const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
+    const [newPositionName, setNewPositionName] = useState("")
     
     const [filterSymbol, setFilterSymbol] = useState<string>("ALL")
     const [filterTimeRange, setFilterTimeRange] = useState<string>("ALL")
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction)
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
+    const createPosition = usePositionStore((state) => state.createPosition)
+    const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
 
     // Reactively fetch all transactions
     const allTransactions = useLiveQuery(
@@ -122,6 +129,48 @@ export default function Transactions() {
         } else {
             setSelectedIds(new Set(transactions.map(t => t.id)));
         }
+    }
+
+    const handleCreatePositionClick = () => {
+        if (!allTransactions || selectedIds.size === 0) return
+
+        const selectedTxs = allTransactions.filter(tx => selectedIds.has(tx.id))
+        const symbols = new Set(selectedTxs.map(tx => tx.symbol))
+
+        if (symbols.size > 1) {
+            alert("Cannot create position: All selected transactions must have the same trading pair.")
+            return
+        }
+
+        const symbol = Array.from(symbols)[0]
+        setNewPositionName(`${symbol} Position`)
+        setIsCreatePositionDialogOpen(true)
+    }
+
+    const executeCreatePosition = async () => {
+        if (!allTransactions || selectedIds.size === 0) return
+
+        const selectedTxs = allTransactions.filter(tx => selectedIds.has(tx.id))
+        const symbol = selectedTxs[0].symbol
+
+        const positionId = await createPosition({
+            symbol,
+            strategyName: newPositionName,
+            startDate: Math.min(...selectedTxs.map(tx => tx.date))
+        })
+
+        for (const tx of selectedTxs) {
+            await addTransactionToPosition(positionId, {
+                transactionId: tx.id,
+                allocatedAmount: tx.quantity
+            })
+        }
+
+        setIsCreatePositionDialogOpen(false)
+        setSelectedIds(new Set())
+        // toast.success("Position created", {
+        //     description: `Successfully created ${newPositionName} with ${selectedTxs.length} trades.`
+        // })
     }
 
     return (
@@ -424,6 +473,38 @@ export default function Transactions() {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isCreatePositionDialogOpen} onOpenChange={setIsCreatePositionDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Create New Position</DialogTitle>
+                        <DialogDescription>
+                            Create a managed position for the {selectedIds.size} selected trades.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Name / Strategy</Label>
+                            <Input 
+                                id="name" 
+                                value={newPositionName} 
+                                onChange={(e) => setNewPositionName(e.target.value)}
+                                className="rounded-xl border-border/50 h-11 font-bold"
+                                placeholder="e.g. BTC Long Strategy"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl">
+                            Cancel
+                        </Button>
+                        <Button onClick={executeCreatePosition} className="rounded-xl font-bold">
+                            Create Position
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+
             {selectedIds.size > 0 && (
                 <div className="fixed bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
                     <div className="bg-popover text-popover-foreground border shadow-xl rounded-full px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-6 w-max max-w-[90vw]">
@@ -440,6 +521,15 @@ export default function Transactions() {
                             <Button variant="ghost" size="sm" onClick={toggleAll} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-3">
                                 <CheckSquare className="h-4 w-4 md:mr-2" />
                                 <span className="hidden md:inline">{selectedIds.size === transactions?.length ? 'Deselect All' : 'Select All'}</span>
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={handleCreatePositionClick} 
+                                className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm bg-primary/10 hover:bg-primary/20 text-primary border-none"
+                            >
+                                <FolderPlus className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">Create Position</span>
                             </Button>
                             <Button variant="destructive" size="sm" onClick={confirmBulkDelete} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm">
                                 <Trash2 className="h-4 w-4 md:mr-2" />
