@@ -95,11 +95,12 @@ export default function Positions() {
             const metrics = getMetrics(pos);
             const endDate = metrics.derivedEndDate || now;
             
-            // Only count towards global metrics if it closed within the time range,
-            // or if it's currently open (active).
+            // Only count towards global metrics if it's a PRIMARY position,
+            // AND if it closed within the time range OR is currently open.
+            const isPrimary = pos.type !== 'SHADOW';
             const isWithinRange = timeThreshold === 0 || (pos.status === 'CLOSED' ? endDate >= timeThreshold : true);
 
-            if (isWithinRange) {
+            if (isWithinRange && isPrimary) {
                 totalRealizedPnL = add(totalRealizedPnL, metrics.realizedPnL);
                 totalUnrealizedPnL = add(totalUnrealizedPnL, metrics.unrealizedPnL);
                 totalInvestment = add(totalInvestment, metrics.totalInvestment);
@@ -247,7 +248,11 @@ export default function Positions() {
 
                                                 return (
                                                     <Link to={`/positions/${pos.id}`} key={pos.id} className="block transition-transform hover:-translate-y-1">
-                                                        <Card className="h-full flex flex-col relative group overflow-hidden bg-card/60 hover:bg-card/100 border-border/40 hover:border-border transition-colors">
+                                                        <Card className={`h-full flex flex-col relative group overflow-hidden border-border/40 hover:border-border transition-colors ${
+                                                            pos.type === 'SHADOW' 
+                                                            ? 'bg-muted/10 opacity-75 grayscale-[0.3]' 
+                                                            : 'bg-card/60 hover:bg-card/100 shadow-sm'
+                                                        }`}>
                                                             <CardHeader className="pb-3 border-b border-border/40">
                                                                 <div className="flex justify-between items-start mb-2">
                                                                     <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || `${pos.symbol.split('/')[0]} Position`}>

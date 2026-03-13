@@ -33,6 +33,7 @@ describe('User Cases Integration Tests', () => {
             const posId = await createPosition({
                 symbol: 'BTC/USDT',
                 strategyName: 'Long Term Hold',
+                type: 'PRIMARY',
                 startDate: Date.now()
             });
 
@@ -60,7 +61,7 @@ describe('User Cases Integration Tests', () => {
             const sellTxPath = await addTransaction({ date: Date.now(), symbol: 'SOL/USDT', type: 'SELL', price: 200, quantity: 15, amount: 3000, fee: 0 });
 
             // Create Position
-            const posId = await createPosition({ symbol: 'SOL/USDT', strategyName: 'SOL Swing Trade', startDate: Date.now() });
+            const posId = await createPosition({ symbol: 'SOL/USDT', strategyName: 'SOL Swing Trade', type: 'PRIMARY', startDate: Date.now() });
 
             // Link trades (allocating only partial amounts)
             await addTransactionToPosition(posId, { transactionId: buyTxPath1, allocatedAmount: 5 }); // 5 * 100 = $500 cost
@@ -107,7 +108,7 @@ describe('User Cases Integration Tests', () => {
             const txId = await addTransaction({
                 date: Date.now(), symbol: 'ETH/USDT', type: 'BUY', price: 3000, quantity: 1, amount: 3000, fee: 0
             });
-            const posId = await createPosition({ symbol: 'ETH/USDT', strategyName: 'Short Term', startDate: Date.now() });
+            const posId = await createPosition({ symbol: 'ETH/USDT', strategyName: 'Short Term', type: 'PRIMARY', startDate: Date.now() });
 
             await addTransactionToPosition(posId, { transactionId: txId, allocatedAmount: 1 });
 

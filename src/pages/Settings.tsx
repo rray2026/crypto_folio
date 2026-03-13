@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
+import { useLiveQuery } from "dexie-react-hooks"
+import { db } from "@/lib/db"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +36,9 @@ export default function Settings() {
     const [isImportConfirmOpen, setIsImportConfirmOpen] = useState(false)
     const [pendingImportFile, setPendingImportFile] = useState<File | null>(null)
     const [isProcessingBackup, setIsProcessingBackup] = useState(false)
+    const [isMigrationProcessing, setIsMigrationProcessing] = useState(false)
+
+    const legacyPositions = useLiveQuery(() => db.positions.toArray().then(items => items.filter(p => !p.type)), [])
 
     useEffect(() => {
         fetchPrices();
@@ -96,6 +101,24 @@ export default function Settings() {
         setIsSyncingAll(true);
         await fetchPrices(undefined, true, false);
         setIsSyncingAll(false);
+    }
+
+    const handleDataUpgrade = async () => {
+        if (!legacyPositions?.length) return
+        setIsMigrationProcessing(true)
+        try {
+            await db.transaction('rw', db.positions, async () => {
+                for (const pos of legacyPositions) {
+                    await db.positions.update(pos.id, { type: 'PRIMARY' })
+                }
+            })
+            alert(`Succesfully upgraded ${legacyPositions.length} positions.`)
+        } catch (error) {
+            console.error("Migration failed:", error)
+            alert("Migration failed. Please check logs.")
+        } finally {
+            setIsMigrationProcessing(false)
+        }
     }
 
     return (
@@ -261,6 +284,48 @@ export default function Settings() {
                         <Upload className="h-4 w-4" />
                         Import Data
                     </Button>
+                </div>
+            </div>
+
+            <div className={`bg-card p-6 rounded-xl border shadow-sm mt-8 transition-all ${legacyPositions?.length ? 'border-amber-500/50 shadow-amber-500/5 ring-1 ring-amber-500/20' : ''}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-xl font-semibold flex items-center gap-2">
+                            <RefreshCw className={`h-5 w-5 text-muted-foreground ${isMigrationProcessing ? 'animate-spin' : ''}`} />
+                            Data Integrity & Upgrade
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Analyze and optimize your database for the latest features.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                    {legacyPositions?.length ? (
+                        <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-bold text-amber-700 dark:text-amber-400">Upgrade Required</p>
+                                    <p className="text-xs text-amber-600/80 dark:text-amber-500/70 mt-1">
+                                        We found {legacyPositions.length} legacy positions that need a "Type" assignment (Strategic vs Analysis) to ensure your portfolio metrics are calculated accurately.
+                                    </p>
+                                    <Button 
+                                        onClick={handleDataUpgrade} 
+                                        disabled={isMigrationProcessing}
+                                        className="mt-4 bg-amber-500 hover:bg-amber-600 text-white border-none h-9 px-6 rounded-full font-bold shadow-lg shadow-amber-500/20"
+                                    >
+                                        Upgrade Data Now
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 p-4 bg-green-500/5 rounded-xl border border-green-500/10">
+                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                            <p className="text-sm font-medium text-green-600 dark:text-green-400">All data is up to date and optimized.</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
