@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar, Clock, Lock } from "lucide-react"
 import type { Transaction } from "@/lib/types"
 
 export function TransactionEditForm({ transaction, onSuccess }: { transaction: Transaction, onSuccess: () => void }) {
@@ -64,61 +65,86 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
-                <Label>Pair / Symbol <span className="text-muted-foreground text-xs ml-2">(Locked: Cannot change symbol on existing items)</span></Label>
+                <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
+                    <span className="text-[9px] flex items-center gap-1 text-muted-foreground/50">
+                        <Lock className="h-2.5 w-2.5" /> Immutable
+                    </span>
+                </div>
                 <Input
-                    placeholder="e.g. BTC/USDT"
                     value={symbol}
-                    onChange={e => setSymbol(e.target.value)}
-                    list="edit-transaction-symbols-list"
-                    required
+                    className="rounded-xl bg-muted/20 border-border/30 h-11 text-base font-bold tracking-tight opacity-70"
                     disabled={true}
                 />
-                <datalist id="edit-transaction-symbols-list">
-                    {predefinedPairs.map(p => <option key={p} value={p} />)}
-                </datalist>
             </div>
+            
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Type <span className="text-muted-foreground text-xs ml-2">(Locked)</span></Label>
-                    <Select value={type} onValueChange={(val: "BUY" | "SELL") => setType(val)} disabled={true}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="BUY">BUY</SelectItem>
-                            <SelectItem value="SELL">SELL</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
+                    <div className="flex p-1 bg-muted/20 rounded-xl border border-border/30 h-11 opacity-70">
+                        <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
+                            type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/40"
+                        }`}>
+                            BUY
+                        </div>
+                        <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
+                            type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/40"
+                        }`}>
+                            SELL
+                        </div>
+                    </div>
                 </div>
                 <div className="space-y-2">
-                    <Label>Date & Time</Label>
-                    <Input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} required />
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
+                    <div className="relative">
+                        <Input 
+                            type="datetime-local" 
+                            value={date} 
+                            onChange={e => setDate(e.target.value)} 
+                            className="rounded-xl border-border/50 h-11 font-mono text-xs pl-9"
+                            required 
+                        />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
                 </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label>Unit Price</Label>
-                    <Input type="number" step="any" min="0" placeholder="0.00" value={price} onChange={e => handlePriceChange(e.target.value)} required />
+
+            <div className="space-y-4 pt-1">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Unit Price</Label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
+                            <Input type="number" step="any" min="0" placeholder="0.00" value={price} onChange={e => handlePriceChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono pl-7 font-bold" required />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Quantity</Label>
+                        <Input type="number" step="any" min="0" placeholder="0.00" value={quantity} onChange={e => handleQuantityChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono font-bold" required />
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input type="number" step="any" min="0" placeholder="0.00" value={quantity} onChange={e => handleQuantityChange(e.target.value)} required />
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Total Amount</Label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
+                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-primary font-black pl-7" required />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Fee</Label>
+                        <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
+                    </div>
                 </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label>Total Amount</Label>
-                    <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                    <Label>Fee</Label>
-                    <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} />
-                </div>
-            </div>
-            <div className="pt-4 text-right">
-                <Button type="submit" className="w-full">Update Transaction</Button>
+
+            <div className="pt-4">
+                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                    Update Transaction
+                </Button>
             </div>
         </form>
     )
