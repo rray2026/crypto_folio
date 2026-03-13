@@ -52,12 +52,11 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
             {date ? format(date, "PPP") : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 rounded-xl border-border/40 shadow-2xl" align="start">
+        <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-auto p-0 rounded-xl border-border/40 shadow-2xl" align="start">
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
-            initialFocus
             className="rounded-xl"
           />
         </PopoverContent>

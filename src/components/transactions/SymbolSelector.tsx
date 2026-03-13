@@ -43,7 +43,7 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 rounded-xl border-border/40 shadow-2xl" align="start">
+        <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-[--radix-popover-trigger-width] p-0 rounded-xl border-border/40 shadow-2xl" align="start">
           <Command className="rounded-xl">
             <CommandInput 
               placeholder="Search or enter custom..." 

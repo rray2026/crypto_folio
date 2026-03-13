@@ -480,7 +480,7 @@ export default function Transactions() {
             </Dialog>
 
             <Dialog open={isCreatePositionDialogOpen} onOpenChange={setIsCreatePositionDialogOpen}>
-                <DialogContent className="sm:max-w-[425px] rounded-2xl">
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px] rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Create New Position</DialogTitle>
                         <DialogDescription>

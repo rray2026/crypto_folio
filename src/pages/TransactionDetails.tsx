@@ -69,7 +69,7 @@ export default function TransactionDetails() {
                                 <span className="hidden sm:inline">Edit</span>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
                             <DialogHeader>
                                 <DialogTitle>Edit Transaction</DialogTitle>
                             </DialogHeader>

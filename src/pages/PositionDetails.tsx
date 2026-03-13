@@ -174,7 +174,7 @@ export default function PositionDetails() {
                                     <Edit className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
+                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
                                 <DialogHeader>
                                     <DialogTitle>Edit Position details</DialogTitle>
                                 </DialogHeader>
@@ -278,7 +278,7 @@ export default function PositionDetails() {
                                                                 <Edit className="h-4 w-4" />
                                                             </Button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="sm:max-w-[425px]">
+                                                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
                                                             <DialogHeader>
                                                                 <DialogTitle>View / Edit Details</DialogTitle>
                                                             </DialogHeader>
@@ -351,7 +351,7 @@ export default function PositionDetails() {
                                                                 <Edit className="h-3 w-3" />
                                                             </Button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="sm:max-w-[425px]">
+                                                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
                                                             <DialogHeader>
                                                                 <DialogTitle>View / Edit Details</DialogTitle>
                                                             </DialogHeader>
