@@ -249,39 +249,47 @@ export default function PositionDetails() {
                                 <p className="text-muted-foreground text-sm">No trades linked to this position yet. Link them from the right panel.</p>
                             ) : (
                                 <div className="space-y-4">
-                                    {linkedTxs.map(tx => (
-                                        <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg border bg-background/50">
-                                            <div className="flex gap-4 items-center">
-                                                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
-                                                    {tx.type}
+                                    {linkedTxs.map(tx => {
+                                        const entry = position.entries.find(e => e.transactionId === tx.id);
+                                        return (
+                                            <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors group">
+                                                <div className="flex gap-3 md:gap-4 items-center min-w-0">
+                                                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                                        {tx.type}
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0">
+                                                        <p className="font-mono text-xs md:text-sm font-medium truncate">
+                                                            ${tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
+                                                        </p>
+                                                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                                                            <span className="bg-primary/5 text-primary px-1 rounded-sm font-semibold">Allocated: {entry?.allocatedAmount}</span>
+                                                            <span className="hidden sm:inline opacity-50">•</span>
+                                                            <span className="opacity-70">{format(new Date(tx.date), "yyyy/MM/dd")}</span>
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm">
-                                                    <p className="font-mono">${tx.price} <span className="text-muted-foreground mx-1">×</span> {tx.quantity}</p>
+                                                <div className="flex items-center gap-0.5 md:gap-1 shrink-0 ml-2">
+                                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="sm:max-w-[425px]">
+                                                            <DialogHeader>
+                                                                <DialogTitle>View / Edit Details</DialogTitle>
+                                                            </DialogHeader>
+                                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                                        </DialogContent>
+                                                    </Dialog>
+
+                                                    <Button variant="ghost" size="icon" onClick={() => handleRemove(tx.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div className="text-sm font-medium flex items-center gap-2">
-                                                <span className="text-muted-foreground pr-2">Allocated: {position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount}</span>
-
-                                                <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="sm:max-w-[425px]">
-                                                        <DialogHeader>
-                                                            <DialogTitle>View / Edit Details</DialogTitle>
-                                                        </DialogHeader>
-                                                        <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                                    </DialogContent>
-                                                </Dialog>
-
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemove(tx.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
