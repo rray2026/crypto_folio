@@ -218,17 +218,17 @@ export default function Positions() {
                     </CardContent>
                 </Card>
             ) : (
-                <Tabs defaultValue="active" className="w-full">
+                <Tabs defaultValue="unrealized" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
-                        <TabsTrigger value="active">Active ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
-                        <TabsTrigger value="history">History ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
-                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="unrealized">UNREALIZED ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
+                        <TabsTrigger value="realized">REALIZED ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
+                        <TabsTrigger value="all">ALL</TabsTrigger>
                     </TabsList>
 
-                    {['active', 'history', 'all'].map(tab => {
+                    {['unrealized', 'realized', 'all'].map(tab => {
                         const filteredPositions = positions.filter(p => {
-                            if (tab === 'active') return p.status === 'OPEN';
-                            if (tab === 'history') return p.status === 'CLOSED';
+                            if (tab === 'unrealized') return p.status === 'OPEN';
+                            if (tab === 'realized') return p.status === 'CLOSED';
                             return true; // all
                         });
 
@@ -275,7 +275,7 @@ export default function Positions() {
                                                                             : 'bg-muted/50 text-muted-foreground border-border'
                                                                         }`}>
                                                                             <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
-                                                                            {isActive ? 'ACTIVE' : 'ARCHIVED'}
+                                                                            {isActive ? 'UNREALIZED' : 'REALIZED'}
                                                                         </div>
                                                                     </div>
                                                                 </div>

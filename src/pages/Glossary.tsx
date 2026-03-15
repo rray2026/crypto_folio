@@ -63,11 +63,11 @@ export default function Glossary() {
             icon: <ShieldCheck className="h-5 w-5 text-purple-500" />,
             items: [
                 {
-                    term: "OPEN (Active)",
+                    term: "OPEN (Unrealized)",
                     definition: "A position that currently has a balance. It is actively exposed to market price movements."
                 },
                 {
-                    term: "CLOSED (Archived)",
+                    term: "CLOSED (Realized)",
                     definition: "A position where the quantity has returned to zero. The strategy is complete, and the final results are locked into your history."
                 },
                 {

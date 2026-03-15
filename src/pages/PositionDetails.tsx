@@ -132,7 +132,7 @@ export default function PositionDetails() {
                                         : 'bg-muted/50 text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
-                                        {position.status === 'OPEN' ? 'ACTIVE' : 'ARCHIVED'}
+                                        {position.status === 'OPEN' ? 'UNREALIZED' : 'REALIZED'}
                                     </div>
                                 </div>
                             </div>
