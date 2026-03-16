@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { TransactionRow } from "@/components/shared/TransactionRow"
+import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
@@ -382,21 +382,11 @@ export default function Transactions() {
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="space-y-2">
-                        {/* Table Header Mockup for Alignment */}
-                        <div className="px-6 py-2 grid grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px] text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                            <div>Asset</div>
-                            <div>Date</div>
-                            <div>Side</div>
-                            <div className="text-right">Price</div>
-                            <div className="text-right">Quantity</div>
-                            <div className="text-right">Total Amount</div>
-                            <div className="text-right">Fee</div>
-                            <div></div>
-                        </div>
+                    <div className="space-y-4 md:space-y-2">
+                        <TransactionListHeader showAsset={true} />
                         
                         {transactions.map((tx) => (
-                            <TransactionRow 
+                            <TransactionCard 
                                 key={tx.id}
                                 tx={tx}
                                 isSelected={selectedIds.has(tx.id)}

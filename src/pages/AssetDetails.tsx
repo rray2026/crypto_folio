@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getPositionMetrics } from "@/lib/metrics"
 import { useEffect, useState } from "react"
 import { PositionCard } from "@/components/shared/PositionCard"
-import { TransactionRow } from "@/components/shared/TransactionRow"
+import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 
 export default function AssetDetails() {
     const { symbol } = useParams<{ symbol: string }>()
@@ -107,17 +107,8 @@ export default function AssetDetails() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="transactions" className="space-y-2">
-                    {/* Header Mockup for Alignment */}
-                    <div className="px-6 py-2 grid grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px] text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                        <div>Date</div>
-                        <div>Side</div>
-                        <div className="text-right">Price</div>
-                        <div className="text-right">Quantity</div>
-                        <div className="text-right">Total Amount</div>
-                        <div className="text-right">Fee</div>
-                        <div></div>
-                    </div>
+                <TabsContent value="transactions" className="space-y-4 md:space-y-2">
+                    <TransactionListHeader showAsset={false} />
                     
                     {transactions?.length === 0 ? (
                         <div className="p-12 text-center text-muted-foreground border border-dashed rounded-xl bg-muted/20">
@@ -125,13 +116,13 @@ export default function AssetDetails() {
                         </div>
                     ) : (
                         transactions?.map(tx => (
-                            <TransactionRow 
+                            <TransactionCard 
                                 key={tx.id}
                                 tx={tx}
                                 showAsset={false}
                                 onViewDetail={(id) => navigate(`/transactions/${id}`)}
                                 onEdit={(id) => setEditingTxId(id)}
-                                onDelete={() => {}} // Consider adding delete handler if appropriate
+                                onDelete={() => {}} 
                                 isEditing={editingTxId === tx.id}
                                 setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
                             />
