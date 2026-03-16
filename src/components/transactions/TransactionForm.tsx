@@ -58,17 +58,17 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-3">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Trading Pair</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Trading Pair</Label>
                 <SymbolSelector value={symbol} onChange={setSymbol} />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Side</Label>
                 <div className="flex p-1 bg-muted/30 rounded-xl border border-border/50 h-11">
                     <button
                         type="button"
                         onClick={() => setType("BUY")}
-                        className={`flex-1 rounded-lg text-xs font-black transition-all ${
+                        className={`flex-1 rounded-lg text-xs font-bold transition-all ${
                             type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
                         }`}
                     >
@@ -77,7 +77,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                     <button
                         type="button"
                         onClick={() => setType("SELL")}
-                        className={`flex-1 rounded-lg text-xs font-black transition-all ${
+                        className={`flex-1 rounded-lg text-xs font-bold transition-all ${
                             type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
                         }`}
                     >
@@ -87,7 +87,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
                 <DateTimePicker value={date} onChange={setDate} />
             </div>
 
@@ -96,28 +96,28 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             <div className="space-y-4 pt-1">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Price</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Unit Price</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
                             <Input type="number" step="any" min="0" placeholder="0.00" value={price} onChange={e => handlePriceChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono pl-7 font-bold" required />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Quantity</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
                         <Input type="number" step="any" min="0" placeholder="0.00" value={quantity} onChange={e => handleQuantityChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono font-bold" required />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Total Value</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Total Amount</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
-                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-primary font-black pl-7" required />
+                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-primary font-bold pl-7" required />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Fees</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Fee</Label>
                         <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
                     </div>
                 </div>

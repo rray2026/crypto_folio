@@ -38,12 +38,12 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-3">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Pair / Asset</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
                 <SymbolSelector value={symbol} onChange={setSymbol} />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Name (Optional)</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Strategy Name</Label>
                 <Input 
                     placeholder="e.g. Q4 BTC Accumulation" 
                     value={strategyName} 
@@ -53,12 +53,12 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Start Date & Time</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Start Date & Time</Label>
                 <DateTimePicker value={startDate} onChange={setStartDate} />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Nature</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Position Nature</Label>
                 <Select value={type} onValueChange={(val: any) => setType(val)}>
                     <SelectTrigger className="w-full h-11 rounded-xl border-border/50 font-medium">
                         <SelectValue />
@@ -78,7 +78,7 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Optional)</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Notes)</Label>
                 <Input 
                     placeholder="Initial thoughts, triggers, rules..." 
                     value={notes} 

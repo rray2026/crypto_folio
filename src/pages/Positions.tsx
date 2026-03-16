@@ -305,13 +305,13 @@ export default function Positions() {
                                                                 <div className="flex justify-between items-center">
                                                                     <div className="flex flex-col">
                                                                         <span className="text-xs text-muted-foreground mb-1">Holdings</span>
-                                                                        <span className="font-mono text-sm font-medium">
+                                                                        <span className="font-mono text-sm font-bold">
                                                                             {metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{pos.symbol.split('/')[0]}</span>
                                                                         </span>
                                                                     </div>
                                                                     <div className="flex flex-col text-right">
                                                                         <span className="text-xs text-muted-foreground mb-1">{isActive && metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}</span>
-                                                                        <span className="font-mono text-sm font-medium">
+                                                                        <span className="font-mono text-sm font-bold">
                                                                             ${isActive && metrics.currentPrice > 0 
                                                                                 ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
                                                                                 : (metrics.totalRemaining > 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}

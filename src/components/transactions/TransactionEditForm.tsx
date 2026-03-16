@@ -66,7 +66,7 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
                     <span className="text-[9px] flex items-center gap-1 text-muted-foreground/50">
                         <Lock className="h-2.5 w-2.5" /> Immutable
                     </span>
@@ -79,14 +79,14 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
             </div>
             
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Side</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Side</Label>
                 <div className="flex p-1 bg-muted/20 rounded-xl border border-border/30 h-11 opacity-70">
-                    <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
+                    <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-bold ${
                         type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/40"
                     }`}>
                         BUY
                     </div>
-                    <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-black ${
+                    <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-bold ${
                         type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/40"
                     }`}>
                         SELL
@@ -95,7 +95,7 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Date & Time</Label>
                 <DateTimePicker value={date} onChange={setDate} />
             </div>
 
@@ -103,28 +103,28 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
             <div className="space-y-4 pt-1">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Unit Price</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Unit Price</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
                             <Input type="number" step="any" min="0" placeholder="0.00" value={price} onChange={e => handlePriceChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono pl-7 font-bold" required />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Quantity</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Quantity</Label>
                         <Input type="number" step="any" min="0" placeholder="0.00" value={quantity} onChange={e => handleQuantityChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono font-bold" required />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Total Amount</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Total Amount</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
-                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-primary font-black pl-7" required />
+                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-primary font-bold pl-7" required />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Fee</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Fee</Label>
                         <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
                     </div>
                 </div>

@@ -62,7 +62,7 @@ export default function Dashboard() {
                                         <div className="h-2 w-2 rounded-full bg-green-500" />
                                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
                                     </div>
-                                    <div className="text-lg font-bold font-mono tracking-tight text-foreground">
+                                    <div className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
                                         {priceDisplay}
                                     </div>
                                 </div>

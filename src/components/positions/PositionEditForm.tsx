@@ -36,7 +36,7 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
                     <span className="text-[9px] flex items-center gap-1 text-muted-foreground/50">
                         <Lock className="h-2.5 w-2.5" /> Immutable
                     </span>
@@ -59,17 +59,17 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Start Date</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Start Date</Label>
                 <DateTimePicker value={startDate} onChange={setStartDate} />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">End Date (Optional)</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">End Date (Optional)</Label>
                 <DateTimePicker value={endDate || new Date().toISOString().slice(0, 16)} onChange={setEndDate} />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Notes)</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Notes)</Label>
                 <Input 
                     placeholder="Reflections, rules, triggers..." 
                     value={notes} 
