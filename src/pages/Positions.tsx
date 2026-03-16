@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { mul, add, div } from "@/lib/math"
@@ -31,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Positions() {
+    const navigate = useNavigate()
     const deletePosition = usePositionStore((state) => state.deletePosition)
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange } = useSettingsStore()
@@ -40,7 +41,7 @@ export default function Positions() {
 
     // Fetch prices for all OPEN symbols
     // Fetch prices for all OPEN symbols periodically (every 5 mins)
-    useState(() => {
+    useEffect(() => {
         const interval = setInterval(() => {
             if (!positions) return;
             const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
@@ -49,15 +50,17 @@ export default function Positions() {
             }
         }, 300000);
         return () => clearInterval(interval);
-    });
+    }, [positions, fetchPrices]); // Added dependencies
 
-    if (positions) {
-        const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
-        if (openSymbols.length > 0) {
-            // Non-blocking fetch on render if not cached
-            fetchPrices(openSymbols);
+    // Non-blocking fetch on render if not cached
+    useEffect(() => {
+        if (positions) {
+            const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
+            if (openSymbols.length > 0) {
+                fetchPrices(openSymbols);
+            }
         }
-    }
+    }, [positions, fetchPrices]); // Added dependencies
 
     const getMetrics = (pos: any) => {
         if (!transactions) return { realizedPnL: 0, unrealizedPnL: 0, totalPnL: 0, roi: 0, totalInvestment: 0, totalRemaining: 0, currentPrice: 0, positionType: 'LONG' as const, derivedStartDate: pos.startDate, derivedEndDate: pos.endDate, avgBuyPrice: 0, avgSellPrice: 0 };
@@ -289,7 +292,12 @@ export default function Positions() {
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center justify-between">
-                                                                    <p className="text-sm text-foreground/80 font-mono font-medium">{pos.symbol}</p>
+                                                                    <p 
+                                                                        className="text-sm text-foreground/80 font-mono font-medium hover:text-primary transition-colors cursor-pointer"
+                                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/assets/${pos.symbol.replace('/', '_')}`); }}
+                                                                    >
+                                                                        {pos.symbol}
+                                                                    </p>
                                                                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
                                                                         <div className="flex items-center gap-1" title="Start Date">
                                                                             <Calendar className="h-3 w-3" />

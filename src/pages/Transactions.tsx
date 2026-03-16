@@ -404,12 +404,17 @@ export default function Transactions() {
                                     : 'bg-card/40 border-border/40 hover:border-border hover:bg-card/60'
                                 }`}
                             >
-                                <div className="font-bold text-base tracking-tight">{tx.symbol}</div>
+                                <div 
+                                    className="font-bold text-base tracking-tight hover:text-primary transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/assets/${tx.symbol.replace('/', '_')}`); }}
+                                >
+                                    {tx.symbol}
+                                </div>
                                 <div className="text-[11px] font-mono text-muted-foreground/80">
                                     {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
                                 </div>
                                 <div>
-                                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
                                         tx.type === "BUY" 
                                         ? "bg-green-500/10 text-green-600 dark:text-green-400" 
                                         : "bg-red-500/10 text-red-600 dark:text-red-400"

@@ -122,8 +122,13 @@ export default function PositionDetails() {
                                         )}
                                     </div>
                                     <p className="text-muted-foreground font-mono text-sm md:text-base flex items-center gap-2">
+                                    <span 
+                                        className="cursor-pointer hover:text-primary transition-colors"
+                                        onClick={() => navigate(`/assets/${position.symbol.replace('/', '_')}`)}
+                                    >
                                         {position.symbol}
-                                        {position.type === 'SHADOW' && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded border text-muted-foreground font-sans">Lab Only</span>}
+                                    </span>
+                                    {position.type === 'SHADOW' && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded border text-muted-foreground font-sans">Lab Only</span>}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
@@ -266,7 +271,7 @@ export default function PositionDetails() {
                                         return (
                                             <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors group">
                                                 <div className="flex gap-3 md:gap-4 items-center min-w-0">
-                                                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
                                                         {tx.type}
                                                     </div>
                                                     <div className="flex flex-col min-w-0">
