@@ -3,6 +3,8 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Lock } from "lucide-react"
+import { DateTimePicker } from "../ui/DateTimePicker"
 import type { Position } from "@/lib/types"
 
 export function PositionEditForm({ position, onSuccess }: { position: Position, onSuccess: () => void }) {
@@ -10,7 +12,7 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
     const [strategyName, setStrategyName] = useState(position.strategyName || "")
     const [notes, setNotes] = useState(position.notes || "")
     const [startDate, setStartDate] = useState(() => {
-        if (!position.startDate) return "";
+        if (!position.startDate) return new Date().toISOString().slice(0, 16);
         return new Date(position.startDate).toISOString().slice(0, 16);
     })
     const [endDate, setEndDate] = useState(() => {
@@ -31,25 +33,55 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
-                <Label>Strategy Name / Label (Optional)</Label>
-                <Input placeholder="e.g. Q4 BTC Accumulation" value={strategyName} onChange={e => setStrategyName(e.target.value)} />
+                <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
+                    <span className="text-[9px] flex items-center gap-1 text-muted-foreground/50">
+                        <Lock className="h-2.5 w-2.5" /> Immutable
+                    </span>
+                </div>
+                <Input
+                    value={position.symbol}
+                    className="rounded-xl bg-muted/20 border-border/30 h-11 text-base font-bold tracking-tight opacity-70"
+                    disabled={true}
+                />
             </div>
+
             <div className="space-y-2">
-                <Label>Start Date</Label>
-                <Input type="datetime-local" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Name</Label>
+                <Input 
+                    placeholder="e.g. Q4 BTC Accumulation" 
+                    value={strategyName} 
+                    onChange={e => setStrategyName(e.target.value)} 
+                    className="rounded-xl border-border/50 h-11 font-medium"
+                />
             </div>
+
             <div className="space-y-2">
-                <Label>End Date</Label>
-                <Input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Start Date</Label>
+                <DateTimePicker value={startDate} onChange={setStartDate} />
             </div>
+
             <div className="space-y-2">
-                <Label>Notes (Optional)</Label>
-                <Input placeholder="Strategy reflections, rules..." value={notes} onChange={e => setNotes(e.target.value)} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">End Date (Optional)</Label>
+                <DateTimePicker value={endDate || new Date().toISOString().slice(0, 16)} onChange={setEndDate} />
             </div>
-            <div className="pt-4 text-right">
-                <Button type="submit" className="w-full">Save Changes</Button>
+
+            <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Notes)</Label>
+                <Input 
+                    placeholder="Reflections, rules, triggers..." 
+                    value={notes} 
+                    onChange={e => setNotes(e.target.value)} 
+                    className="rounded-xl border-border/50 h-11 font-medium"
+                />
+            </div>
+
+            <div className="pt-4">
+                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                    Save Strategy Changes
+                </Button>
             </div>
         </form>
     )
