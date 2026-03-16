@@ -110,10 +110,22 @@ export default function PositionDetails() {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div className="flex-1 w-full min-w-0">
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">
-                                    {position.strategyName || `${position.symbol.split('/')[0]} Position`}
-                                </h1>
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
+                                        {position.type === 'SHADOW' && (
+                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                <Eye className="h-3 w-3" />
+                                                SHADOW ANALYSIS
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-muted-foreground font-mono text-sm md:text-base flex items-center gap-2">
+                                        {position.symbol}
+                                        {position.type === 'SHADOW' && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded border text-muted-foreground font-sans">Lab Only</span>}
+                                    </p>
+                                </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     {/* Direction Badge */}
                                     <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold ${
