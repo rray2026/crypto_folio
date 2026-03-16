@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { TransactionRow } from "@/components/shared/TransactionRow"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
@@ -395,54 +396,17 @@ export default function Transactions() {
                         </div>
                         
                         {transactions.map((tx) => (
-                            <div
+                            <TransactionRow 
                                 key={tx.id}
-                                onClick={() => toggleSelection(tx.id)}
-                                className={`group relative grid grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px] items-center px-6 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                                    selectedIds.has(tx.id)
-                                    ? 'bg-primary/5 border-primary shadow-sm'
-                                    : 'bg-card/40 border-border/40 hover:border-border hover:bg-card/60'
-                                }`}
-                            >
-                                <div className="font-bold text-base tracking-tight">{tx.symbol}</div>
-                                <div className="text-[11px] font-mono text-muted-foreground/80">
-                                    {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                </div>
-                                <div>
-                                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
-                                        tx.type === "BUY" 
-                                        ? "bg-green-500/10 text-green-600 dark:text-green-400" 
-                                        : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                    }`}>
-                                        {tx.type}
-                                    </div>
-                                </div>
-                                <div className="text-right font-mono font-medium text-sm text-foreground/80">${tx.price.toLocaleString()}</div>
-                                <div className="text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
-                                <div className="text-right font-mono font-bold text-sm text-primary/90">${tx.amount.toLocaleString()}</div>
-                                <div className="text-right font-mono font-medium text-xs text-muted-foreground/60">${tx.fee.toLocaleString()}</div>
-                                <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
-                                        <Eye className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
-                                                <Edit className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
-                                            <DialogHeader>
-                                                <DialogTitle>Edit Transaction</DialogTitle>
-                                            </DialogHeader>
-                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                        </DialogContent>
-                                    </Dialog>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive hover:bg-destructive/5" onClick={(e) => confirmSingleDelete(tx.id, e)}>
-                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </div>
-                            </div>
+                                tx={tx}
+                                isSelected={selectedIds.has(tx.id)}
+                                onToggleSelection={toggleSelection}
+                                onViewDetail={(id) => navigate(`/transactions/${id}`)}
+                                onEdit={(id) => setEditingTxId(id)}
+                                onDelete={confirmSingleDelete}
+                                isEditing={editingTxId === tx.id}
+                                setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
+                            />
                         ))}
                     </div>
                 )}
