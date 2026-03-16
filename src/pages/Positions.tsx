@@ -7,7 +7,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { PositionForm } from "@/components/positions/PositionForm"
 
-import { Plus, Trash2, ArrowRight, Calendar, Clock, Wallet, Activity, Target, TrendingUp, TrendingDown, LineChart, Circle, Eye, CheckSquare, X } from "lucide-react"
+import { Plus, Trash2, ArrowRight, Calendar, Clock, Wallet, Activity, Target, TrendingUp, TrendingDown, LineChart, Circle, Eye } from "lucide-react"
 import { differenceInDays, format } from "date-fns"
 import { getPositionMetrics } from "@/lib/metrics"
 
@@ -31,7 +31,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Positions() {
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const deletePosition = usePositionStore((state) => state.deletePosition)
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange } = useSettingsStore()
@@ -67,34 +66,11 @@ export default function Positions() {
         return getPositionMetrics(pos, linkedTxs, prices);
     };
 
-    const toggleSelection = (id: string) => {
-        setSelectedIds(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(id)) newSet.delete(id);
-            else newSet.add(id);
-            return newSet;
-        });
-    }
-
-    const toggleAll = () => {
-        if (!positions) return;
-        if (selectedIds.size === positions.length) {
-            setSelectedIds(new Set());
-        } else {
-            setSelectedIds(new Set(positions.map(p => p.id)));
-        }
-    }
-
     const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (confirm("Are you sure you want to delete this position? Linkings to transactions will be removed (but transactions are kept).")) {
             await deletePosition(id)
-            setSelectedIds(prev => {
-                const newSet = new Set(prev)
-                newSet.delete(id)
-                return newSet
-            })
         }
     }
 
@@ -271,29 +247,19 @@ export default function Positions() {
                                                 const isActive = pos.status === 'OPEN';
 
                                                 return (
-                                                    <div key={pos.id} className="block transition-transform hover:-translate-y-1">
+                                                    <Link to={`/positions/${pos.id}`} key={pos.id} className="block transition-transform hover:-translate-y-1">
                                                         <Card 
-                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelection(pos.id); }}
-                                                            className={`h-full flex flex-col relative group overflow-hidden cursor-pointer transition-all duration-200 border-2 ${
-                                                                selectedIds.has(pos.id)
-                                                                ? 'bg-primary/5 border-primary shadow-md'
-                                                                : 'bg-card/60 hover:bg-card/100 border-border/40 hover:border-border shadow-sm'
-                                                            } ${
+                                                            className={`h-full flex flex-col relative group overflow-hidden border-border/40 hover:border-border transition-colors ${
                                                                 pos.type === 'SHADOW' 
                                                                 ? 'bg-amber-500/[0.03] border-dashed grayscale-[0.2]' 
-                                                                : ''
+                                                                : 'bg-card/60 hover:bg-card/100 shadow-sm'
                                                             }`}
                                                         >
                                                             <CardHeader className="pb-3 border-b border-border/40">
                                                                 <div className="flex justify-between items-start mb-2">
-                                                                    <div className="flex flex-col">
-                                                                        <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || `${pos.symbol.split('/')[0]} Position`}>
-                                                                            {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
-                                                                        </CardTitle>
-                                                                        <Link to={`/positions/${pos.id}`} onClick={(e) => e.stopPropagation()} className="w-fit text-[10px] text-primary hover:underline mt-0.5 flex items-center gap-1">
-                                                                            View Details <ArrowRight className="h-2.5 w-2.5" />
-                                                                        </Link>
-                                                                    </div>
+                                                                    <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={pos.strategyName || `${pos.symbol.split('/')[0]} Position`}>
+                                                                        {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
+                                                                    </CardTitle>
                                                                     <div className="flex justify-end gap-1.5 shrink-0 flex-wrap">
                                                                         {/* Shadow Badge */}
                                                                         {pos.type === 'SHADOW' && (
@@ -389,14 +355,16 @@ export default function Positions() {
                                                                     </div>
                                                                 </div>
                                                             </CardContent>
-                                                            
                                                             <CardFooter className="pt-2 pb-3 px-4 flex justify-between items-center bg-muted/20 border-t border-border/10 opacity-70 group-hover:opacity-100 transition-opacity">
-                                                                <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-destructive z-10 -ml-2" onClick={(e) => { e.stopPropagation(); handleDelete(pos.id, e); }}>
+                                                                <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-destructive z-10 -ml-2" onClick={(e) => handleDelete(pos.id, e)}>
                                                                     <Trash2 className="h-3 w-3 mr-1.5" /> Delete
+                                                                </Button>
+                                                                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-primary">
+                                                                    View Details <ArrowRight className="h-3 w-3" />
                                                                 </Button>
                                                             </CardFooter>
                                                         </Card>
-                                                    </div>
+                                                    </Link>
                                                 );
                                             })}
                                     </div>
@@ -407,48 +375,6 @@ export default function Positions() {
                 </Tabs>
             )}
 
-            {/* Floating Bulk Action Bar */}
-            {selectedIds.size > 0 && (
-                <div className="fixed bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
-                    <div className="bg-popover text-popover-foreground border shadow-xl rounded-full px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-6 w-max max-w-[90vw]">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
-                                {selectedIds.size}
-                            </div>
-                            <span className="text-sm font-semibold hidden sm:inline-block">Selected</span>
-                        </div>
-                        
-                        <div className="h-4 w-[1px] bg-border hidden sm:block"></div>
-                        
-                        <div className="flex items-center gap-1 md:gap-2">
-                            <Button variant="ghost" size="sm" onClick={toggleAll} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-3">
-                                <CheckSquare className="h-4 w-4 md:mr-2" />
-                                <span className="hidden md:inline">{selectedIds.size === positions?.length ? 'Deselect All' : 'Select All'}</span>
-                            </Button>
-                            <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={async () => {
-                                    if (confirm(`Are you sure you want to delete ${selectedIds.size} positions?`)) {
-                                        for (const id of selectedIds) await deletePosition(id);
-                                        setSelectedIds(new Set());
-                                    }
-                                }} 
-                                className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm"
-                            >
-                                <Trash2 className="h-4 w-4 md:mr-2" />
-                                <span className="hidden md:inline">Bulk Delete</span>
-                            </Button>
-                        </div>
-                        
-                        <div className="h-4 w-[1px] bg-border"></div>
-                        
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedIds(new Set())} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            )}
             {/* Mobile FAB */}
             <div className="sm:hidden fixed bottom-20 right-4 z-40">
                 <Button 
