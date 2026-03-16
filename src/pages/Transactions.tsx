@@ -194,10 +194,13 @@ export default function Transactions() {
                     {/* Filters */}
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Select value={filterSymbol} onValueChange={setFilterSymbol}>
-                            <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/50 rounded-lg border-border/50 text-xs shadow-sm">
-                                <SelectValue placeholder="All Assets" />
+                            <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
+                                <div className="flex items-center gap-2">
+                                    <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <SelectValue placeholder="All Assets" />
+                                </div>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="rounded-xl">
                                 <SelectItem value="ALL">All Assets</SelectItem>
                                 {uniqueSymbols.map(sym => (
                                     <SelectItem key={sym} value={sym}>{sym}</SelectItem>
@@ -206,10 +209,13 @@ export default function Transactions() {
                         </Select>
 
                         <Select value={filterTimeRange} onValueChange={setFilterTimeRange}>
-                            <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/50 rounded-lg border-border/50 text-xs shadow-sm">
-                                <SelectValue placeholder="All Time" />
+                            <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <SelectValue placeholder="All Time" />
+                                </div>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="rounded-xl">
                                 <SelectItem value="24H">Last 24 Hours</SelectItem>
                                 <SelectItem value="1W">Last 1 Week</SelectItem>
                                 <SelectItem value="1M">Last 1 Month</SelectItem>
@@ -371,94 +377,84 @@ export default function Transactions() {
                 )}
             </div>
 
-            {/* Desktop Table Layout */}
-            <Card className="hidden md:block">
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="pl-6">Asset</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead className="text-right">Price</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                                <TableHead className="text-right">Value</TableHead>
-                                <TableHead className="text-right">Fee</TableHead>
-                                <TableHead className="w-[80px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {!transactions?.length ? (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="h-48 text-center text-muted-foreground">
-                                        <div className="flex flex-col items-center justify-center gap-2">
-                                            <p>No transactions recorded yet.</p>
-                                            <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
-                                                Record Your First Trade
+            {/* Desktop Row-Card Layout */}
+            <div className="hidden md:block space-y-3">
+                {!transactions?.length ? (
+                    <Card className="border-dashed shadow-none">
+                        <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
+                            <p>No transactions recorded yet.</p>
+                            <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-4">
+                                Record Your First Trade
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="space-y-2">
+                        {/* Table Header Mockup for Alignment */}
+                        <div className="px-6 py-2 grid grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px] text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                            <div>Asset</div>
+                            <div>Date</div>
+                            <div>Side</div>
+                            <div className="text-right">Price</div>
+                            <div className="text-right">Quantity</div>
+                            <div className="text-right">Total Amount</div>
+                            <div className="text-right">Fee</div>
+                            <div></div>
+                        </div>
+                        
+                        {transactions.map((tx) => (
+                            <div
+                                key={tx.id}
+                                onClick={() => toggleSelection(tx.id)}
+                                className={`group relative grid grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px] items-center px-6 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                                    selectedIds.has(tx.id)
+                                    ? 'bg-primary/5 border-primary shadow-sm'
+                                    : 'bg-card/40 border-border/40 hover:border-border hover:bg-card/60'
+                                }`}
+                            >
+                                <div className="font-bold text-base tracking-tight">{tx.symbol}</div>
+                                <div className="text-[11px] font-mono text-muted-foreground/80">
+                                    {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                </div>
+                                <div>
+                                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                        tx.type === "BUY" 
+                                        ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                                        : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                    }`}>
+                                        {tx.type}
+                                    </div>
+                                </div>
+                                <div className="text-right font-mono font-medium text-sm text-foreground/80">${tx.price.toLocaleString()}</div>
+                                <div className="text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
+                                <div className="text-right font-mono font-bold text-sm text-primary/90">${tx.amount.toLocaleString()}</div>
+                                <div className="text-right font-mono font-medium text-xs text-muted-foreground/60">${tx.fee.toLocaleString()}</div>
+                                <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
+                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
+                                                <Edit className="h-4 w-4 text-muted-foreground" />
                                             </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                transactions.map((tx) => (
-                                    <TableRow 
-                                        key={tx.id} 
-                                        className={`group cursor-pointer transition-all duration-200 border-l-[4px] relative ${
-                                            selectedIds.has(tx.id) 
-                                            ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20 border-l-primary' 
-                                            : 'border-l-transparent hover:border-l-primary/30 hover:bg-muted/30'
-                                        }`} 
-                                        onClick={() => toggleSelection(tx.id)}
-                                    >
-                                        <TableCell className="font-bold pl-6 text-base tracking-tight">
-                                            {tx.symbol}
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground whitespace-nowrap text-xs font-mono">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                tx.type === "BUY" 
-                                                ? "bg-green-500/10 text-green-600 dark:text-green-400" 
-                                                : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                            }`}>
-                                                {tx.type}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono font-medium">${tx.price.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono font-medium">{tx.quantity.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono font-black text-primary/90">${tx.amount.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono text-muted-foreground">${tx.fee.toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all justify-end -mr-2">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                                <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
-                                                            <Edit className="h-4 w-4 text-muted-foreground" />
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
-                                                        <DialogHeader>
-                                                            <DialogTitle>Edit Transaction</DialogTitle>
-                                                        </DialogHeader>
-                                                        <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                                    </DialogContent>
-                                                </Dialog>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive hover:bg-destructive/5" onClick={(e) => confirmSingleDelete(tx.id, e)}>
-                                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                                        </DialogTrigger>
+                                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
+                                            <DialogHeader>
+                                                <DialogTitle>Edit Transaction</DialogTitle>
+                                            </DialogHeader>
+                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive hover:bg-destructive/5" onClick={(e) => confirmSingleDelete(tx.id, e)}>
+                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             <Dialog open={confirmDeleteState.isOpen} onOpenChange={(isOpen) => setConfirmDeleteState(prev => ({ ...prev, isOpen }))}>
                 <DialogContent className="sm:max-w-[425px]">
