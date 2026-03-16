@@ -37,7 +37,9 @@ export function TransactionRow({
     return (
         <div
             onClick={() => onToggleSelection?.(tx.id)}
-            className={`group relative grid ${gridCols} items-center px-6 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+            className={`group relative grid ${gridCols} items-center px-6 py-3 rounded-xl border transition-all duration-200 ${
+                onToggleSelection ? 'cursor-pointer' : 'cursor-default'
+            } ${
                 isSelected
                 ? 'bg-primary/5 border-primary shadow-sm'
                 : 'bg-card/40 border-border/40 hover:border-border hover:bg-card/60'

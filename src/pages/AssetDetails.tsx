@@ -107,38 +107,36 @@ export default function AssetDetails() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="transactions" className="space-y-6">
-                    {/* Simplified header mockup matching the grid of TransactionRow with showAsset=false */}
-                    <div className="bg-card/40 rounded-2xl border border-border/40 overflow-hidden">
-                        <div className="px-6 py-4 grid grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px] bg-muted/30 border-b border-border/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
-                            <div>Date</div>
-                            <div>Side</div>
-                            <div className="text-right">Price</div>
-                            <div className="text-right">Quantity</div>
-                            <div className="text-right">Total Amount</div>
-                            <div className="text-right">Fee</div>
-                            <div></div>
-                        </div>
-                        <div className="divide-y divide-border/20">
-                            {transactions?.length === 0 ? (
-                                <div className="p-12 text-center text-muted-foreground">No transactions found for {decodedSymbol}</div>
-                            ) : (
-                                transactions?.map(tx => (
-                                    <TransactionRow 
-                                        key={tx.id}
-                                        tx={tx}
-                                        showAsset={false}
-                                        onViewDetail={(id) => navigate(`/transactions/${id}`)}
-                                        onEdit={(id) => setEditingTxId(id)}
-                                        onDelete={() => {}} // Disabled in this view or add handler if needed
-                                        isEditing={editingTxId === tx.id}
-                                        setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
-                                        className="border-none rounded-none hover:bg-muted/10"
-                                    />
-                                ))
-                            )}
-                        </div>
+                <TabsContent value="transactions" className="space-y-2">
+                    {/* Header Mockup for Alignment */}
+                    <div className="px-6 py-2 grid grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px] text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                        <div>Date</div>
+                        <div>Side</div>
+                        <div className="text-right">Price</div>
+                        <div className="text-right">Quantity</div>
+                        <div className="text-right">Total Amount</div>
+                        <div className="text-right">Fee</div>
+                        <div></div>
                     </div>
+                    
+                    {transactions?.length === 0 ? (
+                        <div className="p-12 text-center text-muted-foreground border border-dashed rounded-xl bg-muted/20">
+                            No transactions found for {decodedSymbol}
+                        </div>
+                    ) : (
+                        transactions?.map(tx => (
+                            <TransactionRow 
+                                key={tx.id}
+                                tx={tx}
+                                showAsset={false}
+                                onViewDetail={(id) => navigate(`/transactions/${id}`)}
+                                onEdit={(id) => setEditingTxId(id)}
+                                onDelete={() => {}} // Consider adding delete handler if appropriate
+                                isEditing={editingTxId === tx.id}
+                                setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
+                            />
+                        ))
+                    )}
                 </TabsContent>
             </Tabs>
         </div>
