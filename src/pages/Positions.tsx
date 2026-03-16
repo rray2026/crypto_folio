@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { mul, add, div } from "@/lib/math"
@@ -31,7 +31,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Positions() {
-    const navigate = useNavigate()
     const deletePosition = usePositionStore((state) => state.deletePosition)
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange } = useSettingsStore()
@@ -292,12 +291,7 @@ export default function Positions() {
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center justify-between">
-                                                                    <p 
-                                                                        className="text-sm text-foreground/80 font-mono font-medium hover:text-primary transition-colors cursor-pointer"
-                                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/assets/${pos.symbol.replace('/', '_')}`); }}
-                                                                    >
-                                                                        {pos.symbol}
-                                                                    </p>
+                                                                    <p className="text-sm text-foreground/80 font-mono font-medium">{pos.symbol}</p>
                                                                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
                                                                         <div className="flex items-center gap-1" title="Start Date">
                                                                             <Calendar className="h-3 w-3" />

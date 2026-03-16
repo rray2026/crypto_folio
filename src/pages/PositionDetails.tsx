@@ -122,12 +122,7 @@ export default function PositionDetails() {
                                         )}
                                     </div>
                                     <p className="text-muted-foreground font-mono text-sm md:text-base flex items-center gap-2">
-                                    <span 
-                                        className="cursor-pointer hover:text-primary transition-colors"
-                                        onClick={() => navigate(`/assets/${position.symbol.replace('/', '_')}`)}
-                                    >
                                         {position.symbol}
-                                    </span>
                                     {position.type === 'SHADOW' && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded border text-muted-foreground font-sans">Lab Only</span>}
                                     </p>
                                 </div>

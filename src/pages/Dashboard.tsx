@@ -2,9 +2,11 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 
 export default function Dashboard() {
+    const navigate = useNavigate()
     const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices } = useSettingsStore()
 
@@ -57,7 +59,11 @@ export default function Dashboard() {
                             const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
                             
                             return (
-                                <div key={pair} className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group">
+                                <div 
+                                    key={pair} 
+                                    className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group cursor-pointer"
+                                    onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
+                                >
                                     <div className="flex items-center gap-3">
                                         <div className="h-2 w-2 rounded-full bg-green-500" />
                                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
