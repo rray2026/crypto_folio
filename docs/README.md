@@ -1,23 +1,46 @@
-# CryptoFolio 用户手册 (User Manual)
+# CryptoFolio Documentation Hub
 
-欢迎使用 **CryptoFolio** - 您的全能且本地优先的加密货币波段交易和投资组合追踪工作站。
+Welcome to the central documentation for CryptoFolio. This hub provides both user-centric guides and technical implementation details.
 
-## 目录指南
+## 📖 User Guides (How-to)
 
-本手册被划分为几个核心章节，帮助您从零开始掌握应用的所有功能：
+Our guides are designed to help you master the application from a functional perspective.
 
-1. [**01. 仪表盘与核心指标分析 (Dashboard)**](./01-dashboard.md)
-   - 了解如何看懂您的总资产盈亏、胜率、以及活跃波段。
-2. [**02. 交易流水记录与导入 (Transactions)**](./02-transactions.md)
-   - 学习如何单笔记录交易，或是从币安等交易所批量导入历史订单。
-3. [**03. 策略波段管理 (Positions)**](./03-positions.md)
-   - 学习如何创建多头/空头波段，关联底层交易单，并实时追踪您的交易收益。
-4. [**04. 系统设置与数据迁移 (Settings)**](./04-settings.md)
-   - 了解如何切换黑暗模式、查阅投资术语字典，以及最重要的——如何备份和还原您的所有本地数据。
+1. [**Market Watch & Dashboard**](guides/01-market-watch.md): Tracking real-time prices and pinned assets.
+2. [**Transaction Mastery**](guides/02-transaction-mastery.md): Logging trades and mastering Binance bulk imports.
+3. [**Position Strategies**](guides/03-position-strategies.md): Understanding Strategic (Primary) vs. Analysis (Shadow) positions.
+4. [**Performance Analytics**](guides/04-performance-analytics.md): Deep dive into Global ROI, Win Rate, and time filtering.
+5. [**Data Security & UI**](guides/05-data-security.md): Managing backups, restores, and theme settings.
 
-## 数据隐私声明
+## 🛠 Technical Reference (Internal)
 
-CryptoFolio 是一个以 **“本地优先 (Local-First)”** 为原则构建的 Web 应用程序。这意味着：
-- 您录入的所有交易资产数据、配置信息，甚至您的资产总额，**都仅安全地存储在您当前使用的浏览器本地缓存 (IndexedDB) 中**。
-- 只有在获取实时行情时，应用会向 Binance Open API 发起匿名的市场价格查询。
-- 我们不提供云端账号系统，您的数据永远属于您自己。请务必阅读设置向导中的“数据备份与还原”章节，以保障数据在重装系统或更换电脑时不丢失。
+For developers or advanced users interested in the inner workings of the engine.
+
+- [**Technical Architecture**](architecture.md): Data models, metric engine details, and Price API caching.
+- [**Technical Use Cases**](use_cases.md): User flows mapped to system events.
+- [**Deployment Guide**](deployment.md): Standard procedures for Cloudflare Pages deployment.
+
+---
+*Privacy First. Local Storage. Strategic Insights.*
+
+## Development Guide
+
+### Prerequisites
+- Node.js (v18+)
+- npm
+
+### Setup
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Start the dev server: `npm run dev`.
+
+### Testing
+We use **Vitest** for unit and integration testing.
+- Run all tests: `npm run test`.
+- Run tests in watch mode: `npm run test:watch`.
+
+### Key Directories
+- `src/lib`: Core logic, database setup, and metrics.
+- `src/store`: Zustand state management.
+- `src/pages`: Main UI views.
+- `src/components`: Reusable UI components.

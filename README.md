@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# CryptoFolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A high-performance, privacy-focused crypto portfolio tracker built with React and TypeScript. Unlike traditional trackers, CryptoFolio stores all your sensitive trade data locally in your browser using IndexedDB, ensuring complete privacy and zero server-side dependency.
 
-Currently, two official plugins are available:
+## ✨ Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Privacy First**: No account required. All data stays on your machine.
+- **Strategic Analysis**: Group transactions into **Primary** (for total PnL) and **Shadow** (for "what-if" analysis) positions.
+- **Precise Metrics**: Real-time calculation of Weighted Average Price, ROI, and Win Rate.
+- **Modern UX**: Stunning dashboard with high-density performance summaries and fluid layout.
+- **Offline Capable**: Works entirely client-side, with optional price sync from public APIs.
 
-## React Compiler
+## 🚀 Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Start Dev Server**:
+   ```bash
+   npm run dev
+   ```
+3. **Run Tests**:
+   ```bash
+   npm run test
+   ```
 
-## Expanding the ESLint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Framework**: React 19 + Vite
+- **Language**: TypeScript
+- **Database**: Dexie.js (IndexedDB)
+- **State**: Zustand
+- **Styling**: Tailwind CSS + Shadcn/UI
+- **Icons**: Lucide-React
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📖 Documentation | 文档
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Detailed documentation is available in the [**`docs/`**](docs/README.md) directory:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [**User Guides**](docs/guides/01-market-watch.md): Step-by-step instructions for market tracking, import, and strategies.
+- [**Technical Architecture**](docs/architecture.md): Deep dive into data models and the metric engine.
+- [**Deployment**](docs/deployment.md): How to deploy your own instance.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+*Developed with ❤️ for the Crypto Community.*
