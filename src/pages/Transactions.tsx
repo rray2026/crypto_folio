@@ -6,7 +6,7 @@ import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle, Activity, Calendar } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -30,14 +30,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function Transactions() {
