@@ -249,10 +249,10 @@ export default function Positions() {
                                                 return (
                                                     <Link to={`/positions/${pos.id}`} key={pos.id} className="block transition-transform hover:-translate-y-1">
                                                         <Card 
-                                                            className={`h-full flex flex-col relative group overflow-hidden border-border/40 hover:border-border transition-colors ${
+                                                            className={`h-full flex flex-col relative group overflow-hidden border-border/40 hover:border-border transition-colors bg-card/60 hover:bg-card/100 shadow-sm ${
                                                                 pos.type === 'SHADOW' 
-                                                                ? 'bg-amber-500/[0.03] border-dashed grayscale-[0.2]' 
-                                                                : 'bg-card/60 hover:bg-card/100 shadow-sm'
+                                                                ? 'border-dashed border-2' 
+                                                                : ''
                                                             }`}
                                                         >
                                                             <CardHeader className="pb-3 border-b border-border/40">
@@ -263,7 +263,7 @@ export default function Positions() {
                                                                     <div className="flex justify-end gap-1.5 shrink-0 flex-wrap">
                                                                         {/* Shadow Badge */}
                                                                         {pos.type === 'SHADOW' && (
-                                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-muted/50 text-muted-foreground border border-border">
                                                                                 <Eye className="h-2.5 w-2.5" />
                                                                                 SHADOW
                                                                             </div>
