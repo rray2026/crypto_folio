@@ -3,12 +3,12 @@ import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { mul, add, div } from "@/lib/math"
-import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
+import type { Position } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 
-import { Plus, Trash2, ArrowRight, Calendar, Clock, Wallet, Activity, Target, TrendingUp, TrendingDown, LineChart, Circle, Eye } from "lucide-react"
-import { differenceInDays, format } from "date-fns"
+import { Plus, Target, Activity, Wallet, LineChart, TrendingUp } from "lucide-react"
+import { differenceInDays } from "date-fns"
 import { getPositionMetrics } from "@/lib/metrics"
 
 import { Button } from "@/components/ui/button"
@@ -27,11 +27,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Positions() {
-    const deletePosition = usePositionStore((state) => state.deletePosition)
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange } = useSettingsStore()
 
@@ -68,13 +67,6 @@ export default function Positions() {
         return getPositionMetrics(pos, linkedTxs, prices);
     };
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        if (confirm("Are you sure you want to delete this position? Linkings to transactions will be removed (but transactions are kept).")) {
-            await deletePosition(id)
-        }
-    }
 
     // Calculate global metrics
     let totalRealizedPnL = 0;
@@ -93,7 +85,7 @@ export default function Positions() {
     if (dashboardTimeRange === '1Y') timeThreshold = now - 365 * 24 * 60 * 60 * 1000;
 
     if (positions && transactions) {
-        positions.forEach(pos => {
+        positions.forEach((pos: Position) => {
             const metrics = getMetrics(pos);
             const endDate = metrics.derivedEndDate || now;
             
@@ -242,10 +234,16 @@ export default function Positions() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                        {filteredPositions.map(pos => ({ pos, metrics: getMetrics(pos) }))
-                                            .sort((a, b) => (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0))
-                                            .map(({ pos, metrics }) => {
-                                                const duration = differenceInDays(metrics.derivedEndDate || Date.now(), metrics.derivedStartDate || Date.now());
+                                        {filteredPositions
+                                            ?.filter((p: any) => {
+                                                if (timeThreshold === 0) return true;
+                                                const metrics = getMetrics(p);
+                                                return (metrics.derivedStartDate || p.startDate) >= timeThreshold;
+                                            })
+                                            .map((pos: any) => ({ pos, metrics: getMetrics(pos) }))
+                                            .sort((a: any, b: any) => (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0))
+                                            .map(({ pos, metrics }: { pos: any, metrics: any }) => {
+                                                const duration = metrics.derivedStartDate ? differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate) : 0;
                                                 const isActive = pos.status === 'OPEN';
 
                                                 return (
