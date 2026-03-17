@@ -24,8 +24,12 @@ export default function Glossary() {
                     definition: "Selling an asset with the expectation that its price will decrease. You 'sell high' and aim to 'buy back' lower."
                 },
                 {
-                    term: "Execution Price",
-                    definition: "The specific price at which a transaction was filled in the market."
+                    term: "Primary Strategy",
+                    definition: "Official portfolio strategies. Metrics from these positions are included in your global balance and total PnL."
+                },
+                {
+                    term: "Shadow Analysis",
+                    definition: "Sandbox or experimental strategies. Used for 'What if' scenarios or pure technical analysis without affecting your real portfolio metrics."
                 }
             ]
         },
@@ -34,9 +38,9 @@ export default function Glossary() {
             icon: <Calculator className="h-5 w-5 text-emerald-500" />,
             items: [
                 {
-                    term: "Average Entry Price",
-                    definition: "The volume-weighted average cost of all your entry transactions. Formula: Total Cost / Total Quantity Purchased.",
-                    formula: "Σ(Price * Quantity) / ΣQuantity"
+                    term: "Avg. Cost (Breakeven)",
+                    definition: "The net cost of your remaining holdings, considering both buy price and any profit/loss already realized from partial sells.",
+                    formula: "(Total Spent - Total Revenue) / Remaining Quantity"
                 },
                 {
                     term: "Realized PnL",
@@ -63,12 +67,12 @@ export default function Glossary() {
             icon: <ShieldCheck className="h-5 w-5 text-purple-500" />,
             items: [
                 {
-                    term: "OPEN (Unrealized)",
-                    definition: "A position that currently has a balance. It is actively exposed to market price movements."
+                    term: "ACTIVE (Open)",
+                    definition: "A strategy that is currently in progress. It may have an active balance or simply hasn't been manually closed yet."
                 },
                 {
-                    term: "CLOSED (Realized)",
-                    definition: "A position where the quantity has returned to zero. The strategy is complete, and the final results are locked into your history."
+                    term: "ARCHIVED (Closed)",
+                    definition: "A strategy that has been completed or stopped. The results are finalized and historically locked."
                 },
                 {
                     term: "Total Investment",
