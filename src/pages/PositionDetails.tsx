@@ -227,6 +227,22 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
+                            {/* Avg. Entry Price */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg. Cost</span>
+                                <span className="text-base sm:text-xl font-bold font-mono">
+                                    {avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
+                                </span>
+                            </div>
+
+                            {/* Avg. Exit Price */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg. Exit</span>
+                                <span className="text-base sm:text-xl font-bold font-mono">
+                                    {avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
+                                </span>
+                            </div>
+
                             {/* ROI */}
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Return (ROI)</span>
