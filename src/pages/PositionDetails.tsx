@@ -219,9 +219,9 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
-                            {/* Unrealized PnL -> Active PnL */}
+                            {/* Unrealized PnL */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Active PnL</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
                                 <span className={`text-base sm:text-xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
                                     {totalRemaining > 0 ? `$${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>

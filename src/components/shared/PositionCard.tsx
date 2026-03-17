@@ -107,7 +107,7 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                     <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
                         <div className="flex flex-col">
                             <span className={isActive ? 'text-[11px] text-primary/80 mb-1 uppercase tracking-wider font-semibold' : 'text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold'}>
-                                {isActive ? 'Active PnL' : 'Archived PnL'}
+                                {isActive ? 'Unrealized PnL' : 'Realized PnL'}
                             </span>
                             <span className={`font-mono font-bold text-lg ${isActive ? (metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : '') : (metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : '')}`}>
                                 ${isActive 
