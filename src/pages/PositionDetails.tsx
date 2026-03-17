@@ -105,7 +105,7 @@ export default function PositionDetails() {
     const {
         realizedPnL, unrealizedPnL, roi,
         totalRemaining, currentPrice, positionType, derivedStartDate,
-        derivedEndDate, avgBuyPrice, avgSellPrice
+        derivedEndDate, avgBuyPrice, avgSellPrice, breakevenPrice
     } = getPositionMetrics(position, linkedTxs, prices);
 
     return (
@@ -128,10 +128,6 @@ export default function PositionDetails() {
                                             </div>
                                         )}
                                     </div>
-                                    <p className="text-muted-foreground font-mono text-sm md:text-base flex items-center gap-2">
-                                        {position.symbol}
-                                    {position.type === 'SHADOW' && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded border text-muted-foreground font-sans">Lab Only</span>}
-                                    </p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     {/* Direction Badge */}
@@ -227,11 +223,11 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
-                            {/* Avg. Entry Price */}
+                            {/* Avg. Cost (Breakeven) */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg. Cost</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg. Cost</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
+                                    {(breakevenPrice > 0 && totalRemaining > 0) ? `$${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 

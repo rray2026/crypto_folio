@@ -11,6 +11,7 @@ Our guides are designed to help you master the application from a functional per
 3. [**Position Strategies**](guides/03-position-strategies.md): Understanding Strategic (Primary) vs. Analysis (Shadow) positions.
 4. [**Performance Analytics**](guides/04-performance-analytics.md): Deep dive into Global ROI, Win Rate, and time filtering.
 5. [**Data Security & UI**](guides/05-data-security.md): Managing backups, restores, and theme settings.
+6. [**Glossary (名词解释)**](GLOSSARY.md): Definitions and calculation logic for all metrics.
 
 ## 🛠 Technical Reference (Internal)
 

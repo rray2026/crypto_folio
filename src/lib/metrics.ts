@@ -73,5 +73,18 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
         }
     }
 
-    return { realizedPnL, unrealizedPnL, totalPnL, roi, totalInvestment, totalRemaining, currentPrice, positionType, derivedStartDate, derivedEndDate, avgBuyPrice, avgSellPrice };
+    let breakevenPrice = 0;
+    if (totalRemaining > 0) {
+        if (positionType === 'LONG') {
+            breakevenPrice = div(sub(tCost, tRevenue), totalRemaining);
+        } else {
+            // For SHORT: (Revenue - Cost) / Remaining. 
+            // If you sold 1 BTC @ 100, and bought 0.5 @ 40, you have 0.5 short remaining.
+            // You have 60 left to "cover" the remaining 0.5. 60/0.5 = 120.
+            // If price hits 120, you close at 120*0.5=60, total profit 0.
+            breakevenPrice = div(sub(tRevenue, tCost), totalRemaining);
+        }
+    }
+
+    return { realizedPnL, unrealizedPnL, totalPnL, roi, totalInvestment, totalRemaining, currentPrice, positionType, derivedStartDate, derivedEndDate, avgBuyPrice, avgSellPrice, breakevenPrice };
 }
