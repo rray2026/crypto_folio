@@ -212,25 +212,25 @@ export default function Positions() {
                     </CardContent>
                 </Card>
             ) : (
-                <Tabs defaultValue="unrealized" className="w-full">
+                <Tabs defaultValue="active" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
-                        <TabsTrigger value="unrealized">UNREALIZED ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
-                        <TabsTrigger value="realized">REALIZED ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
-                        <TabsTrigger value="all">ALL</TabsTrigger>
+                        <TabsTrigger value="active" className="font-bold tracking-wider">ACTIVE ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
+                        <TabsTrigger value="archived" className="font-bold tracking-wider">ARCHIVED ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
+                        <TabsTrigger value="all" className="font-bold tracking-wider">ALL</TabsTrigger>
                     </TabsList>
 
-                    {['unrealized', 'realized', 'all'].map(tab => {
+                    {['active', 'archived', 'all'].map(tab => {
                         const filteredPositions = positions.filter(p => {
-                            if (tab === 'unrealized') return p.status === 'OPEN';
-                            if (tab === 'realized') return p.status === 'CLOSED';
+                            if (tab === 'active') return p.status === 'OPEN';
+                            if (tab === 'archived') return p.status === 'CLOSED';
                             return true; // all
                         });
 
                         return (
                             <TabsContent value={tab} key={tab}>
                                 {filteredPositions.length === 0 ? (
-                                    <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50">
-                                        No {tab} positions found.
+                                    <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50 font-medium">
+                                        No {tab} strategies found.
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

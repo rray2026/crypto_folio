@@ -32,6 +32,7 @@ export default function PositionDetails() {
     const removeTransactionFromPosition = usePositionStore(state => state.removeTransactionFromPosition)
     const closePosition = usePositionStore(state => state.closePosition)
     const openPosition = usePositionStore(state => state.openPosition)
+    const deletePosition = usePositionStore(state => state.deletePosition)
     const { prices, fetchPrices } = useSettingsStore()
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -86,6 +87,12 @@ export default function PositionDetails() {
         } else {
             await openPosition(id);
         }
+    }
+
+    const handleDeletePosition = async () => {
+        if (!id || !window.confirm("Are you sure you want to delete this position strategy? All transaction links will be removed.")) return;
+        await deletePosition(id);
+        navigate('/positions');
     }
 
     const handleRefresh = async () => {
@@ -144,7 +151,7 @@ export default function PositionDetails() {
                                         : 'bg-muted/50 text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
-                                        {position.status === 'OPEN' ? 'UNREALIZED' : 'REALIZED'}
+                                        {position.status === 'OPEN' ? 'ACTIVE' : 'ARCHIVED'}
                                     </div>
                                 </div>
                             </div>
@@ -193,6 +200,9 @@ export default function PositionDetails() {
                                 <PositionEditForm position={position} onSuccess={() => setIsEditDialogOpen(false)} />
                             </DialogContent>
                         </Dialog>
+                        <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={handleDeletePosition}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
 
@@ -209,9 +219,9 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
-                            {/* Unrealized PnL */}
+                            {/* Unrealized PnL -> Active PnL */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Active PnL</span>
                                 <span className={`text-base sm:text-xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
                                     {totalRemaining > 0 ? `$${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>

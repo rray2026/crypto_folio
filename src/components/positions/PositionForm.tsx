@@ -5,13 +5,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SymbolSelector } from "../transactions/SymbolSelector"
 import { DateTimePicker } from "../ui/DateTimePicker"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 
 export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
     const createPosition = usePositionStore(state => state.createPosition)
@@ -57,18 +50,33 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
                 <DateTimePicker value={startDate} onChange={setStartDate} />
             </div>
 
-            <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Position Nature</Label>
-                <Select value={type} onValueChange={(val: any) => setType(val)}>
-                    <SelectTrigger className="w-full h-11 rounded-xl border-border/50 font-medium">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-border/40 shadow-2xl">
-                        <SelectItem value="PRIMARY" className="font-medium">🎯 Strategic (Primary)</SelectItem>
-                        <SelectItem value="SHADOW" className="font-medium">👀 Analysis (Shadow)</SelectItem>
-                    </SelectContent>
-                </Select>
-                <div className="px-1 pt-1">
+            <div className="space-y-3">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Type</Label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/30 rounded-xl border border-border/50">
+                    <button
+                        type="button"
+                        onClick={() => setType('PRIMARY')}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                            type === 'PRIMARY' 
+                            ? 'bg-background text-primary shadow-sm ring-1 ring-border/50' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        PRIMARY (REAL)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setType('SHADOW')}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                            type === 'SHADOW' 
+                            ? 'bg-background text-amber-600 shadow-sm ring-1 ring-border/50' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        SHADOW (OBSERV.)
+                    </button>
+                </div>
+                <div className="px-1">
                     <p className="text-[10px] leading-relaxed text-muted-foreground italic">
                         {type === 'PRIMARY' 
                             ? "Real asset tracking. Counted towards global portfolio metrics." 

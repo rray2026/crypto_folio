@@ -9,6 +9,7 @@ import type { Position } from "@/lib/types"
 
 export function PositionEditForm({ position, onSuccess }: { position: Position, onSuccess: () => void }) {
     const updatePosition = usePositionStore(state => state.updatePosition)
+    const [type, setType] = useState<'PRIMARY' | 'SHADOW'>(position.type)
     const [strategyName, setStrategyName] = useState(position.strategyName || "")
     const [notes, setNotes] = useState(position.notes || "")
     const [startDate, setStartDate] = useState(() => {
@@ -24,6 +25,7 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
         e.preventDefault()
 
         await updatePosition(position.id, {
+            type,
             strategyName: strategyName || undefined,
             notes: notes || undefined,
             startDate: startDate ? new Date(startDate).getTime() : undefined,
@@ -46,6 +48,34 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
                     className="rounded-xl bg-muted/20 border-border/30 h-11 text-base font-bold tracking-tight opacity-70"
                     disabled={true}
                 />
+            </div>
+
+            <div className="space-y-3">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Type</Label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/30 rounded-xl border border-border/50">
+                    <button
+                        type="button"
+                        onClick={() => setType('PRIMARY')}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                            type === 'PRIMARY' 
+                            ? 'bg-background text-primary shadow-sm ring-1 ring-border/50' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        PRIMARY (REAL)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setType('SHADOW')}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                            type === 'SHADOW' 
+                            ? 'bg-background text-amber-600 shadow-sm ring-1 ring-border/50' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        SHADOW (OBSERV.)
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-2">

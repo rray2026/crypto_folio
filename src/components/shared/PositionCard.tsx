@@ -52,7 +52,7 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                                 : 'bg-muted/50 text-muted-foreground border-border'
                             }`}>
                                 <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
-                                {isActive ? 'UNREALIZED' : 'REALIZED'}
+                                {isActive ? 'ACTIVE' : 'ARCHIVED'}
                             </div>
                         </div>
                     </div>
@@ -106,8 +106,8 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                     {/* Primary Metrics: Unrealized PnL and ROI */}
                     <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
                         <div className="flex flex-col">
-                            <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">
-                                {isActive ? 'Unrealized PnL' : 'Final PnL'}
+                            <span className={isActive ? 'text-[11px] text-primary/80 mb-1 uppercase tracking-wider font-semibold' : 'text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold'}>
+                                {isActive ? 'Active PnL' : 'Archived PnL'}
                             </span>
                             <span className={`font-mono font-bold text-lg ${isActive ? (metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : '') : (metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : '')}`}>
                                 ${isActive 
