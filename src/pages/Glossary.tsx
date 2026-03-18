@@ -134,9 +134,9 @@ export default function Glossary() {
                                             {item.definition}
                                         </p>
                                         {item.formula && (
-                                            <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg border border-border/10">
-                                                <Info className="h-3.5 w-3.5 text-primary/50 shrink-0" />
-                                                <code className="text-[11px] font-mono font-bold text-primary/80 truncate">
+                                            <div className="flex items-start gap-2 p-2 bg-muted/30 rounded-lg border border-border/10">
+                                                <Info className="h-3.5 w-3.5 text-primary/50 shrink-0 mt-0.5" />
+                                                <code className="text-[11px] font-mono font-bold text-primary/80 break-words min-w-0">
                                                     {item.formula}
                                                 </code>
                                             </div>
