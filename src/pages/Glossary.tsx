@@ -38,9 +38,19 @@ export default function Glossary() {
             icon: <Calculator className="h-5 w-5 text-emerald-500" />,
             items: [
                 {
+                    term: "Avg Entry",
+                    definition: "The weighted average price at which the position was entered. For LONG positions, this is the average buy price across all entry transactions. For SHORT positions, it is the average sell price.",
+                    formula: "Total Entry Amount / Total Entry Quantity"
+                },
+                {
+                    term: "Avg. Exit",
+                    definition: "The weighted average price at which units were closed out of the position. For LONG positions, this is the average sell price. For SHORT positions, it is the average buy-back price.",
+                    formula: "Total Exit Amount / Total Exit Quantity"
+                },
+                {
                     term: "Avg. Cost (Breakeven)",
-                    definition: "The net cost of your remaining holdings, considering both buy price and any profit/loss already realized from partial sells.",
-                    formula: "(Total Spent - Total Revenue) / Remaining Quantity"
+                    definition: "The price at which your remaining holdings would need to be closed to break even, accounting for capital already recovered from partial exits. For LONG: cost minus recovered revenue, spread over remaining quantity. For SHORT: revenue minus buyback cost, spread over remaining short quantity.",
+                    formula: "LONG: (Total Spent - Total Revenue) / Remaining Qty | SHORT: (Total Revenue - Total Cost) / Remaining Qty"
                 },
                 {
                     term: "Realized PnL",
