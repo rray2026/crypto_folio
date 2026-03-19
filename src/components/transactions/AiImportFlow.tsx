@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useTransactionStore } from "@/store/useTransactionStore"
@@ -42,22 +42,15 @@ interface ParsedTx {
 export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const [step, setStep] = useState<1 | 2>(1)
     const [copied, setCopied] = useState(false)
-    const [pasting, setPasting] = useState(false)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
     const [pastedJson, setPastedJson] = useState("")
     const [parsed, setParsed] = useState<ParsedTx | null>(null)
     const [parseError, setParseError] = useState("")
     const addTransaction = useTransactionStore((state) => state.addTransaction)
 
-    const handlePasteFromClipboard = async () => {
-        try {
-            setPasting(true)
-            const text = await navigator.clipboard.readText()
-            setPastedJson(text)
-        } catch {
-            // ignore permission denied
-        } finally {
-            setPasting(false)
-        }
+    const handlePasteFromClipboard = () => {
+        textareaRef.current?.focus()
+        document.execCommand("paste")
     }
 
     const handleCopy = async () => {
@@ -163,13 +156,13 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                             size="sm"
                             className="h-7 gap-1.5 text-xs shrink-0"
                             onClick={handlePasteFromClipboard}
-                            disabled={pasting}
                         >
                             <ClipboardPaste className="h-3.5 w-3.5" />
                             从剪贴板粘贴
                         </Button>
                     </div>
                     <Textarea
+                        ref={textareaRef}
                         value={pastedJson}
                         onChange={(e) => setPastedJson(e.target.value)}
                         placeholder={'{\n  "symbol": "BTC/USDT",\n  "type": "BUY",\n  ...\n}'}
