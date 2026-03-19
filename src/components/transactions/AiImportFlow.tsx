@@ -7,6 +7,7 @@ import { Copy, Check, ArrowRight, AlertCircle, Sparkles } from "lucide-react"
 const AI_PROMPT = `You are a trading record parser. Extract the trade details from the screenshot and return ONLY a JSON object in the exact format below, with no extra text, markdown, or explanation.
 
 {
+  "orderId": "",
   "symbol": "BTC/USDT",
   "type": "BUY",
   "date": "YYYY-MM-DD HH:mm:ss",
@@ -17,6 +18,7 @@ const AI_PROMPT = `You are a trading record parser. Extract the trade details fr
 }
 
 Rules:
+- orderId: order number or trade ID shown in the screenshot (use "" if not shown)
 - symbol: trading pair in "BASE/QUOTE" format (e.g. BTC/USDT, ETH/USDT)
 - type: must be exactly "BUY" or "SELL"
 - date: local time in "YYYY-MM-DD HH:mm:ss" format
@@ -27,6 +29,7 @@ Rules:
 - All numeric values must be plain numbers, no currency symbols or commas`
 
 interface ParsedTx {
+    orderId?: string
     symbol: string
     type: "BUY" | "SELL"
     date: string
@@ -68,6 +71,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             }
 
             setParsed({
+                orderId: obj.orderId ? String(obj.orderId) : undefined,
                 symbol: String(obj.symbol).toUpperCase(),
                 type: obj.type,
                 date: String(obj.date),
@@ -91,6 +95,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             amount: parsed.amount,
             fee: parsed.fee,
             date: new Date(parsed.date).getTime(),
+            orderId: parsed.orderId,
         })
         onSuccess()
     }
@@ -163,6 +168,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                     <p className="text-sm text-muted-foreground">请确认以下交易信息，确认后将自动录入。</p>
                     <div className="rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30 text-sm">
                         {[
+                            ...(parsed.orderId ? [{ label: "订单号", value: parsed.orderId }] : []),
                             { label: "交易对", value: parsed.symbol },
                             { label: "方向", value: parsed.type },
                             { label: "时间", value: parsed.date },
