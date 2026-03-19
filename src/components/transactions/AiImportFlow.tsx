@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { Copy, Check, ArrowRight, AlertCircle, Sparkles } from "lucide-react"
+import { Copy, Check, ArrowRight, AlertCircle, Sparkles, ClipboardPaste } from "lucide-react"
 
 const AI_PROMPT = `You are a trading record parser. Extract the trade details from the screenshot and return ONLY a JSON object in the exact format below, with no extra text, markdown, or explanation.
 
@@ -42,10 +42,23 @@ interface ParsedTx {
 export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const [step, setStep] = useState<1 | 2>(1)
     const [copied, setCopied] = useState(false)
+    const [pasting, setPasting] = useState(false)
     const [pastedJson, setPastedJson] = useState("")
     const [parsed, setParsed] = useState<ParsedTx | null>(null)
     const [parseError, setParseError] = useState("")
     const addTransaction = useTransactionStore((state) => state.addTransaction)
+
+    const handlePasteFromClipboard = async () => {
+        try {
+            setPasting(true)
+            const text = await navigator.clipboard.readText()
+            setPastedJson(text)
+        } catch {
+            // ignore permission denied
+        } finally {
+            setPasting(false)
+        }
+    }
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(AI_PROMPT)
@@ -140,9 +153,22 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
         <div className="space-y-4 pt-2">
             {!parsed ? (
                 <>
-                    <p className="text-sm text-muted-foreground">
-                        将 AI 返回的 JSON 内容粘贴到下方，点击解析。
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            将 AI 返回的 JSON 内容粘贴到下方，点击解析。
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1.5 text-xs shrink-0"
+                            onClick={handlePasteFromClipboard}
+                            disabled={pasting}
+                        >
+                            <ClipboardPaste className="h-3.5 w-3.5" />
+                            从剪贴板粘贴
+                        </Button>
+                    </div>
                     <Textarea
                         value={pastedJson}
                         onChange={(e) => setPastedJson(e.target.value)}
