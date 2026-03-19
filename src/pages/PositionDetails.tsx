@@ -231,9 +231,9 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
-                            {/* Avg. Exit Price */}
+                            {/* Avg. Sell Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg. Exit</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg. Sell</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
                                 </span>
@@ -247,11 +247,11 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
-                            {/* Avg Entry Price */}
+                            {/* Avg Buy Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Entry</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
                                 <span className="text-base sm:text-lg font-mono font-medium truncate">
-                                    ${(positionType === 'LONG' ? avgBuyPrice : avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                                    {avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}` : '--'}
                                 </span>
                             </div>
 

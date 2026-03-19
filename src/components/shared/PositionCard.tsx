@@ -123,16 +123,16 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                         </>
                     ) : (
                         <>
-                            {/* Avg Entry and Avg Exit */}
+                            {/* Avg Buy and Avg Sell */}
                             <div className="flex justify-between items-center">
                                 <div className="flex flex-col">
-                                    <span className="text-xs text-muted-foreground mb-1">Avg Entry</span>
+                                    <span className="text-xs text-muted-foreground mb-1">Avg Buy</span>
                                     <span className="font-mono text-sm font-bold">
                                         ${metrics.avgBuyPrice > 0 ? metrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
                                     </span>
                                 </div>
                                 <div className="flex flex-col text-right">
-                                    <span className="text-xs text-muted-foreground mb-1">Avg Exit</span>
+                                    <span className="text-xs text-muted-foreground mb-1">Avg Sell</span>
                                     <span className="font-mono text-sm font-bold">
                                         ${metrics.avgSellPrice > 0 ? metrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
                                     </span>
