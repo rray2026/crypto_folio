@@ -12,6 +12,13 @@ interface TransactionState {
 
 export const useTransactionStore = create<TransactionState>(() => ({
     addTransaction: async (tx) => {
+        // Dedup by exchange+orderId if both are present
+        if (tx.exchange && tx.orderId) {
+            const existing = await db.transactions
+                .filter(t => t.exchange === tx.exchange && t.orderId === tx.orderId)
+                .first();
+            if (existing) return existing.id;
+        }
         const id = crypto.randomUUID();
         await db.transactions.add({
             ...tx,
@@ -24,14 +31,28 @@ export const useTransactionStore = create<TransactionState>(() => ({
         const fullTxs = txs.map(tx => ({
             ...tx,
             id: tx.id || crypto.randomUUID(),
-            associatedPositionIds: [],
-        }));
+            associatedPositionIds: [] as string[],
+        })) as Transaction[];
 
+        // Layer 1: dedup by id
         const incomingIds = fullTxs.map(t => t.id);
-        const existingTxs = await db.transactions.where('id').anyOf(incomingIds).toArray();
-        const existingIds = new Set(existingTxs.map(t => t.id));
+        const existingById = await db.transactions.where('id').anyOf(incomingIds).toArray();
+        const existingIdSet = new Set(existingById.map(t => t.id));
 
-        const newTxs = fullTxs.filter(t => !existingIds.has(t.id));
+        // Layer 2: dedup by exchange+orderId (for cross-source dedup)
+        const txsWithKey = fullTxs.filter(t => t.exchange && t.orderId);
+        let existingExchangeOrderIdSet = new Set<string>();
+        if (txsWithKey.length > 0) {
+            const existingKeyed = await db.transactions
+                .filter(t => !!t.exchange && !!t.orderId)
+                .toArray();
+            existingExchangeOrderIdSet = new Set(existingKeyed.map(t => `${t.exchange}:${t.orderId}`));
+        }
+
+        const newTxs = fullTxs.filter(t =>
+            !existingIdSet.has(t.id) &&
+            !(t.exchange && t.orderId && existingExchangeOrderIdSet.has(`${t.exchange}:${t.orderId}`))
+        );
 
         if (newTxs.length > 0) {
             await db.transactions.bulkAdd(newTxs as any);
