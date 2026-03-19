@@ -43,14 +43,27 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const [step, setStep] = useState<1 | 2>(1)
     const [copied, setCopied] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const autoPasteRef = useRef(false)
     const [pastedJson, setPastedJson] = useState("")
     const [parsed, setParsed] = useState<ParsedTx | null>(null)
     const [parseError, setParseError] = useState("")
     const addTransaction = useTransactionStore((state) => state.addTransaction)
 
     const handlePasteFromClipboard = () => {
+        setPastedJson("")
+        autoPasteRef.current = true
         textareaRef.current?.focus()
         document.execCommand("paste")
+    }
+
+    const handleTextareaPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        if (!autoPasteRef.current) return
+        autoPasteRef.current = false
+        e.preventDefault()
+        const text = e.clipboardData.getData("text")
+        setPastedJson(text)
+        textareaRef.current?.blur()
+        handleParse(text)
     }
 
     const handleCopy = async () => {
@@ -59,12 +72,12 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
         setTimeout(() => setCopied(false), 2000)
     }
 
-    const handleParse = () => {
+    const handleParse = (text?: string) => {
         setParseError("")
         setParsed(null)
         try {
             // Extract JSON block if wrapped in markdown code fences
-            const jsonStr = pastedJson.replace(/```(?:json)?\n?/g, "").trim()
+            const jsonStr = (text ?? pastedJson).replace(/```(?:json)?\n?/g, "").trim()
             const obj = JSON.parse(jsonStr)
 
             if (!obj.symbol || !obj.type || !obj.date || obj.price == null || obj.quantity == null || obj.amount == null) {
@@ -165,6 +178,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                         ref={textareaRef}
                         value={pastedJson}
                         onChange={(e) => setPastedJson(e.target.value)}
+                        onPaste={handleTextareaPaste}
                         placeholder={'{\n  "symbol": "BTC/USDT",\n  "type": "BUY",\n  ...\n}'}
                         className="font-mono text-xs min-h-[180px] bg-muted/30 border-border/50"
                     />
@@ -176,7 +190,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                     )}
                     <Button
                         className="w-full h-11 rounded-xl font-bold"
-                        onClick={handleParse}
+                        onClick={() => handleParse()}
                         disabled={!pastedJson.trim()}
                     >
                         解析内容
