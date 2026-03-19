@@ -6,8 +6,9 @@ import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
+import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle, Activity, Calendar } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -36,7 +37,7 @@ import { Card, CardContent } from "@/components/ui/card"
 export default function Transactions() {
     const navigate = useNavigate()
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-    const [addMode, setAddMode] = useState<'choice' | 'manual'>('choice')
+    const [addMode, setAddMode] = useState<'choice' | 'manual' | 'ai'>('choice')
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
@@ -236,7 +237,7 @@ export default function Transactions() {
                             <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6 overflow-hidden">
                                 <DialogHeader>
                                     <DialogTitle>
-                                        {addMode === 'manual' ? 'Record Transaction' : 'Add Transaction'}
+                                        {addMode === 'manual' ? 'Record Transaction' : addMode === 'ai' ? 'AI 辅助导入' : 'Add Transaction'}
                                     </DialogTitle>
                                     {addMode === 'choice' && (
                                         <DialogDescription>
@@ -246,34 +247,50 @@ export default function Transactions() {
                                 </DialogHeader>
                                 
                                 {addMode === 'choice' ? (
-                                    <div className="grid grid-cols-1 gap-4 py-6">
-                                        <Button 
-                                            variant="outline" 
-                                            className="h-24 flex flex-col items-center justify-center gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                                    <div className="grid grid-cols-1 gap-3 py-4">
+                                        <Button
+                                            variant="outline"
+                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
                                             onClick={() => setAddMode('manual')}
                                         >
                                             <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                                <Keyboard className="h-6 w-6 text-primary" />
+                                                <Keyboard className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="flex flex-col items-center">
-                                                <span className="font-semibold">Manual Entry</span>
+                                                <span className="font-semibold text-sm">Manual Entry</span>
                                                 <span className="text-xs text-muted-foreground">Type trade details manually</span>
                                             </div>
                                         </Button>
-                                        
-                                        <ImportTransactionsButton 
-                                            className="h-24 flex flex-col items-center justify-center gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+
+                                        <Button
+                                            variant="outline"
+                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
+                                            onClick={() => setAddMode('ai')}
+                                        >
+                                            <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                                                <Sparkles className="h-5 w-5 text-amber-500" />
+                                            </div>
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-semibold text-sm">AI 辅助导入</span>
+                                                <span className="text-xs text-muted-foreground">用提示词让 AI 解析截图</span>
+                                            </div>
+                                        </Button>
+
+                                        <ImportTransactionsButton
+                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
                                             variant="outline"
                                         >
                                             <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                                                <FileUp className="h-6 w-6 text-blue-500" />
+                                                <FileUp className="h-5 w-5 text-blue-500" />
                                             </div>
                                             <div className="flex flex-col items-center">
-                                                <span className="font-semibold">Import from Binance</span>
+                                                <span className="font-semibold text-sm">Import from Binance</span>
                                                 <span className="text-xs text-muted-foreground">Upload exported Excel file</span>
                                             </div>
                                         </ImportTransactionsButton>
                                     </div>
+                                ) : addMode === 'ai' ? (
+                                    <AiImportFlow onSuccess={() => setIsAddDialogOpen(false)} />
                                 ) : (
                                     <TransactionForm onSuccess={() => setIsAddDialogOpen(false)} />
                                 )}
