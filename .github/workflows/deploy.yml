@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - master
-      - nightly
+      - claude/nightly
 
 jobs:
   deploy:
