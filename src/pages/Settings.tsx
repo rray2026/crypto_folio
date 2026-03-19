@@ -412,7 +412,7 @@ export default function Settings() {
 
             <div className="pt-8 pb-4 text-center">
                 <p className="text-[10px] md:text-xs text-muted-foreground/40 font-mono tracking-widest uppercase">
-                    CryptoFolio Build v{version}
+                    CryptoFolio v{version} · Built {__BUILD_DATE__}
                 </p>
             </div>
         </div>
