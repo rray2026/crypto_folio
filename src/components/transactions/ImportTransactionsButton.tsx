@@ -1,8 +1,15 @@
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { Upload, Loader2 } from "lucide-react"
+import { Upload, Loader2, AlertTriangle } from "lucide-react"
 import * as xlsx from "xlsx"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
 
 interface ImportTransactionsButtonProps {
     variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
@@ -14,11 +21,12 @@ interface ImportTransactionsButtonProps {
 
 export function ImportTransactionsButton({ variant = "outline", size, className, iconOnly, children }: ImportTransactionsButtonProps) {
     const [isImporting, setIsImporting] = useState(false)
+    const [showUnavailableDialog, setShowUnavailableDialog] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const bulkAddTransactions = useTransactionStore(state => state.bulkAddTransactions)
 
     const handleImportClick = () => {
-        fileInputRef.current?.click()
+        setShowUnavailableDialog(true)
     }
 
     const processExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,11 +124,11 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                 accept=".xlsx, .xls, .csv"
                 className="hidden"
             />
-            <Button 
-                variant={variant} 
+            <Button
+                variant={variant}
                 size={size}
-                className={className || (iconOnly ? "" : "gap-2")} 
-                onClick={handleImportClick} 
+                className={className || (iconOnly ? "" : "gap-2")}
+                onClick={handleImportClick}
                 disabled={isImporting}
                 title="Import Binance Excel"
             >
@@ -131,6 +139,22 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                     </>
                 )}
             </Button>
+
+            <Dialog open={showUnavailableDialog} onOpenChange={setShowUnavailableDialog}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-amber-500">
+                            <AlertTriangle className="h-5 w-5 shrink-0" />
+                            功能暂不可用
+                        </DialogTitle>
+                        <DialogDescription className="pt-2 text-sm leading-relaxed">
+                            Binance 导出文件格式已发生变化，当前导入功能暂时无法正常解析。
+                            <br /><br />
+                            我们正在适配新格式，请稍后再试。感谢您的耐心等待。
+                        </DialogDescription>
+                    </DialogHeader>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }
