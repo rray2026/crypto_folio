@@ -71,57 +71,91 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                     </div>
                 </CardHeader>
                 <CardContent className="flex-1 pt-4 pb-2 space-y-4">
-                    {/* Holdings and Price / Cost */}
-                    <div className="flex justify-between items-center">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-muted-foreground mb-1">Holdings</span>
-                            <span className="font-mono text-sm font-bold">
-                                {metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{base}</span>
-                            </span>
-                        </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-xs text-muted-foreground mb-1">{isActive && metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}</span>
-                            <span className="font-mono text-sm font-bold">
-                                ${isActive && metrics.currentPrice > 0 
-                                    ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
-                                    : (metrics.totalRemaining > 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}
-                            </span>
-                        </div>
-                    </div>
+                    {isActive ? (
+                        <>
+                            {/* Holdings and Price / Cost */}
+                            <div className="flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-muted-foreground mb-1">Holdings</span>
+                                    <span className="font-mono text-sm font-bold">
+                                        {metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{base}</span>
+                                    </span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-xs text-muted-foreground mb-1">{metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}</span>
+                                    <span className="font-mono text-sm font-bold">
+                                        ${metrics.currentPrice > 0
+                                            ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
+                                            : (metrics.totalRemaining > 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}
+                                    </span>
+                                </div>
+                            </div>
 
-                    {/* Investment and Realized PnL */}
-                    <div className="flex justify-between items-center pt-3 border-t border-border/30">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-muted-foreground mb-1">Total Inv.</span>
-                            <span className="font-mono text-sm">${metrics.totalInvestment.toFixed(2)}</span>
-                        </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-xs text-muted-foreground mb-1">Realized PnL</span>
-                            <span className={`font-mono text-sm font-medium ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                                ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
-                            </span>
-                        </div>
-                    </div>
+                            {/* Investment and Realized PnL */}
+                            <div className="flex justify-between items-center pt-3 border-t border-border/30">
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-muted-foreground mb-1">Total Inv.</span>
+                                    <span className="font-mono text-sm">${metrics.totalInvestment.toFixed(2)}</span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-xs text-muted-foreground mb-1">Realized PnL</span>
+                                    <span className={`font-mono text-sm font-medium ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
+                                        ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
 
-                    {/* Primary Metrics: Unrealized PnL and ROI */}
-                    <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
-                        <div className="flex flex-col">
-                            <span className={isActive ? 'text-[11px] text-primary/80 mb-1 uppercase tracking-wider font-semibold' : 'text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold'}>
-                                {isActive ? 'Unrealized PnL' : 'Realized PnL'}
-                            </span>
-                            <span className={`font-mono font-bold text-lg ${isActive ? (metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : '') : (metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : '')}`}>
-                                ${isActive 
-                                    ? `${metrics.unrealizedPnL > 0 ? '+' : ''}${metrics.unrealizedPnL.toFixed(2)}`
-                                    : `${metrics.realizedPnL > 0 ? '+' : ''}${metrics.realizedPnL.toFixed(2)}`}
-                            </span>
-                        </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">ROI</span>
-                            <span className={`font-mono font-bold text-lg ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
-                                {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
-                            </span>
-                        </div>
-                    </div>
+                            {/* Unrealized PnL and ROI */}
+                            <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-[11px] text-primary/80 mb-1 uppercase tracking-wider font-semibold">Unrealized PnL</span>
+                                    <span className={`font-mono font-bold text-lg ${metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                        ${metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">ROI</span>
+                                    <span className={`font-mono font-bold text-lg ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
+                                        {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
+                                    </span>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Avg Entry and Avg Exit */}
+                            <div className="flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-muted-foreground mb-1">Avg Entry</span>
+                                    <span className="font-mono text-sm font-bold">
+                                        ${metrics.avgBuyPrice > 0 ? metrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-xs text-muted-foreground mb-1">Avg Exit</span>
+                                    <span className="font-mono text-sm font-bold">
+                                        ${metrics.avgSellPrice > 0 ? metrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Realized PnL and ROI */}
+                            <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Realized PnL</span>
+                                    <span className={`font-mono font-bold text-lg ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                        ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">ROI</span>
+                                    <span className={`font-mono font-bold text-lg ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
+                                        {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
+                                    </span>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
         </Link>
