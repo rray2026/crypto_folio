@@ -140,8 +140,12 @@ export default function TransactionDetails() {
                                     <Hash className="h-4 w-4 text-muted-foreground" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Transaction ID</p>
-                                    <p className="text-xs font-mono break-all text-muted-foreground select-all">{transaction.id}</p>
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                                        {transaction.orderId ? "Order ID" : "Transaction ID"}
+                                    </p>
+                                    <p className="text-xs font-mono break-all text-muted-foreground select-all">
+                                        {transaction.orderId ?? transaction.id}
+                                    </p>
                                 </div>
                             </div>
                         </div>

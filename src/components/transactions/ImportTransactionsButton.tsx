@@ -65,6 +65,7 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                     currentOrderId = row[1]; // 订单号 is at index 1
                     ordersMap.set(currentOrderId, {
                         id: currentOrderId.toString(), // Explicitly bind Binance Order Id
+                        orderId: currentOrderId.toString(),
                         date: new Date(row[0]).getTime(), // 委托时间
                         symbol: row[2], // BTC/USDT (Keep the slash as requested)
                         type: row[5],

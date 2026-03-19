@@ -1,16 +1,14 @@
-name: Deploy to Cloudflare
+name: Deploy Nightly to Cloudflare
 
 on:
   push:
     branches:
-      - main
-      - master
-      - claude/nightly
+      - claude/**
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Cloudflare Network
+    name: Deploy to Cloudflare Nightly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,9 +25,9 @@ jobs:
       - name: Build Application
         run: npm run build
 
-      - name: Deploy to Cloudflare (via Wrangler)
+      - name: Deploy to Cloudflare (Nightly)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name crypto-folio
+          command: pages deploy dist --project-name crypto-folio --branch claude/nightly

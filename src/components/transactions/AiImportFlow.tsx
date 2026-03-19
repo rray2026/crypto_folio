@@ -1,12 +1,13 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { Copy, Check, ArrowRight, AlertCircle, Sparkles } from "lucide-react"
+import { Copy, Check, ArrowRight, AlertCircle, Sparkles, ClipboardPaste } from "lucide-react"
 
 const AI_PROMPT = `You are a trading record parser. Extract the trade details from the screenshot and return ONLY a JSON object in the exact format below, with no extra text, markdown, or explanation.
 
 {
+  "orderId": "",
   "symbol": "BTC/USDT",
   "type": "BUY",
   "date": "YYYY-MM-DD HH:mm:ss",
@@ -17,6 +18,7 @@ const AI_PROMPT = `You are a trading record parser. Extract the trade details fr
 }
 
 Rules:
+- orderId: order number or trade ID shown in the screenshot (use "" if not shown)
 - symbol: trading pair in "BASE/QUOTE" format (e.g. BTC/USDT, ETH/USDT)
 - type: must be exactly "BUY" or "SELL"
 - date: local time in "YYYY-MM-DD HH:mm:ss" format
@@ -27,6 +29,7 @@ Rules:
 - All numeric values must be plain numbers, no currency symbols or commas`
 
 interface ParsedTx {
+    orderId?: string
     symbol: string
     type: "BUY" | "SELL"
     date: string
@@ -39,10 +42,29 @@ interface ParsedTx {
 export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const [step, setStep] = useState<1 | 2>(1)
     const [copied, setCopied] = useState(false)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const autoPasteRef = useRef(false)
     const [pastedJson, setPastedJson] = useState("")
     const [parsed, setParsed] = useState<ParsedTx | null>(null)
     const [parseError, setParseError] = useState("")
     const addTransaction = useTransactionStore((state) => state.addTransaction)
+
+    const handlePasteFromClipboard = () => {
+        setPastedJson("")
+        autoPasteRef.current = true
+        textareaRef.current?.focus()
+        document.execCommand("paste")
+    }
+
+    const handleTextareaPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        if (!autoPasteRef.current) return
+        autoPasteRef.current = false
+        e.preventDefault()
+        const text = e.clipboardData.getData("text")
+        setPastedJson(text)
+        textareaRef.current?.blur()
+        handleParse(text)
+    }
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(AI_PROMPT)
@@ -50,12 +72,12 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
         setTimeout(() => setCopied(false), 2000)
     }
 
-    const handleParse = () => {
+    const handleParse = (text?: string) => {
         setParseError("")
         setParsed(null)
         try {
             // Extract JSON block if wrapped in markdown code fences
-            const jsonStr = pastedJson.replace(/```(?:json)?\n?/g, "").trim()
+            const jsonStr = (text ?? pastedJson).replace(/```(?:json)?\n?/g, "").trim()
             const obj = JSON.parse(jsonStr)
 
             if (!obj.symbol || !obj.type || !obj.date || obj.price == null || obj.quantity == null || obj.amount == null) {
@@ -68,6 +90,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             }
 
             setParsed({
+                orderId: obj.orderId ? String(obj.orderId) : undefined,
                 symbol: String(obj.symbol).toUpperCase(),
                 type: obj.type,
                 date: String(obj.date),
@@ -84,6 +107,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const handleConfirm = async () => {
         if (!parsed) return
         await addTransaction({
+            orderId: parsed.orderId,
             symbol: parsed.symbol,
             type: parsed.type,
             price: parsed.price,
@@ -135,12 +159,26 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
         <div className="space-y-4 pt-2">
             {!parsed ? (
                 <>
-                    <p className="text-sm text-muted-foreground">
-                        将 AI 返回的 JSON 内容粘贴到下方，点击解析。
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            将 AI 返回的 JSON 内容粘贴到下方，点击解析。
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1.5 text-xs shrink-0"
+                            onClick={handlePasteFromClipboard}
+                        >
+                            <ClipboardPaste className="h-3.5 w-3.5" />
+                            从剪贴板粘贴
+                        </Button>
+                    </div>
                     <Textarea
+                        ref={textareaRef}
                         value={pastedJson}
                         onChange={(e) => setPastedJson(e.target.value)}
+                        onPaste={handleTextareaPaste}
                         placeholder={'{\n  "symbol": "BTC/USDT",\n  "type": "BUY",\n  ...\n}'}
                         className="font-mono text-xs min-h-[180px] bg-muted/30 border-border/50"
                     />
@@ -152,7 +190,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                     )}
                     <Button
                         className="w-full h-11 rounded-xl font-bold"
-                        onClick={handleParse}
+                        onClick={() => handleParse()}
                         disabled={!pastedJson.trim()}
                     >
                         解析内容
@@ -163,6 +201,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                     <p className="text-sm text-muted-foreground">请确认以下交易信息，确认后将自动录入。</p>
                     <div className="rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30 text-sm">
                         {[
+                            ...(parsed.orderId ? [{ label: "订单号", value: parsed.orderId }] : []),
                             { label: "交易对", value: parsed.symbol },
                             { label: "方向", value: parsed.type },
                             { label: "时间", value: parsed.date },
@@ -181,7 +220,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                         <Button
                             variant="outline"
                             className="flex-1 h-11 rounded-xl"
-                            onClick={() => { setParsed(null); setPastedJson("") }}
+                            onClick={() => setParsed(null)}
                         >
                             重新粘贴
                         </Button>

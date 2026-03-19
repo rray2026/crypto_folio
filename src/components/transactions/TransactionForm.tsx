@@ -15,6 +15,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const [amount, setAmount] = useState("")
     const [fee, setFee] = useState("0")
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16))
+    const [orderId, setOrderId] = useState("")
 
 
     // Handlers for dynamic math
@@ -51,6 +52,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             amount: parseFloat(amount),
             fee: parseFloat(fee || "0"),
             date: new Date(date).getTime(),
+            orderId: orderId.trim() || undefined,
         })
         onSuccess()
     }
@@ -121,6 +123,11 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                         <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
                     </div>
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
+                <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
             </div>
 
             <div className="pt-4">

@@ -12,6 +12,13 @@ interface TransactionState {
 
 export const useTransactionStore = create<TransactionState>(() => ({
     addTransaction: async (tx) => {
+        // Dedup by orderId if present
+        if (tx.orderId) {
+            const existing = await db.transactions
+                .filter(t => t.orderId === tx.orderId)
+                .first();
+            if (existing) return existing.id;
+        }
         const id = crypto.randomUUID();
         await db.transactions.add({
             ...tx,
@@ -24,14 +31,28 @@ export const useTransactionStore = create<TransactionState>(() => ({
         const fullTxs = txs.map(tx => ({
             ...tx,
             id: tx.id || crypto.randomUUID(),
-            associatedPositionIds: [],
-        }));
+            associatedPositionIds: [] as string[],
+        })) as Transaction[];
 
+        // Layer 1: dedup by id
         const incomingIds = fullTxs.map(t => t.id);
-        const existingTxs = await db.transactions.where('id').anyOf(incomingIds).toArray();
-        const existingIds = new Set(existingTxs.map(t => t.id));
+        const existingById = await db.transactions.where('id').anyOf(incomingIds).toArray();
+        const existingIdSet = new Set(existingById.map(t => t.id));
 
-        const newTxs = fullTxs.filter(t => !existingIds.has(t.id));
+        // Layer 2: dedup by orderId
+        const txsWithOrderId = fullTxs.filter(t => t.orderId);
+        let existingOrderIdSet = new Set<string>();
+        if (txsWithOrderId.length > 0) {
+            const existingKeyed = await db.transactions
+                .filter(t => !!t.orderId)
+                .toArray();
+            existingOrderIdSet = new Set(existingKeyed.map(t => t.orderId!));
+        }
+
+        const newTxs = fullTxs.filter(t =>
+            !existingIdSet.has(t.id) &&
+            !(t.orderId && existingOrderIdSet.has(t.orderId))
+        );
 
         if (newTxs.length > 0) {
             await db.transactions.bulkAdd(newTxs as any);

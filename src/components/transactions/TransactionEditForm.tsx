@@ -17,6 +17,7 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
     const [quantity, setQuantity] = useState(transaction.quantity.toString())
     const [amount, setAmount] = useState(transaction.amount.toString())
     const [fee, setFee] = useState(transaction.fee.toString())
+    const [orderId, setOrderId] = useState(transaction.orderId ?? "")
 
     // Format timestamp back to HTML datetime-local string (YYYY-MM-DDThh:mm)
     const [date, setDate] = useState(() => {
@@ -58,6 +59,7 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
             amount: parseFloat(amount),
             fee: parseFloat(fee || "0"),
             date: new Date(date).getTime(),
+            orderId: orderId.trim() || undefined,
         })
         onSuccess()
     }
@@ -128,6 +130,11 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
                         <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
                     </div>
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
+                <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
             </div>
 
             <div className="pt-4">

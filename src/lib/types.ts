@@ -7,6 +7,7 @@ export interface Transaction {
     quantity: number;
     amount: number; // total value = price * quantity
     fee: number;
+    orderId?: string;
     associatedPositionIds: string[];
     notes?: string;
 }
