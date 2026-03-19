@@ -220,7 +220,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                         <Button
                             variant="outline"
                             className="flex-1 h-11 rounded-xl"
-                            onClick={() => { setParsed(null); setPastedJson("") }}
+                            onClick={() => setParsed(null)}
                         >
                             重新粘贴
                         </Button>
