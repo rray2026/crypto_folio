@@ -7,7 +7,6 @@ export interface Transaction {
     quantity: number;
     amount: number; // total value = price * quantity
     fee: number;
-    exchange?: string;  // e.g., "Binance", "OKX", "Bybit"
     orderId?: string;
     associatedPositionIds: string[];
     notes?: string;

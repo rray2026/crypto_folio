@@ -15,7 +15,6 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const [amount, setAmount] = useState("")
     const [fee, setFee] = useState("0")
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16))
-    const [exchange, setExchange] = useState("")
     const [orderId, setOrderId] = useState("")
 
 
@@ -53,7 +52,6 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             amount: parseFloat(amount),
             fee: parseFloat(fee || "0"),
             date: new Date(date).getTime(),
-            exchange: exchange.trim() || undefined,
             orderId: orderId.trim() || undefined,
         })
         onSuccess()
@@ -127,15 +125,9 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Exchange</Label>
-                    <Input placeholder="Binance, OKX…" value={exchange} onChange={e => setExchange(e.target.value)} className="rounded-xl border-border/50 h-11" />
-                </div>
-                <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
-                    <Input placeholder="Optional" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
-                </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
+                <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
             </div>
 
             <div className="pt-4">

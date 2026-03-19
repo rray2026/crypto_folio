@@ -17,7 +17,6 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
     const [quantity, setQuantity] = useState(transaction.quantity.toString())
     const [amount, setAmount] = useState(transaction.amount.toString())
     const [fee, setFee] = useState(transaction.fee.toString())
-    const [exchange, setExchange] = useState(transaction.exchange ?? "")
     const [orderId, setOrderId] = useState(transaction.orderId ?? "")
 
     // Format timestamp back to HTML datetime-local string (YYYY-MM-DDThh:mm)
@@ -60,7 +59,6 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
             amount: parseFloat(amount),
             fee: parseFloat(fee || "0"),
             date: new Date(date).getTime(),
-            exchange: exchange.trim() || undefined,
             orderId: orderId.trim() || undefined,
         })
         onSuccess()
@@ -134,15 +132,9 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Exchange</Label>
-                    <Input placeholder="Binance, OKX…" value={exchange} onChange={e => setExchange(e.target.value)} className="rounded-xl border-border/50 h-11" />
-                </div>
-                <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
-                    <Input placeholder="Optional" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
-                </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
+                <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
             </div>
 
             <div className="pt-4">

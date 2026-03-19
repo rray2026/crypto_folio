@@ -12,10 +12,10 @@ interface TransactionState {
 
 export const useTransactionStore = create<TransactionState>(() => ({
     addTransaction: async (tx) => {
-        // Dedup by exchange+orderId if both are present
-        if (tx.exchange && tx.orderId) {
+        // Dedup by orderId if present
+        if (tx.orderId) {
             const existing = await db.transactions
-                .filter(t => t.exchange === tx.exchange && t.orderId === tx.orderId)
+                .filter(t => t.orderId === tx.orderId)
                 .first();
             if (existing) return existing.id;
         }
@@ -39,19 +39,19 @@ export const useTransactionStore = create<TransactionState>(() => ({
         const existingById = await db.transactions.where('id').anyOf(incomingIds).toArray();
         const existingIdSet = new Set(existingById.map(t => t.id));
 
-        // Layer 2: dedup by exchange+orderId (for cross-source dedup)
-        const txsWithKey = fullTxs.filter(t => t.exchange && t.orderId);
-        let existingExchangeOrderIdSet = new Set<string>();
-        if (txsWithKey.length > 0) {
+        // Layer 2: dedup by orderId
+        const txsWithOrderId = fullTxs.filter(t => t.orderId);
+        let existingOrderIdSet = new Set<string>();
+        if (txsWithOrderId.length > 0) {
             const existingKeyed = await db.transactions
-                .filter(t => !!t.exchange && !!t.orderId)
+                .filter(t => !!t.orderId)
                 .toArray();
-            existingExchangeOrderIdSet = new Set(existingKeyed.map(t => `${t.exchange}:${t.orderId}`));
+            existingOrderIdSet = new Set(existingKeyed.map(t => t.orderId!));
         }
 
         const newTxs = fullTxs.filter(t =>
             !existingIdSet.has(t.id) &&
-            !(t.exchange && t.orderId && existingExchangeOrderIdSet.has(`${t.exchange}:${t.orderId}`))
+            !(t.orderId && existingOrderIdSet.has(t.orderId))
         );
 
         if (newTxs.length > 0) {

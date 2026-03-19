@@ -7,7 +7,6 @@ import { Copy, Check, ArrowRight, AlertCircle, Sparkles, ClipboardPaste } from "
 const AI_PROMPT = `You are a trading record parser. Extract the trade details from the screenshot and return ONLY a JSON object in the exact format below, with no extra text, markdown, or explanation.
 
 {
-  "exchange": "",
   "orderId": "",
   "symbol": "BTC/USDT",
   "type": "BUY",
@@ -19,7 +18,6 @@ const AI_PROMPT = `You are a trading record parser. Extract the trade details fr
 }
 
 Rules:
-- exchange: name of the exchange shown in the screenshot (e.g. "Binance", "OKX", "Bybit", "Coinbase"; use "" if not identifiable)
 - orderId: order number or trade ID shown in the screenshot (use "" if not shown)
 - symbol: trading pair in "BASE/QUOTE" format (e.g. BTC/USDT, ETH/USDT)
 - type: must be exactly "BUY" or "SELL"
@@ -31,7 +29,6 @@ Rules:
 - All numeric values must be plain numbers, no currency symbols or commas`
 
 interface ParsedTx {
-    exchange?: string
     orderId?: string
     symbol: string
     type: "BUY" | "SELL"
@@ -93,7 +90,6 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             }
 
             setParsed({
-                exchange: obj.exchange ? String(obj.exchange) : undefined,
                 orderId: obj.orderId ? String(obj.orderId) : undefined,
                 symbol: String(obj.symbol).toUpperCase(),
                 type: obj.type,
@@ -111,7 +107,6 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const handleConfirm = async () => {
         if (!parsed) return
         await addTransaction({
-            exchange: parsed.exchange,
             orderId: parsed.orderId,
             symbol: parsed.symbol,
             type: parsed.type,
@@ -206,7 +201,6 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                     <p className="text-sm text-muted-foreground">请确认以下交易信息，确认后将自动录入。</p>
                     <div className="rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30 text-sm">
                         {[
-                            ...(parsed.exchange ? [{ label: "交易所", value: parsed.exchange }] : []),
                             ...(parsed.orderId ? [{ label: "订单号", value: parsed.orderId }] : []),
                             { label: "交易对", value: parsed.symbol },
                             { label: "方向", value: parsed.type },
