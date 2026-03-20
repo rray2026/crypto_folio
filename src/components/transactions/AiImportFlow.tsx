@@ -81,11 +81,11 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             const obj = JSON.parse(jsonStr)
 
             if (!obj.symbol || !obj.type || !obj.date || obj.price == null || obj.quantity == null || obj.amount == null) {
-                setParseError("缺少必要字段，请检查 AI 返回内容是否完整。")
+                setParseError("Missing required fields. Please check that the AI response is complete.")
                 return
             }
             if (obj.type !== "BUY" && obj.type !== "SELL") {
-                setParseError("type 字段必须为 \"BUY\" 或 \"SELL\"。")
+                setParseError("The \"type\" field must be exactly \"BUY\" or \"SELL\".")
                 return
             }
 
@@ -100,7 +100,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                 fee: Number(obj.fee ?? 0),
             })
         } catch {
-            setParseError("JSON 解析失败，请确认已完整复制 AI 的返回内容。")
+            setParseError("Failed to parse JSON. Please make sure you copied the full AI response.")
         }
     }
 
@@ -124,8 +124,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                        将下方提示词复制后，连同交易截图一起发给任意 AI（如 ChatGPT、Claude），
-                        AI 会返回结构化的交易数据。
+                        Copy the prompt below and send it along with your trade screenshot to any AI (e.g. ChatGPT, Claude). The AI will return structured trade data.
                     </p>
                     <div className="relative">
                         <Textarea
@@ -148,7 +147,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                     className="w-full h-11 rounded-xl font-bold gap-2"
                     onClick={() => setStep(2)}
                 >
-                    已发给 AI，粘贴返回结果
+                    Sent to AI — Paste the Response
                     <ArrowRight className="h-4 w-4" />
                 </Button>
             </div>
@@ -161,7 +160,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                 <>
                     <div className="flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">
-                            将 AI 返回的 JSON 内容粘贴到下方，点击解析。
+                            Paste the JSON returned by the AI below, then click Parse.
                         </p>
                         <Button
                             type="button"
@@ -171,7 +170,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                             onClick={handlePasteFromClipboard}
                         >
                             <ClipboardPaste className="h-3.5 w-3.5" />
-                            从剪贴板粘贴
+                            Paste from Clipboard
                         </Button>
                     </div>
                     <Textarea
@@ -193,22 +192,22 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                         onClick={() => handleParse()}
                         disabled={!pastedJson.trim()}
                     >
-                        解析内容
+                        Parse
                     </Button>
                 </>
             ) : (
                 <>
-                    <p className="text-sm text-muted-foreground">请确认以下交易信息，确认后将自动录入。</p>
+                    <p className="text-sm text-muted-foreground">Please confirm the trade details below. They will be saved automatically upon confirmation.</p>
                     <div className="rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30 text-sm">
                         {[
-                            ...(parsed.orderId ? [{ label: "订单号", value: parsed.orderId }] : []),
-                            { label: "交易对", value: parsed.symbol },
-                            { label: "方向", value: parsed.type },
-                            { label: "时间", value: parsed.date },
-                            { label: "单价", value: parsed.price },
-                            { label: "数量", value: parsed.quantity },
-                            { label: "总额", value: parsed.amount },
-                            { label: "手续费", value: parsed.fee },
+                            ...(parsed.orderId ? [{ label: "Order ID", value: parsed.orderId }] : []),
+                            { label: "Symbol", value: parsed.symbol },
+                            { label: "Side", value: parsed.type },
+                            { label: "Date", value: parsed.date },
+                            { label: "Price", value: parsed.price },
+                            { label: "Quantity", value: parsed.quantity },
+                            { label: "Amount", value: parsed.amount },
+                            { label: "Fee", value: parsed.fee },
                         ].map(({ label, value }) => (
                             <div key={label} className="flex items-center justify-between px-4 py-2.5">
                                 <span className="text-muted-foreground text-xs">{label}</span>
@@ -222,14 +221,14 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                             className="flex-1 h-11 rounded-xl"
                             onClick={() => setParsed(null)}
                         >
-                            重新粘贴
+                            Paste Again
                         </Button>
                         <Button
                             className="flex-1 h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
                             onClick={handleConfirm}
                         >
                             <Sparkles className="h-4 w-4" />
-                            确认录入
+                            Confirm & Save
                         </Button>
                     </div>
                 </>

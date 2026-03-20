@@ -237,7 +237,7 @@ export default function Transactions() {
                             <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6 overflow-hidden">
                                 <DialogHeader>
                                     <DialogTitle>
-                                        {addMode === 'manual' ? 'Record Transaction' : addMode === 'ai' ? 'AI 辅助导入' : 'Add Transaction'}
+                                        {addMode === 'manual' ? 'Record Transaction' : addMode === 'ai' ? 'AI-Assisted Import' : 'Add Transaction'}
                                     </DialogTitle>
                                     {addMode === 'choice' && (
                                         <DialogDescription>
@@ -271,8 +271,8 @@ export default function Transactions() {
                                                 <Sparkles className="h-5 w-5 text-amber-500" />
                                             </div>
                                             <div className="flex flex-col items-center">
-                                                <span className="font-semibold text-sm">AI 辅助导入</span>
-                                                <span className="text-xs text-muted-foreground">用提示词让 AI 解析截图</span>
+                                                <span className="font-semibold text-sm">AI-Assisted Import</span>
+                                                <span className="text-xs text-muted-foreground">Use a prompt to let AI parse your screenshot</span>
                                             </div>
                                         </Button>
 
