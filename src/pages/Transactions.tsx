@@ -476,8 +476,8 @@ export default function Transactions() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/30">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">Avg Entry</span>
-                                            <span className="text-sm font-mono font-bold">${(metrics.positionType === 'LONG' ? metrics.avgBuyPrice : metrics.avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">Avg Buy</span>
+                                            <span className="text-sm font-mono font-bold">{metrics.avgBuyPrice > 0 ? `$${metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}` : '--'}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Qty</span>

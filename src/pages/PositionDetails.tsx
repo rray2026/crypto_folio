@@ -108,6 +108,12 @@ export default function PositionDetails() {
         derivedEndDate, avgBuyPrice, avgSellPrice, breakevenPrice
     } = getPositionMetrics(position, linkedTxs, prices);
 
+    const totalFee = linkedTxs.reduce((sum, tx) => {
+        const allocated = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount || 0;
+        const ratio = tx.quantity > 0 ? allocated / tx.quantity : 0;
+        return sum + (tx.fee || 0) * ratio;
+    }, 0);
+
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
@@ -223,53 +229,53 @@ export default function PositionDetails() {
                                 </span>
                             </div>
 
-                            {/* Avg. Cost (Breakeven) */}
+                            {/* Avg Buy Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg. Cost</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {(breakevenPrice > 0 && totalRemaining > 0) ? `$${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
+                                    {avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
                             </div>
 
-                            {/* Avg. Exit Price */}
+                            {/* Avg Sell Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg. Exit</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
+                                    {avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                </span>
+                            </div>
+
+                            {/* Total Fee */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Fee</span>
+                                <span className="text-base sm:text-xl font-bold font-mono">
+                                    {totalFee > 0 ? `$${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 
                             {/* ROI */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Return (ROI)</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">ROI</span>
                                 <span className={`text-base sm:text-xl font-bold ${roi > 0 ? 'text-green-500' : roi < 0 ? 'text-destructive' : ''}`}>
                                     {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
                                 </span>
                             </div>
 
-                            {/* Avg Entry Price */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Entry</span>
-                                <span className="text-base sm:text-lg font-mono font-medium truncate">
-                                    ${(positionType === 'LONG' ? avgBuyPrice : avgSellPrice).toLocaleString(undefined, { maximumFractionDigits: 6 })}
-                                </span>
-                            </div>
-
-                            {/* Current Price */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Current Price</span>
-                                <span className="text-base sm:text-lg font-mono font-medium truncate text-primary">
-                                    {currentPrice > 0 ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
-                                </span>
-                            </div>
-
-                            {/* Current Holding */}
+                            {/* Holding */}
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
                                 <div className="flex items-baseline gap-1 truncate">
-                                    <span className="text-base sm:text-lg font-mono font-medium">{totalRemaining.toLocaleString()}</span>
+                                    <span className="text-base sm:text-xl font-bold font-mono">{totalRemaining.toLocaleString()}</span>
                                     <span className="text-[10px] text-muted-foreground uppercase">{position.symbol.split('/')[0]}</span>
                                 </div>
+                            </div>
+
+                            {/* Avg. Cost (Breakeven) */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
+                                <span className="text-base sm:text-xl font-bold font-mono">
+                                    {(breakevenPrice > 0 && totalRemaining > 0) ? `$${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                </span>
                             </div>
                         </div>
                     </CardContent>
