@@ -181,7 +181,7 @@ export default function FundDetails() {
                         <div className="space-y-3">
                             {fundPositions.map((pos, i) => {
                                 const m = allPosMetrics[i]
-                                const posValue = m.totalRemaining > 0 ? (m.totalInvestment + m.totalPnL) : 0
+                                const posValue = m.totalRemaining > 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
                                 const isLong = m.positionType === 'LONG'
                                 return (
