@@ -20,7 +20,10 @@ export default function Funds() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const { prices } = useSettingsStore()
 
-    const funds = useLiveQuery(() => db.funds.orderBy('createdAt').reverse().toArray())
+    const funds = useLiveQuery(async () => {
+        const all = await db.funds.toArray()
+        return all.sort((a, b) => b.createdAt - a.createdAt)
+    })
     const positions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
 
