@@ -181,7 +181,7 @@ export default function FundDetails() {
                         <div className="space-y-3">
                             {fundPositions.map((pos, i) => {
                                 const m = allPosMetrics[i]
-                                const posValue = m.totalRemaining > 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
+                                const posValue = m.totalRemaining !== 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
                                 const isLong = m.positionType === 'LONG'
                                 return (
@@ -228,7 +228,7 @@ export default function FundDetails() {
                                                 ({m.roi >= 0 ? '+' : ''}{m.roi.toFixed(2)}%)
                                             </span>
                                             <span className="text-muted-foreground/40">•</span>
-                                            <span className="text-muted-foreground">{alloc.toFixed(1)}% alloc</span>
+                                            <span className={alloc < 0 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}>{alloc > 0 ? '+' : ''}{alloc.toFixed(1)}% alloc</span>
                                         </div>
                                         {/* Row 3: price info */}
                                         {m.avgBuyPrice > 0 && (
