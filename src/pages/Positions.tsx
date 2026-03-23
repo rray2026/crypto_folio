@@ -36,6 +36,8 @@ export default function Positions() {
 
     const positions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
+    const funds = useLiveQuery(() => db.funds.toArray())
+    const fundMap = Object.fromEntries((funds ?? []).map(f => [f.id, f.name]))
 
     // Fetch prices for all OPEN symbols
     // Fetch prices for all OPEN symbols periodically (every 5 mins)
@@ -247,12 +249,13 @@ export default function Positions() {
                                                 const isActive = pos.status === 'OPEN';
 
                                                 return (
-                                                    <PositionCard 
+                                                    <PositionCard
                                                         key={pos.id}
                                                         position={pos}
                                                         metrics={metrics}
                                                         isActive={isActive}
                                                         duration={duration}
+                                                        fundName={pos.fundId ? fundMap[pos.fundId] : undefined}
                                                     />
                                                 );
                                             })}

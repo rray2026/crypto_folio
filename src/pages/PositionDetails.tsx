@@ -2,9 +2,10 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
+import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -37,10 +38,12 @@ export default function PositionDetails() {
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
+    const { assignPositionToFund, unassignPosition } = useFundStore()
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
     const allPositions = useLiveQuery(() => db.positions.toArray())
+    const allFunds = useLiveQuery(() => db.funds.toArray())
 
     // Fetch live price for the current symbol if OPEN (every 5 mins)
     useState(() => {
@@ -339,6 +342,52 @@ export default function PositionDetails() {
                     </div>
 
                     <div className="space-y-6">
+                        {/* Fund assignment */}
+                        <div className="bg-card rounded-xl p-4 border shadow-sm">
+                            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                <Layers className="h-3.5 w-3.5" />
+                                Fund
+                            </h3>
+                            {position.fundId ? (() => {
+                                const fund = allFunds?.find(f => f.id === position.fundId)
+                                return (
+                                    <div className="flex items-center justify-between">
+                                        <a href={`/funds/${position.fundId}`} className="text-sm font-medium hover:underline text-indigo-600 dark:text-indigo-400">
+                                            {fund?.name ?? 'Unknown Fund'}
+                                        </a>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                                            onClick={() => id && unassignPosition(id)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </div>
+                                )
+                            })() : (
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-2">Not assigned to any fund.</p>
+                                    {allFunds && allFunds.length > 0 && (
+                                        <select
+                                            className="w-full text-sm rounded-lg border border-border/50 bg-background px-3 py-2 text-foreground"
+                                            defaultValue=""
+                                            onChange={async (e) => {
+                                                if (e.target.value && id) {
+                                                    await assignPositionToFund(id, e.target.value)
+                                                }
+                                            }}
+                                        >
+                                            <option value="" disabled>Assign to fund…</option>
+                                            {allFunds.map(f => (
+                                                <option key={f.id} value={f.id}>{f.name}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="bg-card rounded-xl p-6 border shadow-sm">
                             <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Available Trades</h3>
                             <div className="space-y-3">

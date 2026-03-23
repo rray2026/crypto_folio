@@ -8,6 +8,7 @@ export interface BackupPayload {
     appName: string;
     transactions: any[];
     positions: any[];
+    funds: any[];
     settings: {
         predefinedPairs: string[];
         dashboardTimeRange: string;
@@ -22,6 +23,7 @@ export async function exportData(): Promise<void> {
     try {
         const transactions = await db.transactions.toArray();
         const positions = await db.positions.toArray();
+        const funds = await db.funds.toArray();
         const settingsState = useSettingsStore.getState();
 
         const payload: BackupPayload = {
@@ -30,6 +32,7 @@ export async function exportData(): Promise<void> {
             appName: 'CryptoFolio',
             transactions,
             positions,
+            funds,
             settings: {
                 predefinedPairs: settingsState.predefinedPairs,
                 dashboardTimeRange: settingsState.dashboardTimeRange,
@@ -97,9 +100,13 @@ export async function importData(file: File): Promise<void> {
                     throw new Error("Malformed backup properties. Missing Transactions or Positions arrays.");
                 }
 
+                // Normalise funds (may be absent in pre-v3 backups that were already migrated)
+                if (!Array.isArray(payload.funds)) payload.funds = [];
+
                 // 1. Clear database
                 await db.transactions.clear();
                 await db.positions.clear();
+                await db.funds.clear();
 
                 // 2. Hydrate database
                 if (payload.transactions.length > 0) {
@@ -107,6 +114,9 @@ export async function importData(file: File): Promise<void> {
                 }
                 if (payload.positions.length > 0) {
                     await db.positions.bulkAdd(payload.positions);
+                }
+                if (payload.funds.length > 0) {
+                    await db.funds.bulkAdd(payload.funds);
                 }
 
                 // 3. Hydrate settings seamlessly if properties exist

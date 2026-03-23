@@ -1,5 +1,5 @@
 import { getAveragePrice, mul, sub, add, div } from "./math"
-import type { Position, Transaction } from "./types"
+import type { Position, Transaction, Fund } from "./types"
 
 export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], prices: Record<string, { price: string; timestamp: number }>) {
     let tBought = 0;
@@ -87,4 +87,27 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
     }
 
     return { realizedPnL, unrealizedPnL, totalPnL, roi, totalInvestment, totalRemaining, currentPrice, positionType, derivedStartDate, derivedEndDate, avgBuyPrice, avgSellPrice, breakevenPrice };
+}
+
+/**
+ * Computes NAV-based metrics for a Fund, given pre-computed position metrics.
+ *
+ * Formula (ETF-style):
+ *   fundCurrentValue = initialAmount + totalPnL
+ *   initialNAV       = initialAmount / initialShares
+ *   currentNAV       = fundCurrentValue / initialShares
+ *   navChangePct     = (currentNAV - initialNAV) / initialNAV × 100
+ */
+export function getFundMetrics(
+    fund: Fund,
+    positionMetrics: ReturnType<typeof getPositionMetrics>[],
+) {
+    const totalPnL = positionMetrics.reduce((sum, m) => add(sum, m.totalPnL), 0);
+    const currentValue = add(fund.initialAmount, totalPnL);
+    const initialNAV = fund.initialShares > 0 ? div(fund.initialAmount, fund.initialShares) : 0;
+    const currentNAV = fund.initialShares > 0 ? div(currentValue, fund.initialShares) : 0;
+    const navChangePct = initialNAV > 0
+        ? mul(div(sub(currentNAV, initialNAV), initialNAV), 100)
+        : 0;
+    return { currentValue, initialNAV, currentNAV, navChangePct, totalPnL };
 }

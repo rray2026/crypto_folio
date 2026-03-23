@@ -8,6 +8,8 @@ import TransactionDetails from "./pages/TransactionDetails"
 import Settings from "./pages/Settings"
 import Glossary from "./pages/Glossary"
 import AssetDetails from "./pages/AssetDetails"
+import Funds from "./pages/Funds"
+import FundDetails from "./pages/FundDetails"
 import { useEffect } from "react"
 import { useSettingsStore } from "./store/useSettingsStore"
 
@@ -37,6 +39,8 @@ function App() {
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/transactions/:id" element={<TransactionDetails />} />
           <Route path="/assets/:symbol" element={<AssetDetails />} />
+          <Route path="/funds" element={<Funds />} />
+          <Route path="/funds/:id" element={<FundDetails />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/glossary" element={<Glossary />} />
         </Route>

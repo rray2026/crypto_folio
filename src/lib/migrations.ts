@@ -89,10 +89,32 @@ export interface BackupPayloadV2 extends Omit<BackupPayloadV1, 'version' | 'posi
     positions: PositionV2[];
 }
 
-// When bumping to v3, append here (do NOT touch V1/V2 blocks above):
-//
-// export interface TransactionV3 extends TransactionV2 { ... }
-// export interface BackupPayloadV3 extends Omit<BackupPayloadV2, 'version' | ...> { version: 3; ... }
+// ---- v3 -------------------------------------------------------------------
+// New funds table added. Position gains optional fundId field (no backfill needed).
+
+/** Positions table as of schema v3 — adds optional fundId. */
+export interface PositionV3 extends PositionV2 {
+    fundId?: string;
+}
+
+/** Funds table as of schema v3. */
+export interface FundV3 {
+    id: string;
+    name: string;
+    description?: string;
+    initialAmount: number;
+    initialShares: number;
+    currency: string;
+    createdAt: number;
+    status: 'ACTIVE' | 'CLOSED';
+}
+
+/** Full backup payload shape as of v3. */
+export interface BackupPayloadV3 extends Omit<BackupPayloadV2, 'version' | 'positions'> {
+    version: 3;
+    positions: PositionV3[];
+    funds: FundV3[];
+}
 
 // ---------------------------------------------------------------------------
 // Migration interface
@@ -152,12 +174,20 @@ export const MIGRATIONS: Record<number, Migration> = {
         },
     },
 
-    // Add future migrations here:
-    // 2: {
-    //   description: '...',
-    //   upgradePayload: (p): BackupPayloadV3 => ({ ...p, version: 3, ... }),
-    //   upgradeIdb: async (tx) => { ... },
-    // },
+    // v2 → v3
+    2: {
+        description: 'Add funds table; add optional fundId to positions (no backfill needed)',
+        upgradePayload: (p): BackupPayloadV3 => ({
+            ...(p as BackupPayloadV2),
+            version: 3,
+            funds: (p as any).funds ?? [],
+            // positions are structurally compatible; fundId is optional so no map needed
+        }),
+        upgradeIdb: async (_tx) => {
+            // funds table is created by .stores() in db.ts
+            // Position.fundId is optional — no existing records need modification
+        },
+    },
 };
 
 // ---------------------------------------------------------------------------
