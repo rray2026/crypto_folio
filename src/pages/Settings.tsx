@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin, ArrowLeft } from "lucide-react"
 import { exportData, importData } from "@/lib/backup"
+import { DB_VERSION } from "@/lib/db"
 import { version } from "../../package.json"
 
 export default function Settings() {
@@ -320,6 +321,9 @@ export default function Settings() {
                             Analyze and optimize your database for the latest features.
                         </p>
                     </div>
+                    <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md shrink-0">
+                        schema v{DB_VERSION}
+                    </span>
                 </div>
 
                 <div className="mt-4 space-y-4">
