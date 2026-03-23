@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -40,6 +40,9 @@ export default function PositionDetails() {
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [editingAllocTxId, setEditingAllocTxId] = useState<string | null>(null)
     const [allocInputValue, setAllocInputValue] = useState<string>('')
+    const [isSharePopoverOpen, setIsSharePopoverOpen] = useState(false)
+    const [isAiDialogOpen, setIsAiDialogOpen] = useState(false)
+    const [isCopied, setIsCopied] = useState(false)
     const { assignPositionToFund, unassignPosition } = useFundStore()
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
@@ -131,6 +134,61 @@ export default function PositionDetails() {
         return sum + (tx.fee || 0) * ratio;
     }, 0);
 
+    const generateAiPrompt = () => {
+        const name = position.strategyName || `${position.symbol.split('/')[0]} Position`
+        const startStr = derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'
+        const endStr = derivedEndDate ? format(new Date(derivedEndDate), "yyyy/MM/dd") : (position.status === 'OPEN' ? 'Still Open' : 'Unknown')
+        const durationDays = differenceInDays(derivedEndDate || Date.now(), derivedStartDate || Date.now())
+
+        const tradesSection = linkedTxs.length === 0 ? '  (No linked trades)' : linkedTxs.map(tx => {
+            const alloc = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount ?? tx.quantity
+            return `  - [${tx.type}] ${format(new Date(tx.date), "yyyy/MM/dd HH:mm")}  Price: $${tx.price.toLocaleString()}  Qty: ${tx.quantity}  Allocated: ${alloc}  Fee: $${(tx.fee || 0).toFixed(2)}${tx.notes ? `  Note: ${tx.notes}` : ''}`
+        }).join('\n')
+
+        const lines = [
+            `I need your advice on the following crypto trading position.`,
+            ``,
+            `## Position Overview`,
+            `- Name: ${name}`,
+            `- Symbol: ${position.symbol}`,
+            `- Type: ${position.type} / ${positionType}`,
+            `- Status: ${position.status}`,
+            `- Opened: ${startStr}`,
+            `- Closed: ${endStr}`,
+            `- Duration: ${durationDays} days`,
+            position.notes ? `- Strategy Notes: ${position.notes}` : null,
+            ``,
+            `## Performance Metrics`,
+            `- Avg Buy Price: ${avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
+            `- Avg Sell Price: ${avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
+            position.status === 'OPEN' && currentPrice > 0 ? `- Current Price: $${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
+            `- Holdings: ${totalRemaining} ${position.symbol.split('/')[0]}`,
+            `- Realized PnL: $${realizedPnL.toFixed(2)}`,
+            totalRemaining !== 0 ? `- Unrealized PnL: $${unrealizedPnL.toFixed(2)}` : null,
+            `- ROI: ${roi.toFixed(2)}%`,
+            totalFee > 0 ? `- Total Fees: $${totalFee.toFixed(2)}` : null,
+            breakevenPrice > 0 && totalRemaining !== 0 ? `- Breakeven Price: $${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
+            ``,
+            `## Linked Trades (${linkedTxs.length})`,
+            tradesSection,
+            ``,
+            `## Request`,
+            `Based on the above data, please provide:`,
+            `1. An analysis of this position's performance`,
+            `2. Key strengths and weaknesses of the trading strategy`,
+            `3. Actionable suggestions for improvement or next steps`,
+        ].filter(l => l !== null).join('\n')
+
+        return lines
+    }
+
+    const handleCopyPrompt = async () => {
+        const prompt = generateAiPrompt()
+        await navigator.clipboard.writeText(prompt)
+        setIsCopied(true)
+        setTimeout(() => setIsCopied(false), 2000)
+    }
+
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
@@ -219,6 +277,55 @@ export default function PositionDetails() {
                                 <PositionEditForm position={position} onSuccess={() => setIsEditDialogOpen(false)} />
                             </DialogContent>
                         </Dialog>
+
+                        {/* Share Button */}
+                        <Popover open={isSharePopoverOpen} onOpenChange={setIsSharePopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" size="icon" className="shrink-0">
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-44 p-1.5" align="end">
+                                <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                                    onClick={() => { setIsSharePopoverOpen(false); setIsAiDialogOpen(true); }}
+                                >
+                                    <Bot className="h-4 w-4 text-primary shrink-0" />
+                                    问 AI
+                                </button>
+                                <button
+                                    disabled
+                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground cursor-not-allowed text-left opacity-50"
+                                >
+                                    <Share2 className="h-4 w-4 shrink-0" />
+                                    更多（待定）
+                                </button>
+                            </PopoverContent>
+                        </Popover>
+
+                        {/* Ask AI Dialog */}
+                        <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+                                <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                        <Bot className="h-5 w-5 text-primary" />
+                                        问 AI — 已生成提示词
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <p className="text-xs text-muted-foreground -mt-1">复制下方提示词，粘贴到任意 AI 对话框中获取分析建议。</p>
+                                <div className="flex-1 overflow-y-auto mt-2">
+                                    <pre className="text-xs bg-muted/40 rounded-lg p-4 whitespace-pre-wrap break-words font-mono border border-border/50 leading-relaxed">
+                                        {generateAiPrompt()}
+                                    </pre>
+                                </div>
+                                <div className="flex justify-end pt-2 border-t border-border/40">
+                                    <Button onClick={handleCopyPrompt} className="gap-2" size="sm">
+                                        {isCopied ? <><Check className="h-4 w-4" /> 已复制</> : <><Copy className="h-4 w-4" /> 复制提示词</>}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+
                         <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={handleDeletePosition}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
