@@ -37,7 +37,7 @@ db.version(3)
     .stores({
         transactions: 'id, date, symbol, type',
         positions: 'id, symbol, status, fundId',
-        funds: 'id, status',
+        funds: 'id, status, createdAt',
     })
     .upgrade(MIGRATIONS[2].upgradeIdb);
 
