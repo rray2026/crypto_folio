@@ -144,7 +144,8 @@ describe('MIGRATIONS registry', () => {
     it('each entry increments version by exactly 1', () => {
         for (const [key, migration] of Object.entries(MIGRATIONS)) {
             const fromVersion = Number(key);
-            const result = migration.upgradePayload({ version: fromVersion });
+            // Use makePayload so real migrations have the arrays they expect
+            const result = migration.upgradePayload(makePayload(fromVersion));
             expect(result.version).toBe(fromVersion + 1);
         }
     });

@@ -1,11 +1,12 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { Transaction, Position } from './types';
+import { MIGRATIONS } from './migrations';
 
 /** Database name — single source of truth used for native IDB probing. */
 export const DB_NAME = 'CryptoFolioDB';
 
 /** Current schema version. Increment this when the DB schema changes. */
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 // Extend Dexie to declare DB structure
 const db = new Dexie(DB_NAME) as Dexie & {
@@ -21,16 +22,24 @@ db.version(1).stores({
     positions: 'id, symbol, status'
 });
 
+// v2 — no index changes; backfills Position.type and Transaction.orderId for
+//      records that pre-date those fields being consistently populated.
+db.version(2)
+    .stores({
+        transactions: 'id, date, symbol, type',
+        positions: 'id, symbol, status'
+    })
+    .upgrade(MIGRATIONS[1].upgradeIdb);
+
 // HOW TO ADD A FUTURE SCHEMA MIGRATION:
 // 1. Increment DB_VERSION above.
 // 2. Add new schema snapshot types + a MIGRATIONS[N] entry in migrations.ts.
 // 3. Add a new db.version(N+1) block below, wiring the Dexie upgrade to MIGRATIONS[N].upgradeIdb.
 //
 // Example (do NOT add now):
-// import { MIGRATIONS } from './migrations';
-// db.version(2)
+// db.version(3)
 //   .stores({ transactions: 'id, date, symbol, type, exchange' })
-//   .upgrade(MIGRATIONS[1].upgradeIdb);
+//   .upgrade(MIGRATIONS[2].upgradeIdb);
 
 // When another tab opens the DB at a higher version, close our connection so the
 // upgrade can proceed without being blocked. The user will need to refresh.

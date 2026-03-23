@@ -18,6 +18,10 @@
 // Schema snapshots (append-only — never edit an existing VN block)
 // ---------------------------------------------------------------------------
 
+// ---- v1 -------------------------------------------------------------------
+// Initial schema. type on Position was not always populated; orderId on
+// Transaction was missing for Binance-imported records whose id was numeric.
+
 /** Transactions table as of schema v1. */
 export interface TransactionV1 {
     id: string;
@@ -28,7 +32,7 @@ export interface TransactionV1 {
     quantity: number;
     amount: number;             // price × quantity
     fee: number;
-    orderId?: string;
+    orderId?: string;           // may be absent in v1 data
     associatedPositionIds: string[];
     notes?: string;
 }
@@ -38,7 +42,7 @@ export interface PositionV1 {
     id: string;
     symbol: string;
     strategyName?: string;
-    type: 'PRIMARY' | 'SHADOW';
+    type?: 'PRIMARY' | 'SHADOW'; // was not always populated in v1 data
     status: 'OPEN' | 'CLOSED';
     entries: Array<{ transactionId: string; allocatedAmount: number }>;
     journal?: {
@@ -66,16 +70,29 @@ export interface BackupPayloadV1 {
     };
 }
 
-// When bumping to v2, append here (do NOT touch V1 blocks above):
+// ---- v2 -------------------------------------------------------------------
+// positions.type is now always set (defaults to 'PRIMARY').
+// transactions.orderId is backfilled for records whose id is a numeric
+// exchange order ID (8+ digit pattern from Binance imports).
+
+/** Transactions table as of schema v2 (structurally unchanged from v1). */
+export type TransactionV2 = TransactionV1;
+
+/** Positions table as of schema v2 — type is now required. */
+export interface PositionV2 extends Omit<PositionV1, 'type'> {
+    type: 'PRIMARY' | 'SHADOW';
+}
+
+/** Full backup payload shape as of v2. */
+export interface BackupPayloadV2 extends Omit<BackupPayloadV1, 'version' | 'positions'> {
+    version: 2;
+    positions: PositionV2[];
+}
+
+// When bumping to v3, append here (do NOT touch V1/V2 blocks above):
 //
-// export interface TransactionV2 extends TransactionV1 {
-//     exchange: string | null;
-// }
-//
-// export interface BackupPayloadV2 extends Omit<BackupPayloadV1, 'version' | 'transactions'> {
-//     version: 2;
-//     transactions: TransactionV2[];
-// }
+// export interface TransactionV3 extends TransactionV2 { ... }
+// export interface BackupPayloadV3 extends Omit<BackupPayloadV2, 'version' | ...> { version: 3; ... }
 
 // ---------------------------------------------------------------------------
 // Migration interface
@@ -107,24 +124,40 @@ export interface Migration {
 // ---------------------------------------------------------------------------
 // Key   = source version (being upgraded FROM).
 // Value = migration that produces source + 1.
-//
-// Example — v1 → v2 (not active):
-//
-//   1: {
-//     description: 'Add exchange field to transactions',
-//     upgradePayload: (p) => ({
-//       ...p,
-//       version: 2,
-//       transactions: (p.transactions as TransactionV1[]).map(t => ({ exchange: null, ...t })),
-//     }),
-//     upgradeIdb: (tx) =>
-//       tx.table('transactions').toCollection().modify((t: TransactionV1) => {
-//         (t as any).exchange ??= null;
-//       }),
-//   },
 
 export const MIGRATIONS: Record<number, Migration> = {
-    // Add future migrations here.
+
+    // v1 → v2
+    1: {
+        description: 'Backfill Position.type (→ PRIMARY) and Transaction.orderId for numeric-id records',
+        upgradePayload: (p): BackupPayloadV2 => ({
+            ...(p as BackupPayloadV1),
+            version: 2,
+            positions: (p.positions as PositionV1[]).map(pos => ({
+                ...pos,
+                type: pos.type ?? 'PRIMARY',
+            })),
+            transactions: (p.transactions as TransactionV1[]).map(t => ({
+                ...t,
+                orderId: t.orderId ?? (/^\d{8,}$/.test(t.id) ? t.id : undefined),
+            })),
+        }),
+        upgradeIdb: async (tx) => {
+            await tx.table('positions').toCollection().modify((pos: PositionV1) => {
+                if (!pos.type) pos.type = 'PRIMARY';
+            });
+            await tx.table('transactions').toCollection().modify((t: TransactionV1) => {
+                if (!t.orderId && /^\d{8,}$/.test(t.id)) t.orderId = t.id;
+            });
+        },
+    },
+
+    // Add future migrations here:
+    // 2: {
+    //   description: '...',
+    //   upgradePayload: (p): BackupPayloadV3 => ({ ...p, version: 3, ... }),
+    //   upgradeIdb: async (tx) => { ... },
+    // },
 };
 
 // ---------------------------------------------------------------------------
