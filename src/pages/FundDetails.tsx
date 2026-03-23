@@ -51,6 +51,12 @@ export default function FundDetails() {
     const unassignedPosMetrics = unassignedPositions.map(getPosMetrics)
     const fundM = getFundMetrics(fund, allPosMetrics)
 
+    const assetsValue = allPosMetrics.reduce((sum, m) => {
+        if (m.totalRemaining > 0 && m.currentPrice > 0) return sum + m.totalRemaining * m.currentPrice
+        return sum
+    }, 0)
+    const cashValue = fundM.currentValue - assetsValue
+
     const handleDelete = async () => {
         if (!window.confirm(`Delete fund "${fund.name}"? All positions will be unassigned but not deleted.`)) return
         await deleteFund(fund.id)
@@ -130,6 +136,16 @@ export default function FundDetails() {
                     <p className="text-xs text-muted-foreground mb-1">Current Value</p>
                     <p className="text-xl font-bold font-mono">{fmtNum(fundM.currentValue)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
+                    <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
+                        <div className="flex justify-between text-[10px]">
+                            <span className="text-muted-foreground">Assets</span>
+                            <span className="font-mono text-foreground/80">{fmtNum(assetsValue)}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                            <span className="text-muted-foreground">Cash</span>
+                            <span className="font-mono text-foreground/80">{fmtNum(cashValue)}</span>
+                        </div>
+                    </div>
                 </div>
                 <div className="bg-card rounded-xl border border-border/40 p-4">
                     <p className="text-xs text-muted-foreground mb-1">NAV / Share</p>
