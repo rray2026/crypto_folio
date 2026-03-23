@@ -146,12 +146,12 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-amber-500">
                             <AlertTriangle className="h-5 w-5 shrink-0" />
-                            功能暂不可用
+                            Feature Unavailable
                         </DialogTitle>
                         <DialogDescription className="pt-2 text-sm leading-relaxed">
-                            Binance 导出文件格式已发生变化，当前导入功能暂时无法正常解析。
+                            The Binance export format has changed, and the current import feature is temporarily unable to parse it.
                             <br /><br />
-                            我们正在适配新格式，请稍后再试。感谢您的耐心等待。
+                            We are working on supporting the new format. Please try again later. Thank you for your patience.
                         </DialogDescription>
                     </DialogHeader>
                 </DialogContent>

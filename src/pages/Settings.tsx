@@ -22,7 +22,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin, ArrowLeft } from "lucide-react"
+
 import { exportData, importData } from "@/lib/backup"
+import { DB_VERSION } from "@/lib/db"
 import { version } from "../../package.json"
 
 export default function Settings() {
@@ -31,18 +33,14 @@ export default function Settings() {
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
 
+    const txCount  = useLiveQuery(() => db.transactions.count(), [])
+    const posCount = useLiveQuery(() => db.positions.count(), [])
+
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isImportConfirmOpen, setIsImportConfirmOpen] = useState(false)
     const [pendingImportFile, setPendingImportFile] = useState<File | null>(null)
     const [isProcessingBackup, setIsProcessingBackup] = useState(false)
-    const [isMigrationProcessing, setIsMigrationProcessing] = useState(false)
-
-    const legacyPositions = useLiveQuery(() => db.positions.toArray().then(items => items.filter(p => !p.type)), [])
-    const legacyTransactions = useLiveQuery(
-        () => db.transactions.filter(t => !t.orderId && /^\d{8,}$/.test(t.id)).toArray(),
-        []
-    )
 
     useEffect(() => {
         fetchPrices();
@@ -107,41 +105,6 @@ export default function Settings() {
         setIsSyncingAll(false);
     }
 
-    const handleDataUpgrade = async () => {
-        if (!legacyPositions?.length) return
-        setIsMigrationProcessing(true)
-        try {
-            await db.transaction('rw', db.positions, async () => {
-                for (const pos of legacyPositions) {
-                    await db.positions.update(pos.id, { type: 'PRIMARY' })
-                }
-            })
-            alert(`Succesfully upgraded ${legacyPositions.length} positions.`)
-        } catch (error) {
-            console.error("Migration failed:", error)
-            alert("Migration failed. Please check logs.")
-        } finally {
-            setIsMigrationProcessing(false)
-        }
-    }
-
-    const handleTransactionOrderIdMigration = async () => {
-        if (!legacyTransactions?.length) return
-        setIsMigrationProcessing(true)
-        try {
-            await db.transaction('rw', db.transactions, async () => {
-                for (const tx of legacyTransactions) {
-                    await db.transactions.update(tx.id, { orderId: tx.id })
-                }
-            })
-            alert(`Successfully backfilled orderId for ${legacyTransactions.length} transactions.`)
-        } catch (error) {
-            console.error("Transaction migration failed:", error)
-            alert("Migration failed. Please check logs.")
-        } finally {
-            setIsMigrationProcessing(false)
-        }
-    }
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
@@ -309,68 +272,30 @@ export default function Settings() {
                 </div>
             </div>
 
-            <div className={`bg-card p-6 rounded-xl border shadow-sm mt-8 transition-all ${(legacyPositions?.length || legacyTransactions?.length) ? 'border-amber-500/50 shadow-amber-500/5 ring-1 ring-amber-500/20' : ''}`}>
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <RefreshCw className={`h-5 w-5 text-muted-foreground ${isMigrationProcessing ? 'animate-spin' : ''}`} />
-                            Data Integrity & Upgrade
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Analyze and optimize your database for the latest features.
-                        </p>
+            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
+                <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
+                    <Database className="h-5 w-5 text-muted-foreground" />
+                    Data Integrity & Upgrade
+                </h2>
+
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Transactions</p>
+                        <p className="text-2xl font-bold font-mono">{txCount ?? '—'}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Positions</p>
+                        <p className="text-2xl font-bold font-mono">{posCount ?? '—'}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Schema</p>
+                        <p className="text-2xl font-bold font-mono">v{DB_VERSION}</p>
                     </div>
                 </div>
 
-                <div className="mt-4 space-y-4">
-                    {legacyPositions?.length ? (
-                        <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="text-sm font-bold text-amber-700 dark:text-amber-400">Upgrade Required — Positions</p>
-                                    <p className="text-xs text-amber-600/80 dark:text-amber-500/70 mt-1">
-                                        We found {legacyPositions.length} legacy positions that need a "Type" assignment (Strategic vs Analysis) to ensure your portfolio metrics are calculated accurately.
-                                    </p>
-                                    <Button
-                                        onClick={handleDataUpgrade}
-                                        disabled={isMigrationProcessing}
-                                        className="mt-4 bg-amber-500 hover:bg-amber-600 text-white border-none h-9 px-6 rounded-full font-bold shadow-lg shadow-amber-500/20"
-                                    >
-                                        Upgrade Data Now
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    ) : null}
-
-                    {legacyTransactions?.length ? (
-                        <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="text-sm font-bold text-amber-700 dark:text-amber-400">Upgrade Required — Transactions</p>
-                                    <p className="text-xs text-amber-600/80 dark:text-amber-500/70 mt-1">
-                                        We found {legacyTransactions.length} imported transactions missing an Order ID. Backfilling this enables duplicate detection when the same trade is entered manually.
-                                    </p>
-                                    <Button
-                                        onClick={handleTransactionOrderIdMigration}
-                                        disabled={isMigrationProcessing}
-                                        className="mt-4 bg-amber-500 hover:bg-amber-600 text-white border-none h-9 px-6 rounded-full font-bold shadow-lg shadow-amber-500/20"
-                                    >
-                                        Backfill Order IDs
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    ) : null}
-
-                    {!legacyPositions?.length && !legacyTransactions?.length ? (
-                        <div className="flex items-center gap-3 p-4 bg-green-500/5 rounded-xl border border-green-500/10">
-                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                            <p className="text-sm font-medium text-green-600 dark:text-green-400">All data is up to date and optimized.</p>
-                        </div>
-                    ) : null}
+                <div className="flex items-center gap-2 mt-4">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
                 </div>
             </div>
 

@@ -1,4 +1,5 @@
-import { db } from './db';
+import { db, DB_VERSION } from './db';
+import { migratePayload } from './migrations';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 export interface BackupPayload {
@@ -14,6 +15,9 @@ export interface BackupPayload {
     };
 }
 
+// ---------------------------------------------------------------------------
+// Export
+// ---------------------------------------------------------------------------
 export async function exportData(): Promise<void> {
     try {
         const transactions = await db.transactions.toArray();
@@ -21,7 +25,7 @@ export async function exportData(): Promise<void> {
         const settingsState = useSettingsStore.getState();
 
         const payload: BackupPayload = {
-            version: 1,
+            version: DB_VERSION,
             timestamp: Date.now(),
             appName: 'CryptoFolio',
             transactions,
@@ -52,6 +56,9 @@ export async function exportData(): Promise<void> {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Import
+// ---------------------------------------------------------------------------
 export async function importData(file: File): Promise<void> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -61,12 +68,30 @@ export async function importData(file: File): Promise<void> {
                 const content = e.target?.result as string;
                 if (!content) throw new Error("Empty file payload.");
 
-                const payload = JSON.parse(content) as BackupPayload;
+                const raw = JSON.parse(content) as BackupPayload;
 
-                // Validate schema rudimentarily
-                if (payload.appName !== 'CryptoFolio') {
+                // Validate app identity
+                if (raw.appName !== 'CryptoFolio') {
                     throw new Error("Invalid backup file. This file does not appear to belong to CryptoFolio.");
                 }
+
+                // Validate version field exists
+                if (typeof raw.version !== 'number') {
+                    throw new Error("Invalid backup file: missing or non-numeric version field.");
+                }
+
+                // Reject backups created by a newer version of the app
+                if (raw.version > DB_VERSION) {
+                    throw new Error(
+                        `This backup was created with a newer version of CryptoFolio (backup v${raw.version}, app v${DB_VERSION}). ` +
+                        `Please update the app before importing.`
+                    );
+                }
+
+                // Migrate older backups up to current version
+                const payload = raw.version < DB_VERSION
+                    ? migratePayload(raw, DB_VERSION) as BackupPayload
+                    : raw;
 
                 if (!Array.isArray(payload.transactions) || !Array.isArray(payload.positions)) {
                     throw new Error("Malformed backup properties. Missing Transactions or Positions arrays.");
