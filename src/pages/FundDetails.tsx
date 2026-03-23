@@ -235,7 +235,7 @@ export default function FundDetails() {
                                             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
                                                 <span>Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
                                                 {m.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">${m.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
-                                                {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{(m.positionType === 'SHORT' ? -m.totalRemaining : m.totalRemaining).toLocaleString()}</span></span>}
+                                                {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
                                     </div>
@@ -307,7 +307,7 @@ export default function FundDetails() {
                                         {m.avgBuyPrice > 0 && (
                                             <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
                                                 Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
-                                                {m.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{(m.positionType === 'SHORT' ? -m.totalRemaining : m.totalRemaining).toLocaleString()}</span></span>}
+                                                {m.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
                                     </div>

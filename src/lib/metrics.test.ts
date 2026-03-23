@@ -166,10 +166,9 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         // SHORT logic:
         // Total Revenue: 2000
         // Total Cost (Buyback): 600
-        // Remaining Short: 0.6
-        // Cash Left to cover: 2000 - 600 = 1400
-        // Breakeven: 1400 / 0.6 = 2333.333...
-        expect(metrics.totalRemaining).toBe(0.6);
+        // Remaining Short: tBought - tSold = 0.4 - 1 = -0.6 (negative = short)
+        // Breakeven: (tCost - tRevenue) / remaining = (600 - 2000) / (-0.6) = 2333.333...
+        expect(metrics.totalRemaining).toBe(-0.6);
         expect(metrics.breakevenPrice).toBeCloseTo(2333.3333, 4);
     });
 

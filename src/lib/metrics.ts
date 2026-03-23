@@ -56,14 +56,14 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
     } else {
         // SHORT POSITION
         realizedPnL = tBought > 0 ? mul(sub(avgSellPrice, avgBuyPrice), tBought) : 0;
-        totalRemaining = sub(tSold, tBought);
+        totalRemaining = sub(tBought, tSold);
         totalInvestment = tRevenue;
 
         if (pos.status === 'OPEN' && totalRemaining !== 0) {
             const cached = prices[pos.symbol];
             if (cached) {
                 currentPrice = parseFloat(cached.price);
-                unrealizedPnL = mul(sub(avgSellPrice, currentPrice), totalRemaining);
+                unrealizedPnL = mul(sub(currentPrice, avgSellPrice), totalRemaining);
                 totalPnL = add(realizedPnL, unrealizedPnL);
                 roi = totalInvestment > 0 ? mul(div(totalPnL, totalInvestment), 100) : 0;
             }
@@ -75,15 +75,10 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
 
     let breakevenPrice = 0;
     if (totalRemaining !== 0) {
-        if (positionType === 'LONG') {
-            breakevenPrice = div(sub(tCost, tRevenue), totalRemaining);
-        } else {
-            // For SHORT: (Revenue - Cost) / Remaining. 
-            // If you sold 1 BTC @ 100, and bought 0.5 @ 40, you have 0.5 short remaining.
-            // You have 60 left to "cover" the remaining 0.5. 60/0.5 = 120.
-            // If price hits 120, you close at 120*0.5=60, total profit 0.
-            breakevenPrice = div(sub(tRevenue, tCost), totalRemaining);
-        }
+        // Unified formula works for both LONG (positive remaining) and SHORT (negative remaining).
+        // LONG example: cost=50k, revenue=40k, remaining=0.5 → (50k-40k)/0.5 = 20k ✓
+        // SHORT example: cost=600, revenue=2000, remaining=-0.6 → (600-2000)/(-0.6) = 2333 ✓
+        breakevenPrice = div(sub(tCost, tRevenue), totalRemaining);
     }
 
     return { realizedPnL, unrealizedPnL, totalPnL, roi, totalInvestment, totalRemaining, currentPrice, positionType, derivedStartDate, derivedEndDate, avgBuyPrice, avgSellPrice, breakevenPrice };

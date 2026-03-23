@@ -481,7 +481,7 @@ export default function Transactions() {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Qty</span>
-                                            <span className="text-sm font-mono font-bold text-right">{(metrics.positionType === 'SHORT' ? -metrics.totalRemaining : metrics.totalRemaining).toLocaleString()}</span>
+                                            <span className="text-sm font-mono font-bold text-right">{metrics.totalRemaining.toLocaleString()}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">PnL (Est.)</span>

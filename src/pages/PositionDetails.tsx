@@ -268,7 +268,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
                                 <div className="flex items-baseline gap-1 truncate">
-                                    <span className="text-base sm:text-xl font-bold font-mono">{(positionType === 'SHORT' ? -totalRemaining : totalRemaining).toLocaleString()}</span>
+                                    <span className="text-base sm:text-xl font-bold font-mono">{totalRemaining.toLocaleString()}</span>
                                     <span className="text-[10px] text-muted-foreground uppercase">{position.symbol.split('/')[0]}</span>
                                 </div>
                             </div>
