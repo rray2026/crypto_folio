@@ -352,10 +352,10 @@ export default function PositionDetails() {
                                 const fund = allFunds?.find(f => f.id === position.fundId)
                                 return (
                                     <div className="flex items-center justify-between p-3 rounded-xl border bg-background/40">
-                                        <a href={`/funds/${position.fundId}`} className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-1 truncate mr-2 transition-colors">
+                                        <button onClick={() => navigate(`/funds/${position.fundId}`)} className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-1 truncate mr-2 transition-colors cursor-pointer">
                                             {fund?.name ?? 'Unknown Fund'}
                                             <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
-                                        </a>
+                                        </button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
