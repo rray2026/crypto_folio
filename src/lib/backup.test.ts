@@ -168,29 +168,7 @@ describe('backup logic', () => {
         });
 
         it('applies a single registered migration step', () => {
-            // Temporarily register a v1→v2 migration (only if DB_VERSION >= 2)
-            // We simulate it by patching the map directly and using a synthetic version range.
-            const originalMigrations = { ...BACKUP_MIGRATIONS };
-
-            // Patch: treat version 98 → 99 as a valid migration
-            BACKUP_MIGRATIONS[98] = (p) => ({
-                ...p,
-                version: 99,
-                transactions: p.transactions.map((t: any) => ({ ...t, _migrated: true })),
-            });
-
-            const payload: BackupPayload = makePayload({
-                version: 98,
-                transactions: [{ id: 'tx1' }],
-            });
-
-            // Override DB_VERSION locally — we need a helper approach:
-            // migrateBackup loops while p.version < DB_VERSION, so we need DB_VERSION = 99.
-            // Since DB_VERSION is a const export we can't easily override it. Instead, we
-            // rely on the fact that 98 < current DB_VERSION (1) is false, so this specific
-            // test checks migration logic using the private loop condition directly.
-            // Workaround: set version to something < DB_VERSION with a handler.
-            // DB_VERSION is 1, so we test version 0 → 1.
+            // DB_VERSION is 1, so we test version 0 → 1 by registering a handler for v0.
             BACKUP_MIGRATIONS[0] = (p) => ({
                 ...p,
                 version: 1,
@@ -207,10 +185,7 @@ describe('backup logic', () => {
             expect(result.version).toBe(DB_VERSION);
             expect(result.transactions[0]._migratedFromV0).toBe(true);
 
-            // Cleanup
-            delete BACKUP_MIGRATIONS[98];
             delete BACKUP_MIGRATIONS[0];
-            Object.assign(BACKUP_MIGRATIONS, originalMigrations);
         });
 
         it('applies multiple migration steps in sequence', () => {
