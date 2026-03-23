@@ -1,4 +1,5 @@
 import { db, DB_VERSION } from './db';
+import { migratePayload } from './migrations';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 export interface BackupPayload {
@@ -12,43 +13,6 @@ export interface BackupPayload {
         dashboardTimeRange: string;
         theme: string;
     };
-}
-
-// ---------------------------------------------------------------------------
-// Migration pipeline
-// ---------------------------------------------------------------------------
-// Each key is a "from" version. The function upgrades the payload from vN → vN+1.
-//
-// HOW TO ADD A FUTURE MIGRATION:
-// 1. Increment DB_VERSION in db.ts.
-// 2. Add a new Dexie version block in db.ts with an .upgrade() handler.
-// 3. Add an entry here (key = old version) that transforms the backup payload shape.
-//
-// Example (not active):
-// 1: (p) => ({
-//     ...p,
-//     version: 2,
-//     transactions: p.transactions.map(t => ({ exchange: null, ...t })),
-// }),
-export const BACKUP_MIGRATIONS: Record<number, (p: BackupPayload) => BackupPayload> = {};
-
-/**
- * Sequentially applies BACKUP_MIGRATIONS until payload.version === DB_VERSION.
- * Throws if a migration step is missing.
- */
-export function migrateBackup(payload: BackupPayload): BackupPayload {
-    let p = payload;
-    while (p.version < DB_VERSION) {
-        const migrate = BACKUP_MIGRATIONS[p.version];
-        if (!migrate) {
-            throw new Error(
-                `No migration path from backup version ${p.version} to ${DB_VERSION}. ` +
-                `The backup may be too old to upgrade automatically.`
-            );
-        }
-        p = migrate(p);
-    }
-    return p;
 }
 
 // ---------------------------------------------------------------------------
@@ -125,7 +89,9 @@ export async function importData(file: File): Promise<void> {
                 }
 
                 // Migrate older backups up to current version
-                const payload = raw.version < DB_VERSION ? migrateBackup(raw) : raw;
+                const payload = raw.version < DB_VERSION
+                    ? migratePayload(raw, DB_VERSION) as BackupPayload
+                    : raw;
 
                 if (!Array.isArray(payload.transactions) || !Array.isArray(payload.positions)) {
                     throw new Error("Malformed backup properties. Missing Transactions or Positions arrays.");

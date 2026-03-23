@@ -23,13 +23,14 @@ db.version(1).stores({
 
 // HOW TO ADD A FUTURE SCHEMA MIGRATION:
 // 1. Increment DB_VERSION above.
-// 2. Add a new db.version(N) block below — Dexie runs .upgrade() automatically for existing users.
-// 3. Add a corresponding entry in BACKUP_MIGRATIONS in backup.ts.
+// 2. Add new schema snapshot types + a MIGRATIONS[N] entry in migrations.ts.
+// 3. Add a new db.version(N+1) block below, wiring the Dexie upgrade to MIGRATIONS[N].upgradeIdb.
 //
 // Example (do NOT add now):
+// import { MIGRATIONS } from './migrations';
 // db.version(2)
 //   .stores({ transactions: 'id, date, symbol, type, exchange' })
-//   .upgrade(tx => tx.table('transactions').toCollection().modify(t => { t.exchange ??= null }));
+//   .upgrade(MIGRATIONS[1].upgradeIdb);
 
 // When another tab opens the DB at a higher version, close our connection so the
 // upgrade can proceed without being blocked. The user will need to refresh.
