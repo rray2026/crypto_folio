@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
+import { useLiveQuery } from "dexie-react-hooks"
+import { db } from "@/lib/db"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +22,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Trash2, Plus, RefreshCw, Palette, BookOpen, Download, Upload, Database, AlertTriangle, Pin, ArrowLeft } from "lucide-react"
+
 import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
 import { version } from "../../package.json"
@@ -29,6 +32,9 @@ export default function Settings() {
     const [newPair, setNewPair] = useState("")
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
+
+    const txCount  = useLiveQuery(() => db.transactions.count(), [])
+    const posCount = useLiveQuery(() => db.positions.count(), [])
 
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -267,26 +273,29 @@ export default function Settings() {
             </div>
 
             <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <RefreshCw className="h-5 w-5 text-muted-foreground" />
-                            Data Integrity & Upgrade
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Analyze and optimize your database for the latest features.
-                        </p>
+                <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
+                    <Database className="h-5 w-5 text-muted-foreground" />
+                    Data Integrity & Upgrade
+                </h2>
+
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Transactions</p>
+                        <p className="text-2xl font-bold font-mono">{txCount ?? '—'}</p>
                     </div>
-                    <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md shrink-0">
-                        schema v{DB_VERSION}
-                    </span>
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Positions</p>
+                        <p className="text-2xl font-bold font-mono">{posCount ?? '—'}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Schema</p>
+                        <p className="text-2xl font-bold font-mono">v{DB_VERSION}</p>
+                    </div>
                 </div>
 
-                <div className="mt-4">
-                    <div className="flex items-center gap-3 p-4 bg-green-500/5 rounded-xl border border-green-500/10">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        <p className="text-sm font-medium text-green-600 dark:text-green-400">All data is up to date and optimized.</p>
-                    </div>
+                <div className="flex items-center gap-2 mt-4">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
                 </div>
             </div>
 
