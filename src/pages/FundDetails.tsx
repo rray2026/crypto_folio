@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
-import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -48,6 +48,7 @@ export default function FundDetails() {
     }
 
     const allPosMetrics = fundPositions.map(getPosMetrics)
+    const unassignedPosMetrics = unassignedPositions.map(getPosMetrics)
     const fundM = getFundMetrics(fund, allPosMetrics)
 
     const handleDelete = async () => {
@@ -166,48 +167,61 @@ export default function FundDetails() {
                                 const m = allPosMetrics[i]
                                 const posValue = m.totalInvestment + m.totalPnL
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
+                                const isLong = m.positionType === 'LONG'
                                 return (
-                                    <div key={pos.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors group">
-                                        <div className="flex gap-3 items-center min-w-0">
-                                            <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider shrink-0 ${
-                                                pos.status === 'OPEN'
-                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                : 'bg-muted text-muted-foreground'
-                                            }`}>
-                                                {pos.status}
-                                            </span>
-                                            <div className="flex flex-col min-w-0">
+                                    <div key={pos.id} className="p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors">
+                                        {/* Row 1: badges + name + actions */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className={`shrink-0 inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                    pos.status === 'OPEN'
+                                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                                    : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    {pos.status}
+                                                </span>
+                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                    isLong
+                                                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                }`}>
+                                                    {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                                                    {m.positionType}
+                                                </span>
                                                 <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
-                                                <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                                                    <span className="font-mono opacity-70">{pos.symbol}</span>
-                                                    <span className="opacity-50">•</span>
-                                                    <span className={`font-semibold ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                                                        {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
-                                                    </span>
-                                                    <span className="opacity-50 hidden sm:inline">•</span>
-                                                    <span className="text-muted-foreground hidden sm:inline">{alloc.toFixed(1)}% alloc</span>
-                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-0.5 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={() => navigate(`/positions/${pos.id}`)}>
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={() => unassignPosition(pos.id)} title="Remove from fund">
+                                                    <X className="h-3.5 w-3.5" />
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-0.5 shrink-0 ml-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                                onClick={() => navigate(`/positions/${pos.id}`)}
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
-                                                onClick={() => unassignPosition(pos.id)}
-                                                title="Remove from fund"
-                                            >
-                                                <X className="h-3.5 w-3.5" />
-                                            </Button>
+                                        {/* Row 2: metrics */}
+                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                                            <span className="font-mono text-muted-foreground">{pos.symbol}</span>
+                                            <span className="text-muted-foreground/40">•</span>
+                                            <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
+                                            <span className="text-muted-foreground/40">•</span>
+                                            <span className={`font-semibold font-mono ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                PnL {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
+                                            </span>
+                                            <span className={`font-mono ${m.roi >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                ({m.roi >= 0 ? '+' : ''}{m.roi.toFixed(2)}%)
+                                            </span>
+                                            <span className="text-muted-foreground/40">•</span>
+                                            <span className="text-muted-foreground">{alloc.toFixed(1)}% alloc</span>
                                         </div>
+                                        {/* Row 3: price info */}
+                                        {m.avgBuyPrice > 0 && (
+                                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
+                                                <span>Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
+                                                {m.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">${m.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
+                                                {m.totalRemaining > 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
@@ -225,41 +239,64 @@ export default function FundDetails() {
                                 No unassigned positions.
                             </p>
                         ) : (
-                            unassignedPositions.map(pos => (
-                                <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background/50">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
-                                                pos.status === 'OPEN'
-                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                : 'bg-muted text-muted-foreground'
-                                            }`}>
-                                                {pos.status}
-                                            </span>
-                                            <p className="font-medium truncate text-xs">{pos.strategyName || pos.symbol}</p>
+                            unassignedPositions.map((pos, i) => {
+                                const m = unassignedPosMetrics[i]
+                                const isLong = m.positionType === 'LONG'
+                                return (
+                                    <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
+                                        {/* Row 1: badges + name + actions */}
+                                        <div className="flex items-center justify-between gap-1">
+                                            <div className="flex items-center gap-1 min-w-0">
+                                                <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                    pos.status === 'OPEN'
+                                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                                    : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    {pos.status}
+                                                </span>
+                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                    isLong
+                                                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                }`}>
+                                                    {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                                                    {m.positionType}
+                                                </span>
+                                                <p className="font-medium text-xs truncate">{pos.strategyName || pos.symbol}</p>
+                                            </div>
+                                            <div className="flex items-center gap-0.5 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate(`/positions/${pos.id}`)}>
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button size="sm" variant="secondary" className="h-7 text-xs gap-1" onClick={() => handleAssign(pos.id)}>
+                                                    <LinkIcon className="h-3 w-3" /> Link
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                                onClick={() => navigate(`/positions/${pos.id}`)}
-                                            >
-                                                <Eye className="h-3.5 w-3.5" />
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                className="h-7 text-xs gap-1"
-                                                onClick={() => handleAssign(pos.id)}
-                                            >
-                                                <LinkIcon className="h-3 w-3" /> Link
-                                            </Button>
+                                        {/* Row 2: metrics */}
+                                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
+                                            <span className="font-mono text-muted-foreground">{pos.symbol}</span>
+                                            <span className="text-muted-foreground/40">•</span>
+                                            <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
+                                            {m.totalPnL !== 0 && (
+                                                <>
+                                                    <span className="text-muted-foreground/40">•</span>
+                                                    <span className={`font-mono font-semibold ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                        {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
+                                                        <span className="font-normal ml-0.5">({m.roi >= 0 ? '+' : ''}{m.roi.toFixed(1)}%)</span>
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
+                                        {m.avgBuyPrice > 0 && (
+                                            <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
+                                                Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
+                                                {m.totalRemaining > 0 && <span className="ml-2">Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="font-mono text-muted-foreground text-[10px]">{pos.symbol}</p>
-                                </div>
-                            ))
+                                )
+                            })
                         )}
                     </div>
                 </div>
