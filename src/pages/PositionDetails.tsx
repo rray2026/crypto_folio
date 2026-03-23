@@ -38,6 +38,8 @@ export default function PositionDetails() {
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
+    const [editingAllocTxId, setEditingAllocTxId] = useState<string | null>(null)
+    const [allocInputValue, setAllocInputValue] = useState<string>('')
     const { assignPositionToFund, unassignPosition } = useFundStore()
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
@@ -81,6 +83,18 @@ export default function PositionDetails() {
     const handleRemove = async (txId: string) => {
         if (!id) return;
         await removeTransactionFromPosition(id, txId);
+    }
+
+    const startEditAlloc = (txId: string, currentAlloc: number) => {
+        setEditingAllocTxId(txId);
+        setAllocInputValue(String(currentAlloc));
+    }
+
+    const commitEditAlloc = async (txId: string) => {
+        const val = parseFloat(allocInputValue);
+        if (!id || isNaN(val) || val <= 0) { setEditingAllocTxId(null); return; }
+        await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: val });
+        setEditingAllocTxId(null);
     }
 
     const toggleStatus = async () => {
@@ -305,7 +319,24 @@ export default function PositionDetails() {
                                                             ${tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
                                                         </p>
                                                         <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                                                            <span className="bg-primary/5 text-primary px-1 rounded-sm font-semibold">Allocated: {entry?.allocatedAmount}</span>
+                                                            {editingAllocTxId === tx.id ? (
+                                                                <input
+                                                                    autoFocus
+                                                                    type="number"
+                                                                    value={allocInputValue}
+                                                                    onChange={e => setAllocInputValue(e.target.value)}
+                                                                    onBlur={() => commitEditAlloc(tx.id)}
+                                                                    onKeyDown={e => { if (e.key === 'Enter') commitEditAlloc(tx.id); if (e.key === 'Escape') setEditingAllocTxId(null); }}
+                                                                    className="w-20 bg-background border border-primary/50 rounded px-1 py-0 text-[10px] md:text-xs font-semibold text-primary focus:outline-none"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                />
+                                                            ) : (
+                                                                <span
+                                                                    className="bg-primary/5 text-primary px-1 rounded-sm font-semibold cursor-pointer hover:bg-primary/15 transition-colors"
+                                                                    onClick={e => { e.stopPropagation(); startEditAlloc(tx.id, entry?.allocatedAmount ?? 0); }}
+                                                                    title="Click to edit allocated amount"
+                                                                >Allocated: {entry?.allocatedAmount}</span>
+                                                            )}
                                                             <span className="hidden sm:inline opacity-50">•</span>
                                                             <span className="opacity-70">{format(new Date(tx.date), "yyyy/MM/dd")}</span>
                                                         </p>
@@ -351,19 +382,23 @@ export default function PositionDetails() {
                             {position.fundId ? (() => {
                                 const fund = allFunds?.find(f => f.id === position.fundId)
                                 return (
-                                    <div className="flex items-center justify-between p-3 rounded-xl border bg-background/40">
-                                        <button onClick={() => navigate(`/funds/${position.fundId}`)} className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-1 truncate mr-2 transition-colors cursor-pointer">
-                                            {fund?.name ?? 'Unknown Fund'}
-                                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
-                                        </button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
-                                            onClick={() => id && unassignPosition(id)}
+                                    <div className="rounded-xl border bg-background/40 overflow-hidden">
+                                        <button
+                                            onClick={() => navigate(`/funds/${position.fundId}`)}
+                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left"
                                         >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
+                                            <Layers className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+                                            <span className="text-sm font-medium truncate flex-1">{fund?.name ?? 'Unknown Fund'}</span>
+                                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                                        </button>
+                                        <div className="border-t px-3 py-1.5 flex justify-end">
+                                            <button
+                                                onClick={() => id && unassignPosition(id)}
+                                                className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                                            >
+                                                <Trash2 className="h-3 w-3" /> Unlink
+                                            </button>
+                                        </div>
                                     </div>
                                 )
                             })() : (
