@@ -228,7 +228,7 @@ export default function FundDetails() {
                                                 ({m.roi >= 0 ? '+' : ''}{m.roi.toFixed(2)}%)
                                             </span>
                                             <span className="text-muted-foreground/40">•</span>
-                                            <span className="text-muted-foreground">{alloc > 0 ? '+' : ''}{alloc.toFixed(1)}% alloc</span>
+                                            {alloc !== 0 && <span className="text-muted-foreground">{alloc > 0 ? '+' : ''}{alloc.toFixed(1)}% alloc</span>}
                                         </div>
                                         {/* Row 3: price info */}
                                         {m.avgBuyPrice > 0 && (
