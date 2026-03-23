@@ -52,7 +52,7 @@ export default function FundDetails() {
     const fundM = getFundMetrics(fund, allPosMetrics)
 
     const assetsValue = allPosMetrics.reduce((sum, m) => {
-        if (m.totalRemaining > 0 && m.currentPrice > 0) return sum + m.totalRemaining * m.currentPrice
+        if (m.totalRemaining !== 0 && m.currentPrice > 0) return sum + m.totalRemaining * m.currentPrice
         return sum
     }, 0)
     const cashValue = fundM.currentValue - assetsValue
@@ -235,7 +235,7 @@ export default function FundDetails() {
                                             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
                                                 <span>Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
                                                 {m.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">${m.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
-                                                {m.totalRemaining > 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
+                                                {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
                                     </div>

@@ -94,7 +94,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                                     <span className="font-mono text-sm font-bold">
                                         ${metrics.currentPrice > 0
                                             ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
-                                            : (metrics.totalRemaining > 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}
+                                            : (metrics.totalRemaining !== 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}
                                     </span>
                                 </div>
                             </div>

@@ -39,7 +39,7 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
         totalRemaining = sub(tBought, tSold);
         totalInvestment = tCost;
 
-        if (pos.status === 'OPEN' && totalRemaining > 0) {
+        if (pos.status === 'OPEN' && totalRemaining !== 0) {
             const cached = prices[pos.symbol];
             if (cached) {
                 currentPrice = parseFloat(cached.price);
@@ -59,7 +59,7 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
         totalRemaining = sub(tSold, tBought);
         totalInvestment = tRevenue;
 
-        if (pos.status === 'OPEN' && totalRemaining > 0) {
+        if (pos.status === 'OPEN' && totalRemaining !== 0) {
             const cached = prices[pos.symbol];
             if (cached) {
                 currentPrice = parseFloat(cached.price);
@@ -74,7 +74,7 @@ export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], pric
     }
 
     let breakevenPrice = 0;
-    if (totalRemaining > 0) {
+    if (totalRemaining !== 0) {
         if (positionType === 'LONG') {
             breakevenPrice = div(sub(tCost, tRevenue), totalRemaining);
         } else {
