@@ -351,38 +351,48 @@ export default function PositionDetails() {
                             {position.fundId ? (() => {
                                 const fund = allFunds?.find(f => f.id === position.fundId)
                                 return (
-                                    <div className="flex items-center justify-between">
-                                        <a href={`/funds/${position.fundId}`} className="text-sm font-medium hover:underline text-indigo-600 dark:text-indigo-400">
+                                    <div className="flex items-center justify-between p-3 rounded-xl border bg-background/40">
+                                        <a href={`/funds/${position.fundId}`} className="text-sm font-medium hover:underline text-indigo-600 dark:text-indigo-400 truncate mr-2">
                                             {fund?.name ?? 'Unknown Fund'}
                                         </a>
                                         <Button
                                             variant="ghost"
-                                            size="sm"
-                                            className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                                            size="icon"
+                                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                                             onClick={() => id && unassignPosition(id)}
                                         >
-                                            Remove
+                                            <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
                                     </div>
                                 )
                             })() : (
-                                <div>
-                                    <p className="text-xs text-muted-foreground mb-2">Not assigned to any fund.</p>
-                                    {allFunds && allFunds.length > 0 && (
-                                        <select
-                                            className="w-full text-sm rounded-lg border border-border/50 bg-background px-3 py-2 text-foreground"
-                                            defaultValue=""
-                                            onChange={async (e) => {
-                                                if (e.target.value && id) {
-                                                    await assignPositionToFund(id, e.target.value)
-                                                }
-                                            }}
-                                        >
-                                            <option value="" disabled>Assign to fund…</option>
-                                            {allFunds.map(f => (
-                                                <option key={f.id} value={f.id}>{f.name}</option>
-                                            ))}
-                                        </select>
+                                <div className="space-y-2">
+                                    {!allFunds || allFunds.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                            <AlertCircle className="h-4 w-4" />
+                                            No funds available.
+                                        </p>
+                                    ) : (
+                                        allFunds.map(f => (
+                                            <div key={f.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="min-w-0 mr-2">
+                                                        <p className="font-medium text-xs truncate">{f.name}</p>
+                                                        {f.description && (
+                                                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{f.description}</p>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        className="h-7 text-xs gap-1 shrink-0"
+                                                        onClick={() => id && assignPositionToFund(id, f.id)}
+                                                    >
+                                                        <LinkIcon className="h-3 w-3" /> Link
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
                                     )}
                                 </div>
                             )}

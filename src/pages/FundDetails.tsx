@@ -1,11 +1,11 @@
 import { useState } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
-import { ArrowLeft, Edit, Trash2, Plus, X, Layers, TrendingUp, TrendingDown } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -13,7 +13,6 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogDescription,
 } from "@/components/ui/dialog"
 import { FundForm } from "@/components/funds/FundForm"
 
@@ -24,7 +23,6 @@ export default function FundDetails() {
     const { prices } = useSettingsStore()
 
     const [isEditOpen, setIsEditOpen] = useState(false)
-    const [isAddPositionOpen, setIsAddPositionOpen] = useState(false)
 
     const fund = useLiveQuery(() => id ? db.funds.get(id) : undefined, [id])
     const allPositions = useLiveQuery(() => db.positions.toArray())
@@ -60,7 +58,6 @@ export default function FundDetails() {
 
     const handleAssign = async (positionId: string) => {
         await assignPositionToFund(positionId, fund.id)
-        setIsAddPositionOpen(false)
     }
 
     const fmtNum = (n: number) =>
@@ -104,7 +101,6 @@ export default function FundDetails() {
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Edit Fund</DialogTitle>
-                                <DialogDescription>Update fund settings.</DialogDescription>
                             </DialogHeader>
                             <FundForm initialValues={fund} onSuccess={() => setIsEditOpen(false)} />
                         </DialogContent>
@@ -152,136 +148,122 @@ export default function FundDetails() {
                 </div>
             </div>
 
-            {/* Positions section */}
-            <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-semibold">
-                    Positions
-                    <span className="ml-2 text-sm text-muted-foreground font-normal">({fundPositions.length})</span>
-                </h2>
-                {unassignedPositions.length > 0 && (
-                    <Dialog open={isAddPositionOpen} onOpenChange={setIsAddPositionOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 rounded-xl">
-                                <Plus className="h-3.5 w-3.5" />
-                                Add Position
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Add Position to Fund</DialogTitle>
-                                <DialogDescription>
-                                    Select an unassigned position to include in this fund.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-2 max-h-80 overflow-y-auto py-2">
-                                {unassignedPositions.map(pos => (
-                                    <button
-                                        key={pos.id}
-                                        onClick={() => handleAssign(pos.id)}
-                                        className="w-full flex items-center justify-between p-3 rounded-xl border border-border/40 hover:bg-muted/40 transition-colors text-left"
-                                    >
-                                        <div>
-                                            <p className="font-medium text-sm">{pos.strategyName || pos.symbol}</p>
-                                            <p className="text-xs text-muted-foreground font-mono">{pos.symbol}</p>
-                                        </div>
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                            pos.status === 'OPEN'
-                                            ? 'bg-blue-500/10 text-blue-500'
-                                            : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                            {pos.status}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                )}
-            </div>
-
-            {fundPositions.length === 0 ? (
-                <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
-                    <p className="text-sm text-muted-foreground">No positions assigned yet.</p>
-                    {unassignedPositions.length > 0 && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-3 gap-2 rounded-xl"
-                            onClick={() => setIsAddPositionOpen(true)}
-                        >
-                            <Plus className="h-3.5 w-3.5" />
-                            Add Position
-                        </Button>
-                    )}
-                </div>
-            ) : (
-                <div className="rounded-xl border border-border/40 overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-border/40 bg-muted/30">
-                                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Position</th>
-                                <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Status</th>
-                                <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">PnL</th>
-                                <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Allocation</th>
-                                <th className="px-4 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/30">
+            {/* Positions section — two-column layout mirrors PositionDetails */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: assigned positions */}
+                <div className="lg:col-span-2">
+                    <h2 className="text-base font-semibold mb-3">
+                        Linked Positions
+                        <span className="ml-2 text-sm text-muted-foreground font-normal">({fundPositions.length})</span>
+                    </h2>
+                    {fundPositions.length === 0 ? (
+                        <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
+                            <p className="text-sm text-muted-foreground">No positions linked yet. Link them from the right panel.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
                             {fundPositions.map((pos, i) => {
                                 const m = allPosMetrics[i]
                                 const posValue = m.totalInvestment + m.totalPnL
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
                                 return (
-                                    <tr key={pos.id} className="hover:bg-muted/20 transition-colors">
-                                        <td className="px-4 py-3">
-                                            <Link to={`/positions/${pos.id}`} className="hover:underline">
-                                                <p className="font-medium line-clamp-1">{pos.strategyName || pos.symbol}</p>
-                                                <p className="text-xs text-muted-foreground font-mono">{pos.symbol}</p>
-                                            </Link>
-                                        </td>
-                                        <td className="px-4 py-3 text-right hidden sm:table-cell">
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                    <div key={pos.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors group">
+                                        <div className="flex gap-3 items-center min-w-0">
+                                            <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider shrink-0 ${
                                                 pos.status === 'OPEN'
-                                                ? 'bg-blue-500/10 text-blue-500'
+                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                                                 : 'bg-muted text-muted-foreground'
                                             }`}>
                                                 {pos.status}
                                             </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                {m.totalPnL >= 0
-                                                    ? <TrendingUp className="h-3 w-3 text-green-500" />
-                                                    : <TrendingDown className="h-3 w-3 text-destructive" />
-                                                }
-                                                <span className={`font-mono font-medium ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                                                    {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
-                                                </span>
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                                                    <span className="font-mono opacity-70">{pos.symbol}</span>
+                                                    <span className="opacity-50">•</span>
+                                                    <span className={`font-semibold ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                        {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
+                                                    </span>
+                                                    <span className="opacity-50 hidden sm:inline">•</span>
+                                                    <span className="text-muted-foreground hidden sm:inline">{alloc.toFixed(1)}% alloc</span>
+                                                </p>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-right hidden md:table-cell">
-                                            <span className="text-muted-foreground font-mono text-xs">
-                                                {alloc.toFixed(1)}%
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
+                                        </div>
+                                        <div className="flex items-center gap-0.5 shrink-0 ml-2">
                                             <Button
                                                 variant="ghost"
-                                                size="sm"
-                                                className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                                onClick={() => navigate(`/positions/${pos.id}`)}
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                                                 onClick={() => unassignPosition(pos.id)}
                                                 title="Remove from fund"
                                             >
                                                 <X className="h-3.5 w-3.5" />
                                             </Button>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 )
                             })}
-                        </tbody>
-                    </table>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                {/* Right: available positions panel */}
+                <div className="bg-card rounded-xl p-6 border shadow-sm">
+                    <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Available Positions</h3>
+                    <div className="space-y-3">
+                        {unassignedPositions.length === 0 ? (
+                            <p className="text-muted-foreground text-sm flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4" />
+                                No unassigned positions.
+                            </p>
+                        ) : (
+                            unassignedPositions.map(pos => (
+                                <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background/50">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                pos.status === 'OPEN'
+                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                                : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {pos.status}
+                                            </span>
+                                            <p className="font-medium truncate text-xs">{pos.strategyName || pos.symbol}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0 ml-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                                onClick={() => navigate(`/positions/${pos.id}`)}
+                                            >
+                                                <Eye className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="h-7 text-xs gap-1"
+                                                onClick={() => handleAssign(pos.id)}
+                                            >
+                                                <LinkIcon className="h-3 w-3" /> Link
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <p className="font-mono text-muted-foreground text-[10px]">{pos.symbol}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
