@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -352,8 +352,9 @@ export default function PositionDetails() {
                                 const fund = allFunds?.find(f => f.id === position.fundId)
                                 return (
                                     <div className="flex items-center justify-between p-3 rounded-xl border bg-background/40">
-                                        <a href={`/funds/${position.fundId}`} className="text-sm font-medium hover:underline text-indigo-600 dark:text-indigo-400 truncate mr-2">
+                                        <a href={`/funds/${position.fundId}`} className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-1 truncate mr-2 transition-colors">
                                             {fund?.name ?? 'Unknown Fund'}
+                                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
                                         </a>
                                         <Button
                                             variant="ghost"
