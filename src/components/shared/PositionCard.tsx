@@ -86,7 +86,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                                 <div className="flex flex-col">
                                     <span className="text-xs text-muted-foreground mb-1">Holdings</span>
                                     <span className="font-mono text-sm font-bold">
-                                        {metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{base}</span>
+                                        {metrics.positionType === 'SHORT' ? -metrics.totalRemaining : metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{base}</span>
                                     </span>
                                 </div>
                                 <div className="flex flex-col text-right">
