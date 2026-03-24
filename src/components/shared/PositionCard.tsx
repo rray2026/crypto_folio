@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
-import { TrendingUp, TrendingDown, Eye, Calendar, Clock, Circle } from "lucide-react"
+import { TrendingUp, TrendingDown, Eye, Calendar, Clock, Circle, Layers } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type { Position } from "@/lib/types"
 
@@ -9,9 +9,10 @@ interface PositionCardProps {
     metrics: any;
     isActive: boolean;
     duration: number;
+    fundName?: string;
 }
 
-export function PositionCard({ position, metrics, isActive, duration }: PositionCardProps) {
+export function PositionCard({ position, metrics, isActive, duration, fundName }: PositionCardProps) {
     const base = position.symbol.split('/')[0];
     
     return (
@@ -29,6 +30,13 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                             {position.strategyName || `${base} Position`}
                         </CardTitle>
                         <div className="flex justify-end gap-1.5 shrink-0 flex-wrap">
+                            {/* Fund Badge */}
+                            {fundName && (
+                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-900/40">
+                                    <Layers className="h-2.5 w-2.5" />
+                                    {fundName}
+                                </div>
+                            )}
                             {/* Shadow Badge */}
                             {position.type === 'SHADOW' && (
                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-muted/50 text-muted-foreground border border-border">
@@ -86,7 +94,7 @@ export function PositionCard({ position, metrics, isActive, duration }: Position
                                     <span className="font-mono text-sm font-bold">
                                         ${metrics.currentPrice > 0
                                             ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
-                                            : (metrics.totalRemaining > 0 ? (metrics.totalInvestment / metrics.totalRemaining).toFixed(2) : '0.00')}
+                                            : (metrics.totalRemaining !== 0 ? (metrics.totalInvestment / Math.abs(metrics.totalRemaining)).toFixed(2) : '0.00')}
                                     </span>
                                 </div>
                             </div>

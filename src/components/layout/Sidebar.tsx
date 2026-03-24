@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, ReceiptText, LineChart, Settings } from "lucide-react"
+import { LayoutDashboard, ReceiptText, LineChart, Settings, Layers } from "lucide-react"
 
 export function Sidebar() {
     const location = useLocation()
 
     const links = [
         { name: "Dashboard", href: "/", icon: LayoutDashboard },
+        { name: "Funds", href: "/funds", icon: Layers },
         { name: "Positions", href: "/positions", icon: LineChart },
         { name: "Transactions", href: "/transactions", icon: ReceiptText },
         { name: "Settings", href: "/settings", icon: Settings },
@@ -22,7 +23,9 @@ export function Sidebar() {
                 <nav className="space-y-2 px-4">
                     {links.map((link) => {
                         const Icon = link.icon
-                        const isActive = location.pathname === link.href
+                        const isActive = link.href === '/'
+            ? location.pathname === '/'
+            : location.pathname.startsWith(link.href)
                         return (
                             <Link
                                 key={link.name}

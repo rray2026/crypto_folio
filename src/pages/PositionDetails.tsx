@@ -2,9 +2,10 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
+import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -37,10 +38,17 @@ export default function PositionDetails() {
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
+    const [editingAllocTxId, setEditingAllocTxId] = useState<string | null>(null)
+    const [allocInputValue, setAllocInputValue] = useState<string>('')
+    const [isSharePopoverOpen, setIsSharePopoverOpen] = useState(false)
+    const [isAiDialogOpen, setIsAiDialogOpen] = useState(false)
+    const [isCopied, setIsCopied] = useState(false)
+    const { assignPositionToFund, unassignPosition } = useFundStore()
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
     const allPositions = useLiveQuery(() => db.positions.toArray())
+    const allFunds = useLiveQuery(() => db.funds.toArray())
 
     // Fetch live price for the current symbol if OPEN (every 5 mins)
     useState(() => {
@@ -80,6 +88,18 @@ export default function PositionDetails() {
         await removeTransactionFromPosition(id, txId);
     }
 
+    const startEditAlloc = (txId: string, currentAlloc: number) => {
+        setEditingAllocTxId(txId);
+        setAllocInputValue(String(currentAlloc));
+    }
+
+    const commitEditAlloc = async (txId: string) => {
+        const val = parseFloat(allocInputValue);
+        if (!id || isNaN(val) || val <= 0) { setEditingAllocTxId(null); return; }
+        await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: val });
+        setEditingAllocTxId(null);
+    }
+
     const toggleStatus = async () => {
         if (!id || !position) return;
         if (position.status === 'OPEN') {
@@ -113,6 +133,61 @@ export default function PositionDetails() {
         const ratio = tx.quantity > 0 ? allocated / tx.quantity : 0;
         return sum + (tx.fee || 0) * ratio;
     }, 0);
+
+    const generateAiPrompt = () => {
+        const name = position.strategyName || `${position.symbol.split('/')[0]} Position`
+        const startStr = derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'
+        const endStr = derivedEndDate ? format(new Date(derivedEndDate), "yyyy/MM/dd") : (position.status === 'OPEN' ? 'Still Open' : 'Unknown')
+        const durationDays = differenceInDays(derivedEndDate || Date.now(), derivedStartDate || Date.now())
+
+        const tradesSection = linkedTxs.length === 0 ? '  (No linked trades)' : linkedTxs.map(tx => {
+            const alloc = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount ?? tx.quantity
+            return `  - [${tx.type}] ${format(new Date(tx.date), "yyyy/MM/dd HH:mm")}  Price: $${tx.price.toLocaleString()}  Qty: ${tx.quantity}  Allocated: ${alloc}  Fee: $${(tx.fee || 0).toFixed(2)}${tx.notes ? `  Note: ${tx.notes}` : ''}`
+        }).join('\n')
+
+        const lines = [
+            `I need your advice on the following crypto trading position.`,
+            ``,
+            `## Position Overview`,
+            `- Name: ${name}`,
+            `- Symbol: ${position.symbol}`,
+            `- Type: ${position.type} / ${positionType}`,
+            `- Status: ${position.status}`,
+            `- Opened: ${startStr}`,
+            `- Closed: ${endStr}`,
+            `- Duration: ${durationDays} days`,
+            position.notes ? `- Strategy Notes: ${position.notes}` : null,
+            ``,
+            `## Performance Metrics`,
+            `- Avg Buy Price: ${avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
+            `- Avg Sell Price: ${avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
+            position.status === 'OPEN' && currentPrice > 0 ? `- Current Price: $${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
+            `- Holdings: ${totalRemaining} ${position.symbol.split('/')[0]}`,
+            `- Realized PnL: $${realizedPnL.toFixed(2)}`,
+            totalRemaining !== 0 ? `- Unrealized PnL: $${unrealizedPnL.toFixed(2)}` : null,
+            `- ROI: ${roi.toFixed(2)}%`,
+            totalFee > 0 ? `- Total Fees: $${totalFee.toFixed(2)}` : null,
+            breakevenPrice > 0 && totalRemaining !== 0 ? `- Breakeven Price: $${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
+            ``,
+            `## Linked Trades (${linkedTxs.length})`,
+            tradesSection,
+            ``,
+            `## Request`,
+            `Based on the above data, please provide:`,
+            `1. An analysis of this position's performance`,
+            `2. Key strengths and weaknesses of the trading strategy`,
+            `3. Actionable suggestions for improvement or next steps`,
+        ].filter(l => l !== null).join('\n')
+
+        return lines
+    }
+
+    const handleCopyPrompt = async () => {
+        const prompt = generateAiPrompt()
+        await navigator.clipboard.writeText(prompt)
+        setIsCopied(true)
+        setTimeout(() => setIsCopied(false), 2000)
+    }
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
@@ -202,6 +277,55 @@ export default function PositionDetails() {
                                 <PositionEditForm position={position} onSuccess={() => setIsEditDialogOpen(false)} />
                             </DialogContent>
                         </Dialog>
+
+                        {/* Share Button */}
+                        <Popover open={isSharePopoverOpen} onOpenChange={setIsSharePopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" size="icon" className="shrink-0">
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-44 p-1.5" align="end">
+                                <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                                    onClick={() => { setIsSharePopoverOpen(false); setIsAiDialogOpen(true); }}
+                                >
+                                    <Bot className="h-4 w-4 text-primary shrink-0" />
+                                    问 AI
+                                </button>
+                                <button
+                                    disabled
+                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground cursor-not-allowed text-left opacity-50"
+                                >
+                                    <Share2 className="h-4 w-4 shrink-0" />
+                                    更多（待定）
+                                </button>
+                            </PopoverContent>
+                        </Popover>
+
+                        {/* Ask AI Dialog */}
+                        <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+                                <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                        <Bot className="h-5 w-5 text-primary" />
+                                        问 AI — 已生成提示词
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <p className="text-xs text-muted-foreground -mt-1">复制下方提示词，粘贴到任意 AI 对话框中获取分析建议。</p>
+                                <div className="flex-1 overflow-y-auto mt-2">
+                                    <pre className="text-xs bg-muted/40 rounded-lg p-4 whitespace-pre-wrap break-words font-mono border border-border/50 leading-relaxed">
+                                        {generateAiPrompt()}
+                                    </pre>
+                                </div>
+                                <div className="flex justify-end pt-2 border-t border-border/40">
+                                    <Button onClick={handleCopyPrompt} className="gap-2" size="sm">
+                                        {isCopied ? <><Check className="h-4 w-4" /> 已复制</> : <><Copy className="h-4 w-4" /> 复制提示词</>}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+
                         <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={handleDeletePosition}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -225,7 +349,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
                                 <span className={`text-base sm:text-xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                    {totalRemaining > 0 ? `$${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                                    {totalRemaining !== 0 ? `$${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 
@@ -274,7 +398,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {(breakevenPrice > 0 && totalRemaining > 0) ? `$${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                    {(breakevenPrice > 0 && totalRemaining !== 0) ? `$${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
                             </div>
                         </div>
@@ -302,7 +426,24 @@ export default function PositionDetails() {
                                                             ${tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
                                                         </p>
                                                         <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                                                            <span className="bg-primary/5 text-primary px-1 rounded-sm font-semibold">Allocated: {entry?.allocatedAmount}</span>
+                                                            {editingAllocTxId === tx.id ? (
+                                                                <input
+                                                                    autoFocus
+                                                                    type="number"
+                                                                    value={allocInputValue}
+                                                                    onChange={e => setAllocInputValue(e.target.value)}
+                                                                    onBlur={() => commitEditAlloc(tx.id)}
+                                                                    onKeyDown={e => { if (e.key === 'Enter') commitEditAlloc(tx.id); if (e.key === 'Escape') setEditingAllocTxId(null); }}
+                                                                    className="w-20 bg-background border border-primary/50 rounded px-1 py-0 text-[10px] md:text-xs font-semibold text-primary focus:outline-none"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                />
+                                                            ) : (
+                                                                <span
+                                                                    className="bg-primary/5 text-primary px-1 rounded-sm font-semibold cursor-pointer hover:bg-primary/15 transition-colors"
+                                                                    onClick={e => { e.stopPropagation(); startEditAlloc(tx.id, entry?.allocatedAmount ?? 0); }}
+                                                                    title="Click to edit allocated amount"
+                                                                >Allocated: {entry?.allocatedAmount}</span>
+                                                            )}
                                                             <span className="hidden sm:inline opacity-50">•</span>
                                                             <span className="opacity-70">{format(new Date(tx.date), "yyyy/MM/dd")}</span>
                                                         </p>
@@ -339,6 +480,67 @@ export default function PositionDetails() {
                     </div>
 
                     <div className="space-y-6">
+                        {/* Fund assignment */}
+                        <div className="bg-card rounded-xl p-4 border shadow-sm">
+                            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                <Layers className="h-3.5 w-3.5" />
+                                Fund
+                            </h3>
+                            {position.fundId ? (() => {
+                                const fund = allFunds?.find(f => f.id === position.fundId)
+                                return (
+                                    <div className="rounded-xl border bg-background/40 overflow-hidden">
+                                        <button
+                                            onClick={() => navigate(`/funds/${position.fundId}`)}
+                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left"
+                                        >
+                                            <Layers className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+                                            <span className="text-sm font-medium truncate flex-1">{fund?.name ?? 'Unknown Fund'}</span>
+                                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                                        </button>
+                                        <div className="border-t px-3 py-1.5 flex justify-end">
+                                            <button
+                                                onClick={() => id && unassignPosition(id)}
+                                                className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                                            >
+                                                <Trash2 className="h-3 w-3" /> Unlink
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })() : (
+                                <div className="space-y-2">
+                                    {!allFunds || allFunds.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                            <AlertCircle className="h-4 w-4" />
+                                            No funds available.
+                                        </p>
+                                    ) : (
+                                        allFunds.map(f => (
+                                            <div key={f.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="min-w-0 mr-2">
+                                                        <p className="font-medium text-xs truncate">{f.name}</p>
+                                                        {f.description && (
+                                                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{f.description}</p>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        className="h-7 text-xs gap-1 shrink-0"
+                                                        onClick={() => id && assignPositionToFund(id, f.id)}
+                                                    >
+                                                        <LinkIcon className="h-3 w-3" /> Link
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="bg-card rounded-xl p-6 border shadow-sm">
                             <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Available Trades</h3>
                             <div className="space-y-3">

@@ -49,6 +49,7 @@ function makePayload(overrides: Partial<BackupPayload> = {}): BackupPayload {
         appName: 'CryptoFolio',
         transactions: [],
         positions: [],
+        funds: [],
         settings: { predefinedPairs: ['BTC/USDT'], dashboardTimeRange: '1Y', theme: 'dark' },
         ...overrides,
     };

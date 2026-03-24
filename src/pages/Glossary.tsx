@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, BookOpen, Calculator, Layout, ShieldCheck, TrendingUp, Info } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, Layout, ShieldCheck, TrendingUp, Info, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -7,6 +7,29 @@ export default function Glossary() {
     const navigate = useNavigate()
 
     const sections = [
+        {
+            title: "Data Architecture",
+            icon: <Layers className="h-5 w-5 text-orange-500" />,
+            items: [
+                {
+                    term: "Transaction",
+                    definition: "The atomic unit of the entire system — a single BUY or SELL order executed on an exchange. Each transaction records: asset symbol, direction (BUY/SELL), price, quantity, date, and fees. Transactions are raw market events and exist independently of any position."
+                },
+                {
+                    term: "Position",
+                    definition: "A trading thesis that aggregates one or more transactions under a single strategy. A position answers the question 'What is my overall view on this trade?'. It links transactions via entries, computes blended avg cost, realized/unrealized PnL, and ROI across all those trades. One position can span many partial entries and exits."
+                },
+                {
+                    term: "Fund",
+                    definition: "A portfolio container that groups multiple positions under a single capital pool. A fund tracks total capital deployment (Initial Amount), NAV per share, overall PnL, and each position's allocation percentage within the fund. One fund can hold many positions across different assets and strategies."
+                },
+                {
+                    term: "Three-Layer Hierarchy",
+                    definition: "Fund → Position → Transaction. A Fund owns Positions; each Position links Transactions. Moving up the hierarchy aggregates data: transactions roll up into position-level PnL; positions roll up into fund-level NAV. Moving down provides drill-through detail: from fund allocation → position strategy → individual trade execution.",
+                    formula: "Fund (capital pool) → Positions (strategies) → Transactions (executions)"
+                }
+            ]
+        },
         {
             title: "Fundamental Concepts",
             icon: <Layout className="h-5 w-5 text-blue-500" />,

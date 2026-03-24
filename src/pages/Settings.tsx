@@ -33,8 +33,9 @@ export default function Settings() {
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
 
-    const txCount  = useLiveQuery(() => db.transactions.count(), [])
-    const posCount = useLiveQuery(() => db.positions.count(), [])
+    const txCount   = useLiveQuery(() => db.transactions.count(), [])
+    const posCount  = useLiveQuery(() => db.positions.count(), [])
+    const fundCount = useLiveQuery(() => db.funds.count(), [])
 
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -278,7 +279,7 @@ export default function Settings() {
                     Data Integrity & Upgrade
                 </h2>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                     <div className="bg-muted/40 rounded-xl p-4">
                         <p className="text-xs text-muted-foreground mb-1">Transactions</p>
                         <p className="text-2xl font-bold font-mono">{txCount ?? '—'}</p>
@@ -286,6 +287,10 @@ export default function Settings() {
                     <div className="bg-muted/40 rounded-xl p-4">
                         <p className="text-xs text-muted-foreground mb-1">Positions</p>
                         <p className="text-2xl font-bold font-mono">{posCount ?? '—'}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Funds</p>
+                        <p className="text-2xl font-bold font-mono">{fundCount ?? '—'}</p>
                     </div>
                     <div className="bg-muted/40 rounded-xl p-4">
                         <p className="text-xs text-muted-foreground mb-1">Schema</p>
