@@ -88,6 +88,18 @@ export default function FundDetails() {
 
     const allPosMetrics = fundPositions.map(getPosMetrics)
     const unassignedPosMetrics = unassignedPositions.map(getPosMetrics)
+
+    const positionSortFn = (a: { pos: any, m: any }, b: { pos: any, m: any }) => {
+        const aOpen = a.pos.status === 'OPEN' || !a.m.derivedEndDate;
+        const bOpen = b.pos.status === 'OPEN' || !b.m.derivedEndDate;
+        if (aOpen && !bOpen) return -1;
+        if (!aOpen && bOpen) return 1;
+        if (!aOpen && !bOpen && a.m.derivedEndDate !== b.m.derivedEndDate)
+            return (b.m.derivedEndDate || 0) - (a.m.derivedEndDate || 0);
+        return (b.m.derivedStartDate || b.pos.startDate || 0) - (a.m.derivedStartDate || a.pos.startDate || 0);
+    }
+    const sortedFundPositions = fundPositions.map((pos, i) => ({ pos, m: allPosMetrics[i] })).sort(positionSortFn)
+    const sortedUnassignedPositions = unassignedPositions.map((pos, i) => ({ pos, m: unassignedPosMetrics[i] })).sort(positionSortFn)
     const fundM = getFundMetrics(fund, allPosMetrics)
 
     const assetsValue = allPosMetrics.reduce((sum, m) => {
@@ -214,8 +226,7 @@ export default function FundDetails() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {fundPositions.map((pos, i) => {
-                                const m = allPosMetrics[i]
+                            {sortedFundPositions.map(({ pos, m }) => {
                                 const posValue = m.totalRemaining !== 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
                                 const isLong = m.positionType === 'LONG'
@@ -290,8 +301,7 @@ export default function FundDetails() {
                                 No unassigned positions.
                             </p>
                         ) : (
-                            unassignedPositions.map((pos, i) => {
-                                const m = unassignedPosMetrics[i]
+                            sortedUnassignedPositions.map(({ pos, m }) => {
                                 const isLong = m.positionType === 'LONG'
                                 return (
                                     <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">

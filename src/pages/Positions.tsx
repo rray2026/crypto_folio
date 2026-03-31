@@ -276,7 +276,15 @@ export default function Positions() {
                                                 return (metrics.derivedStartDate || p.startDate) >= timeThreshold;
                                             })
                                             .map((pos: any) => ({ pos, metrics: getMetrics(pos) }))
-                                            .sort((a: any, b: any) => (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0))
+                                            .sort((a: any, b: any) => {
+                                                const aOpen = a.pos.status === 'OPEN' || !a.metrics.derivedEndDate;
+                                                const bOpen = b.pos.status === 'OPEN' || !b.metrics.derivedEndDate;
+                                                if (aOpen && !bOpen) return -1;
+                                                if (!aOpen && bOpen) return 1;
+                                                if (!aOpen && !bOpen && a.metrics.derivedEndDate !== b.metrics.derivedEndDate)
+                                                    return (b.metrics.derivedEndDate || 0) - (a.metrics.derivedEndDate || 0);
+                                                return (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0);
+                                            })
                                             .map(({ pos, metrics }: { pos: any, metrics: any }) => {
                                                 const duration = metrics.derivedStartDate ? differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate) : 0;
                                                 const isActive = pos.status === 'OPEN';
