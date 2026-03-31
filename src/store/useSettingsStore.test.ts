@@ -20,6 +20,7 @@ describe('useSettingsStore', () => {
         // Reset store state by calling its internal set method with initial values
         useSettingsStore.setState({
             predefinedPairs: [],
+            pairConfigs: [],
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',

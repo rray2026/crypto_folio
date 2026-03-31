@@ -1,6 +1,7 @@
 import { db, DB_VERSION } from './db';
 import { migratePayload } from './migrations';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import type { PairConfig } from '@/store/useSettingsStore';
 
 export interface BackupPayload {
     version: number;
@@ -11,6 +12,7 @@ export interface BackupPayload {
     funds: any[];
     settings: {
         predefinedPairs: string[];
+        pairConfigs?: PairConfig[];
         dashboardTimeRange: string;
         theme: string;
     };
@@ -35,6 +37,7 @@ export async function exportData(): Promise<void> {
             funds,
             settings: {
                 predefinedPairs: settingsState.predefinedPairs,
+                pairConfigs: settingsState.pairConfigs,
                 dashboardTimeRange: settingsState.dashboardTimeRange,
                 theme: settingsState.theme,
             }
@@ -124,6 +127,14 @@ export async function importData(file: File): Promise<void> {
                     const store = useSettingsStore.getState();
                     if (payload.settings.predefinedPairs !== undefined) {
                         useSettingsStore.setState({ predefinedPairs: payload.settings.predefinedPairs });
+                    }
+                    if (payload.settings.pairConfigs !== undefined) {
+                        useSettingsStore.setState({ pairConfigs: payload.settings.pairConfigs });
+                    } else if (payload.settings.predefinedPairs !== undefined) {
+                        // Derive pairConfigs from predefinedPairs for older backups
+                        useSettingsStore.setState({
+                            pairConfigs: payload.settings.predefinedPairs.map(p => ({ pair: p, exchange: 'Binance' })),
+                        });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {
                         store.setDashboardTimeRange(payload.settings.dashboardTimeRange as any);
