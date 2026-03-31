@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
@@ -38,6 +39,22 @@ export default function Transactions() {
     const navigate = useNavigate()
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [addMode, setAddMode] = useState<'choice' | 'manual' | 'ai'>('choice')
+    const { setMobileHeader } = useMobileHeader()
+    const openAdd = useCallback(() => { setIsAddDialogOpen(true); setAddMode('choice') }, [])
+    useEffect(() => {
+        setMobileHeader({
+            title: "Transactions",
+            rightActions: (
+                <button
+                    onClick={openAdd}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Add Transaction"
+                >
+                    <Plus className="h-5 w-5" />
+                </button>
+            ),
+        })
+    }, [setMobileHeader, openAdd])
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
@@ -179,11 +196,11 @@ export default function Transactions() {
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 md:mb-8 gap-4">
-                <div>
+                <div className="hidden sm:block">
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3">
                     {/* Filters */}
                     <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -614,19 +631,6 @@ export default function Transactions() {
                 </div>
             )}
 
-            {/* Mobile Fixed Action Button (bottom-right) */}
-            <div className="sm:hidden fixed bottom-20 right-4 z-40">
-                <Button 
-                    size="icon" 
-                    className="h-14 w-14 rounded-full shadow-lg opacity-90 backdrop-blur-md hover:opacity-100 transition-opacity border border-primary/20"
-                    onClick={() => {
-                        setAddMode('choice');
-                        setIsAddDialogOpen(true);
-                    }}
-                >
-                    <Plus className="h-6 w-6" />
-                </Button>
-            </div>
         </div>
     )
 }

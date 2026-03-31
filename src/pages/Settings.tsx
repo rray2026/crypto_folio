@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { Link } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -36,6 +37,8 @@ export default function Settings() {
     const txCount   = useLiveQuery(() => db.transactions.count(), [])
     const posCount  = useLiveQuery(() => db.positions.count(), [])
     const fundCount = useLiveQuery(() => db.funds.count(), [])
+    const { setMobileHeader } = useMobileHeader()
+    useEffect(() => { setMobileHeader({ title: "Settings" }) }, [setMobileHeader])
 
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -109,7 +112,7 @@ export default function Settings() {
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
-            <div>
+            <div className="hidden md:block">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
                 <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
             </div>

@@ -1,10 +1,28 @@
 import { useNavigate } from "react-router-dom"
+import { useEffect } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { ArrowLeft, BookOpen, Calculator, Layout, ShieldCheck, TrendingUp, Info, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function Glossary() {
     const navigate = useNavigate()
+    const { setMobileHeader } = useMobileHeader()
+
+    useEffect(() => {
+        setMobileHeader({
+            title: "Glossary",
+            leftAction: (
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Back"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+            ),
+        })
+    }, [navigate, setMobileHeader])
 
     const sections = [
         {
@@ -121,8 +139,8 @@ export default function Glossary() {
 
     return (
         <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 pb-20">
-            {/* Header */}
-            <div className="flex items-center gap-4">
+            {/* Header (desktop only — mobile uses MobileHeader) */}
+            <div className="hidden md:flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
                     <ArrowLeft className="h-5 w-5" />
                 </Button>

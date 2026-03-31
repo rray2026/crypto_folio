@@ -1,4 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom"
+import { useEffect } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
@@ -11,7 +13,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { useState } from "react"
@@ -21,9 +22,49 @@ export default function TransactionDetails() {
     const navigate = useNavigate()
     const deleteTransaction = useTransactionStore(state => state.deleteTransaction)
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+    const { setMobileHeader } = useMobileHeader()
 
     const transaction = useLiveQuery(() => id ? db.transactions.get(id) : undefined, [id])
     const allPositions = useLiveQuery(() => db.positions.toArray())
+
+    useEffect(() => {
+        setMobileHeader({
+            title: transaction ? `${transaction.symbol}` : "Transaction",
+            leftAction: (
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Back"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+            ),
+            rightActions: (
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setIsEditDialogOpen(true)}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Edit"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (!id) return
+                            if (confirm("Are you sure you want to delete this transaction? It will be removed from all associated positions.")) {
+                                await deleteTransaction(id)
+                                navigate('/transactions')
+                            }
+                        }}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Delete"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                </div>
+            ),
+        })
+    }, [transaction, navigate, setMobileHeader, setIsEditDialogOpen, deleteTransaction, id])
 
     if (transaction === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (transaction === null) return <div className="p-8 text-center text-foreground">Transaction not found.</div>
@@ -43,8 +84,8 @@ export default function TransactionDetails() {
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
-            {/* Header */}
-            <div className="flex items-center gap-4">
+            {/* Header (desktop only — mobile uses MobileHeader) */}
+            <div className="hidden md:flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -52,8 +93,8 @@ export default function TransactionDetails() {
                     <div className="flex items-center gap-3">
                         <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">{transaction.symbol}</h1>
                         <div className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest ${
-                            transaction.type === "BUY" 
-                            ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                            transaction.type === "BUY"
+                            ? "bg-green-500/10 text-green-600 dark:text-green-400"
                             : "bg-red-500/10 text-red-600 dark:text-red-400"
                         }`}>
                             {transaction.type}
@@ -62,26 +103,25 @@ export default function TransactionDetails() {
                     <p className="text-muted-foreground text-xs md:text-sm mt-1">Transaction Details</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 h-9">
-                                <Edit className="h-4 w-4" />
-                                <span className="hidden sm:inline">Edit</span>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Edit Transaction</DialogTitle>
-                            </DialogHeader>
-                            <TransactionEditForm transaction={transaction} onSuccess={() => setIsEditDialogOpen(false)} />
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => setIsEditDialogOpen(true)}>
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline">Edit</span>
+                    </Button>
                     <Button variant="destructive" size="sm" className="gap-2 h-9" onClick={handleDelete}>
                         <Trash2 className="h-4 w-4" />
                         <span className="hidden sm:inline">Delete</span>
                     </Button>
                 </div>
             </div>
+            {/* Single Edit dialog — shared between desktop and mobile header trigger */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Transaction</DialogTitle>
+                    </DialogHeader>
+                    <TransactionEditForm transaction={transaction} onSuccess={() => setIsEditDialogOpen(false)} />
+                </DialogContent>
+            </Dialog>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Main Information */}

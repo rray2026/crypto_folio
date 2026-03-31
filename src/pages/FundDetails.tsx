@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
@@ -12,7 +13,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { FundForm } from "@/components/funds/FundForm"
 
@@ -23,10 +23,49 @@ export default function FundDetails() {
     const { prices } = useSettingsStore()
 
     const [isEditOpen, setIsEditOpen] = useState(false)
+    const { setMobileHeader } = useMobileHeader()
 
     const fund = useLiveQuery(() => id ? db.funds.get(id) : undefined, [id])
     const allPositions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
+
+    useEffect(() => {
+        setMobileHeader({
+            title: fund?.name ?? "Fund",
+            leftAction: (
+                <button
+                    onClick={() => navigate('/funds')}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Back"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+            ),
+            rightActions: (
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setIsEditOpen(true)}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Edit"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (!fund) return
+                            if (!window.confirm(`Delete fund "${fund.name}"? All positions will be unassigned but not deleted.`)) return
+                            await deleteFund(fund.id)
+                            navigate('/funds')
+                        }}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Delete"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                </div>
+            ),
+        })
+    }, [fund, navigate, setMobileHeader, setIsEditOpen])
 
     if (!fund) {
         return (
@@ -74,19 +113,19 @@ export default function FundDetails() {
 
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto">
-            {/* Back nav */}
+            {/* Back nav (desktop only) */}
             <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+                className="hidden md:flex gap-2 mb-4 -ml-2 text-muted-foreground hover:text-foreground"
                 onClick={() => navigate('/funds')}
             >
                 <ArrowLeft className="h-4 w-4" />
                 Funds
             </Button>
 
-            {/* Header */}
-            <div className="flex items-start justify-between mb-6">
+            {/* Header (desktop only — mobile uses MobileHeader) */}
+            <div className="hidden md:flex items-start justify-between mb-6">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <Layers className="h-5 w-5 text-muted-foreground" />
@@ -97,23 +136,10 @@ export default function FundDetails() {
                     )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    {/* Edit */}
-                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 rounded-xl">
-                                <Edit className="h-3.5 w-3.5" />
-                                Edit
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Edit Fund</DialogTitle>
-                            </DialogHeader>
-                            <FundForm initialValues={fund} onSuccess={() => setIsEditOpen(false)} />
-                        </DialogContent>
-                    </Dialog>
-
-                    {/* Delete */}
+                    <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => setIsEditOpen(true)}>
+                        <Edit className="h-3.5 w-3.5" />
+                        Edit
+                    </Button>
                     <Button
                         variant="ghost"
                         size="sm"
@@ -124,6 +150,15 @@ export default function FundDetails() {
                     </Button>
                 </div>
             </div>
+            {/* Single Edit dialog — triggered by desktop buttons and mobile header */}
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit Fund</DialogTitle>
+                    </DialogHeader>
+                    <FundForm initialValues={fund} onSuccess={() => setIsEditOpen(false)} />
+                </DialogContent>
+            </Dialog>
 
             {/* NAV metrics row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">

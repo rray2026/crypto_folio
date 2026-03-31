@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getPositionMetrics } from "@/lib/metrics"
 import { useEffect, useState } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { PositionCard } from "@/components/shared/PositionCard"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 
@@ -18,6 +19,7 @@ export default function AssetDetails() {
     const navigate = useNavigate()
     const { prices, fetchPrices } = useSettingsStore()
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
+    const { setMobileHeader } = useMobileHeader()
 
     const transactions = useLiveQuery(() => 
         db.transactions.where('symbol').equals(decodedSymbol).reverse().sortBy('date'), 
@@ -39,6 +41,21 @@ export default function AssetDetails() {
         }
     }, [decodedSymbol, fetchPrices]);
 
+    useEffect(() => {
+        setMobileHeader({
+            title: decodedSymbol || "Asset",
+            leftAction: (
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Back"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+            ),
+        })
+    }, [decodedSymbol, navigate, setMobileHeader]);
+
     if (!decodedSymbol) return <div className="p-8 text-center text-muted-foreground">Invalid Symbol</div>
 
     const currentPriceData = prices[decodedSymbol]
@@ -54,14 +71,14 @@ export default function AssetDetails() {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-            {/* Header section */}
+            {/* Header section (desktop: full; mobile: price/stats only, title in MobileHeader) */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden md:inline-flex shrink-0">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">{base} <span className="text-muted-foreground text-xl">/ {quote}</span></h1>
+                        <h1 className="hidden md:block text-3xl font-bold tracking-tight">{base} <span className="text-muted-foreground text-xl">/ {quote}</span></h1>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-2xl font-mono font-bold text-primary">
                                 {Number(currentPrice) > 0 ? `$${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
