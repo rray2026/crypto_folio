@@ -6,7 +6,8 @@ import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
-import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown } from "lucide-react"
+import { format } from "date-fns"
+import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -88,6 +89,18 @@ export default function FundDetails() {
 
     const allPosMetrics = fundPositions.map(getPosMetrics)
     const unassignedPosMetrics = unassignedPositions.map(getPosMetrics)
+
+    const positionSortFn = (a: { pos: any, m: any }, b: { pos: any, m: any }) => {
+        const aOpen = a.pos.status === 'OPEN' || !a.m.derivedEndDate;
+        const bOpen = b.pos.status === 'OPEN' || !b.m.derivedEndDate;
+        if (aOpen && !bOpen) return -1;
+        if (!aOpen && bOpen) return 1;
+        if (!aOpen && !bOpen && a.m.derivedEndDate !== b.m.derivedEndDate)
+            return (b.m.derivedEndDate || 0) - (a.m.derivedEndDate || 0);
+        return (b.m.derivedStartDate || b.pos.startDate || 0) - (a.m.derivedStartDate || a.pos.startDate || 0);
+    }
+    const sortedFundPositions = fundPositions.map((pos, i) => ({ pos, m: allPosMetrics[i] })).sort(positionSortFn)
+    const sortedUnassignedPositions = unassignedPositions.map((pos, i) => ({ pos, m: unassignedPosMetrics[i] })).sort(positionSortFn)
     const fundM = getFundMetrics(fund, allPosMetrics)
 
     const assetsValue = allPosMetrics.reduce((sum, m) => {
@@ -214,8 +227,7 @@ export default function FundDetails() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {fundPositions.map((pos, i) => {
-                                const m = allPosMetrics[i]
+                            {sortedFundPositions.map(({ pos, m }) => {
                                 const posValue = m.totalRemaining !== 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
                                 const isLong = m.positionType === 'LONG'
@@ -273,6 +285,15 @@ export default function FundDetails() {
                                                 {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
+                                        {/* Row 4: dates */}
+                                        <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {m.derivedStartDate ? format(new Date(m.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                            </span>
+                                            <span className="text-muted-foreground/40">→</span>
+                                            <span>{m.derivedEndDate ? format(new Date(m.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                        </div>
                                     </div>
                                 )
                             })}
@@ -290,8 +311,7 @@ export default function FundDetails() {
                                 No unassigned positions.
                             </p>
                         ) : (
-                            unassignedPositions.map((pos, i) => {
-                                const m = unassignedPosMetrics[i]
+                            sortedUnassignedPositions.map(({ pos, m }) => {
                                 const isLong = m.positionType === 'LONG'
                                 return (
                                     <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
@@ -345,6 +365,15 @@ export default function FundDetails() {
                                                 {m.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
+                                        {/* Dates */}
+                                        <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {m.derivedStartDate ? format(new Date(m.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                            </span>
+                                            <span className="text-muted-foreground/40">→</span>
+                                            <span>{m.derivedEndDate ? format(new Date(m.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                        </div>
                                     </div>
                                 )
                             })
