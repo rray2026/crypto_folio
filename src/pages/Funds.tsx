@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { Plus, Layers } from "lucide-react"
@@ -9,7 +10,6 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { FundCard } from "@/components/funds/FundCard"
 import { FundForm } from "@/components/funds/FundForm"
@@ -18,6 +18,22 @@ import { useSettingsStore } from "@/store/useSettingsStore"
 
 export default function Funds() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const { setMobileHeader } = useMobileHeader()
+    const openAdd = useCallback(() => setIsAddDialogOpen(true), [])
+    useEffect(() => {
+        setMobileHeader({
+            title: "Funds",
+            rightActions: (
+                <button
+                    onClick={openAdd}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Create Fund"
+                >
+                    <Plus className="h-5 w-5" />
+                </button>
+            ),
+        })
+    }, [setMobileHeader, openAdd])
     const { prices } = useSettingsStore()
 
     const funds = useLiveQuery(() => db.funds.orderBy('createdAt').reverse().toArray())
@@ -46,31 +62,30 @@ export default function Funds() {
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="hidden sm:flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Funds</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
                         NAV-based portfolio groups with initial capital tracking
                     </p>
                 </div>
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="gap-2 rounded-xl shadow-lg shadow-primary/20">
-                            <Plus className="h-4 w-4" />
-                            Create Fund
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Create New Fund</DialogTitle>
-                            <DialogDescription>
-                                Set up a fund with initial capital. Positions you assign to it will contribute to its NAV.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <FundForm onSuccess={() => setIsAddDialogOpen(false)} />
-                    </DialogContent>
-                </Dialog>
+                <Button className="gap-2 rounded-xl shadow-lg shadow-primary/20" onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                    Create Fund
+                </Button>
             </div>
+            {/* Shared dialog (triggered from MobileHeader on mobile, button above on desktop) */}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Create New Fund</DialogTitle>
+                        <DialogDescription>
+                            Set up a fund with initial capital. Positions you assign to it will contribute to its NAV.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <FundForm onSuccess={() => setIsAddDialogOpen(false)} />
+                </DialogContent>
+            </Dialog>
 
             {/* Summary bar */}
             {funds && funds.length > 0 && (

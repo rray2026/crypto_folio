@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { Link } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -36,6 +37,8 @@ export default function Settings() {
     const txCount   = useLiveQuery(() => db.transactions.count(), [])
     const posCount  = useLiveQuery(() => db.positions.count(), [])
     const fundCount = useLiveQuery(() => db.funds.count(), [])
+    const { setMobileHeader } = useMobileHeader()
+    useEffect(() => { setMobileHeader({ title: "Settings" }) }, [setMobileHeader])
 
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)

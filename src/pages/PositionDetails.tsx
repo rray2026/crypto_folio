@@ -22,9 +22,10 @@ import {
 } from "@/components/ui/popover"
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 
 export default function PositionDetails() {
     const { id } = useParams<{ id: string }>()
@@ -44,11 +45,48 @@ export default function PositionDetails() {
     const [isAiDialogOpen, setIsAiDialogOpen] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
     const { assignPositionToFund, unassignPosition } = useFundStore()
+    const { setMobileHeader } = useMobileHeader()
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
     const allPositions = useLiveQuery(() => db.positions.toArray())
     const allFunds = useLiveQuery(() => db.funds.toArray())
+
+    useEffect(() => {
+        const title = position
+            ? (position.strategyName || position.symbol.split('/')[0])
+            : "Position"
+        setMobileHeader({
+            title,
+            leftAction: (
+                <button
+                    onClick={() => navigate('/positions')}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Back"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+            ),
+            rightActions: (
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setIsAiDialogOpen(true)}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Ask AI"
+                    >
+                        <Share2 className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={() => setIsEditDialogOpen(true)}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Edit"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </button>
+                </div>
+            ),
+        })
+    }, [position, navigate, setMobileHeader, setIsAiDialogOpen, setIsEditDialogOpen])
 
     // Fetch live price for the current symbol if OPEN (every 5 mins)
     useState(() => {
@@ -194,14 +232,14 @@ export default function PositionDetails() {
             <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">
-                        <Button variant="ghost" size="icon" className="shrink-0 self-start mt-1" onClick={() => navigate('/positions')}>
+                        <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 self-start mt-1" onClick={() => navigate('/positions')}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div className="flex-1 w-full min-w-0">
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
+                                        <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
                                         {position.type === 'SHADOW' && (
                                             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                                                 <Eye className="h-3 w-3" />
@@ -266,7 +304,7 @@ export default function PositionDetails() {
                         </Button>
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" className="shrink-0">
+                                <Button variant="outline" size="icon" className="hidden md:inline-flex shrink-0">
                                     <Edit className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
@@ -278,10 +316,10 @@ export default function PositionDetails() {
                             </DialogContent>
                         </Dialog>
 
-                        {/* Share Button */}
+                        {/* Share Button (desktop only — mobile uses header button) */}
                         <Popover open={isSharePopoverOpen} onOpenChange={setIsSharePopoverOpen}>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" size="icon" className="shrink-0">
+                                <Button variant="outline" size="icon" className="hidden md:inline-flex shrink-0">
                                     <Share2 className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>

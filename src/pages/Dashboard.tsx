@@ -1,12 +1,15 @@
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore } from "@/store/useSettingsStore"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
+import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 
 export default function Dashboard() {
     const navigate = useNavigate()
+    const { setMobileHeader } = useMobileHeader()
+    useEffect(() => { setMobileHeader({ title: "Dashboard" }) }, [setMobileHeader])
     const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices } = useSettingsStore()
 
