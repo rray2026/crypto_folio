@@ -48,7 +48,7 @@ export default function Dashboard() {
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                <div className="hidden md:flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
                         <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Overview of your crypto portfolio performance.</p>

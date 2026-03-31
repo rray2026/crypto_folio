@@ -300,16 +300,6 @@ export default function Positions() {
                 </Tabs>
             )}
 
-            {/* Mobile FAB */}
-            <div className="sm:hidden fixed bottom-20 right-4 z-40">
-                <Button 
-                    size="icon" 
-                    className="h-14 w-14 rounded-full shadow-lg opacity-90 backdrop-blur-md hover:opacity-100 transition-opacity border border-primary/20"
-                    onClick={() => setIsAddDialogOpen(true)}
-                >
-                    <Plus className="h-6 w-6" />
-                </Button>
-            </div>
         </div>
     )
 }
