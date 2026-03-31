@@ -12,13 +12,79 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, AlertCircle, ChevronDown } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, AlertCircle, Check, ChevronDown } from "lucide-react"
 
-const EXCHANGE_COLORS: Record<string, string> = {
-    Binance: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-    OKX:     "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    Bybit:   "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+const EXCHANGE_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
+    Binance: {
+        badge: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
+        card:  "border-yellow-500/30 hover:border-yellow-500/60 hover:bg-yellow-500/5",
+        dot:   "bg-yellow-500",
+    },
+    OKX: {
+        badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+        card:  "border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-500/5",
+        dot:   "bg-blue-500",
+    },
+    Bybit: {
+        badge: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+        card:  "border-orange-500/30 hover:border-orange-500/60 hover:bg-orange-500/5",
+        dot:   "bg-orange-500",
+    },
+}
+
+const DEFAULT_STYLE = {
+    badge: "bg-muted/50 text-muted-foreground border-border/50",
+    card:  "border-border/50 hover:border-border hover:bg-muted/30",
+    dot:   "bg-muted-foreground",
+}
+
+interface ExchangeDialogProps {
+    open: boolean
+    pair: string
+    currentExchange: string
+    onSelect: (exchange: string) => void
+    onClose: () => void
+}
+
+function ExchangeDialog({ open, pair, currentExchange, onSelect, onClose }: ExchangeDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+            <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                    <DialogTitle className="text-base">
+                        Switch exchange
+                        <span className="ml-2 font-mono text-sm text-muted-foreground">{pair}</span>
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-3 pt-1">
+                    {SUPPORTED_EXCHANGES.map((ex) => {
+                        const style = EXCHANGE_STYLES[ex] ?? DEFAULT_STYLE
+                        const isCurrent = ex === currentExchange
+                        return (
+                            <button
+                                key={ex}
+                                onClick={() => onSelect(ex)}
+                                disabled={isCurrent}
+                                className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${style.card} ${isCurrent ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${style.dot}`} />
+                                    <span className="font-semibold text-sm">{ex}</span>
+                                </div>
+                                {isCurrent && <Check className="h-4 w-4 text-muted-foreground" />}
+                            </button>
+                        )
+                    })}
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 export default function TradingPairs() {
@@ -38,10 +104,10 @@ export default function TradingPairs() {
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
 
-    // Per-row exchange validation state
     const [validatingExchange, setValidatingExchange] = useState<Record<string, boolean>>({})
     const [exchangeErrors, setExchangeErrors] = useState<Record<string, string>>({})
-    const [openPopover, setOpenPopover] = useState<string | null>(null)
+    // pair key whose exchange dialog is open, or null
+    const [dialogPair, setDialogPair] = useState<string | null>(null)
 
     useEffect(() => {
         fetchPrices()
@@ -69,8 +135,8 @@ export default function TradingPairs() {
         setIsValidatingAdd(false)
     }
 
-    const handleExchangeChange = async (pair: string, newExch: string) => {
-        setOpenPopover(null)
+    const handleExchangeSelect = async (pair: string, newExch: string) => {
+        setDialogPair(null)
         setValidatingExchange(prev => ({ ...prev, [pair]: true }))
         setExchangeErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
 
@@ -98,6 +164,8 @@ export default function TradingPairs() {
         await fetchPrices(undefined, true, false)
         setIsSyncingAll(false)
     }
+
+    const dialogConfig = dialogPair ? pairConfigs.find(p => p.pair === dialogPair) : null
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -183,58 +251,32 @@ export default function TradingPairs() {
                                 ? format(new Date(priceData.timestamp), "HH:mm:ss")
                                 : 'Never'
                             const isPinned = pinnedPairs.includes(pair)
-                            const exchangeColor = EXCHANGE_COLORS[exchange] ?? "bg-muted/50 text-muted-foreground border-border/50"
+                            const style = EXCHANGE_STYLES[exchange] ?? DEFAULT_STYLE
                             const isValidating = !!validatingExchange[pair]
                             const rowError = exchangeErrors[pair]
 
                             return (
                                 <div key={pair} className="px-6 py-4 group hover:bg-muted/20 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        {/* Left: pair name + clickable exchange badge + price */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="font-mono font-bold text-sm">{pair}</span>
 
-                                                {/* Exchange badge — click to switch */}
+                                                {/* Exchange badge — click to open dialog */}
                                                 {isValidating ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${exchangeColor}`}>
+                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${style.badge}`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {exchange}
                                                     </span>
                                                 ) : (
-                                                    <Popover
-                                                        open={openPopover === pair}
-                                                        onOpenChange={(open) => setOpenPopover(open ? pair : null)}
+                                                    <button
+                                                        onClick={() => setDialogPair(pair)}
+                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-75 transition-opacity active:scale-95 ${style.badge}`}
+                                                        title="Change exchange"
                                                     >
-                                                        <PopoverTrigger asChild>
-                                                            <button
-                                                                className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-80 transition-opacity ${exchangeColor}`}
-                                                                title="Change exchange"
-                                                            >
-                                                                {exchange}
-                                                                <ChevronDown className="h-2.5 w-2.5 opacity-60" />
-                                                            </button>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-auto p-2" align="start" sideOffset={6}>
-                                                            <p className="text-[10px] text-muted-foreground mb-2 px-1">Switch exchange</p>
-                                                            <div className="flex flex-col gap-1">
-                                                                {SUPPORTED_EXCHANGES.map(ex => {
-                                                                    const color = EXCHANGE_COLORS[ex] ?? "bg-muted/50 text-muted-foreground border-border/50"
-                                                                    const isCurrent = ex === exchange
-                                                                    return (
-                                                                        <button
-                                                                            key={ex}
-                                                                            onClick={() => handleExchangeChange(pair, ex)}
-                                                                            disabled={isCurrent}
-                                                                            className={`text-left text-xs font-semibold px-3 py-1.5 rounded border transition-opacity ${color} ${isCurrent ? 'opacity-40 cursor-default' : 'hover:opacity-80 cursor-pointer'}`}
-                                                                        >
-                                                                            {ex}{isCurrent && ' ✓'}
-                                                                        </button>
-                                                                    )
-                                                                })}
-                                                            </div>
-                                                        </PopoverContent>
-                                                    </Popover>
+                                                        {exchange}
+                                                        <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                                                    </button>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -276,7 +318,6 @@ export default function TradingPairs() {
                                         </div>
                                     </div>
 
-                                    {/* Per-row exchange error */}
                                     {rowError && (
                                         <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
                                             <AlertCircle className="h-3.5 w-3.5 shrink-0" />
@@ -289,6 +330,17 @@ export default function TradingPairs() {
                     </div>
                 )}
             </div>
+
+            {/* Exchange selection dialog */}
+            {dialogConfig && (
+                <ExchangeDialog
+                    open={dialogPair !== null}
+                    pair={dialogConfig.pair}
+                    currentExchange={dialogConfig.exchange}
+                    onSelect={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
+                    onClose={() => setDialogPair(null)}
+                />
+            )}
         </div>
     )
 }
