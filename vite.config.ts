@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   define: {
-    __BUILD_DATE__: JSON.stringify(new Date().toISOString().split('T')[0]),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().replace('T', ' ').substring(0, 16) + ' UTC'),
   },
   resolve: {
     alias: {
