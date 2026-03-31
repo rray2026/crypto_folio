@@ -49,7 +49,7 @@ export default function TradingPairs() {
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault()
-        const pair = newPair.trim()
+        const pair = newPair.trim().toUpperCase()
         if (!pair) return
 
         setIsValidatingAdd(true)
@@ -120,8 +120,8 @@ export default function TradingPairs() {
                     <Input
                         placeholder="e.g. ADA/USDT"
                         value={newPair}
-                        onChange={(e) => { setNewPair(e.target.value.toUpperCase()); setAddError(null) }}
-                        className="flex-1 max-w-xs font-mono"
+                        onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
+                        className="flex-1 max-w-xs font-mono uppercase"
                         disabled={isValidatingAdd}
                     />
                     <Select value={newExchange} onValueChange={(val) => { setNewExchange(val); setAddError(null) }} disabled={isValidatingAdd}>
@@ -202,7 +202,7 @@ export default function TradingPairs() {
                                         </div>
 
                                         {/* Exchange selector with validation */}
-                                        <div className="hidden sm:flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1.5">
                                             {isValidating && (
                                                 <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground shrink-0" />
                                             )}
@@ -211,7 +211,7 @@ export default function TradingPairs() {
                                                 onValueChange={(val) => handleExchangeChange(pair, val)}
                                                 disabled={isValidating}
                                             >
-                                                <SelectTrigger className="w-[110px] h-8 text-xs">
+                                                <SelectTrigger className="w-[90px] sm:w-[110px] h-8 text-xs">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
