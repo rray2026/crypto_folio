@@ -34,11 +34,11 @@ export async function fetchPriceForExchange(pair: string, exchange: string): Pro
                 return data?.result?.list?.[0]?.lastPrice ?? null;
             }
         } else if (exchange === 'NYSE' || exchange === 'NASDAQ') {
-            const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${pair}?interval=1d&range=1d`);
+            // Route through Cloudflare Pages Function to avoid CORS
+            const res = await fetch(`/api/stock-price?symbol=${encodeURIComponent(pair)}`);
             if (res.ok) {
                 const data = await res.json();
-                const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-                return price != null ? String(price) : null;
+                return data?.price ?? null;
             }
         } else {
             // Binance (default)
