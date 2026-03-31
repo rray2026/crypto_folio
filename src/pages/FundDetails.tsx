@@ -6,7 +6,8 @@ import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
-import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown } from "lucide-react"
+import { format } from "date-fns"
+import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -284,6 +285,15 @@ export default function FundDetails() {
                                                 {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
+                                        {/* Row 4: dates */}
+                                        <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {m.derivedStartDate ? format(new Date(m.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                            </span>
+                                            <span className="text-muted-foreground/40">→</span>
+                                            <span>{m.derivedEndDate ? format(new Date(m.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                        </div>
                                     </div>
                                 )
                             })}
@@ -355,6 +365,15 @@ export default function FundDetails() {
                                                 {m.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
+                                        {/* Dates */}
+                                        <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {m.derivedStartDate ? format(new Date(m.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                            </span>
+                                            <span className="text-muted-foreground/40">→</span>
+                                            <span>{m.derivedEndDate ? format(new Date(m.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                        </div>
                                     </div>
                                 )
                             })
