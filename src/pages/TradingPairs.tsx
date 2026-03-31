@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { useMobileHeader } from "@/contexts/MobileHeaderContext"
-import { useSettingsStore, SUPPORTED_EXCHANGES, fetchPriceForExchange } from "@/store/useSettingsStore"
+import { useSettingsStore, SUPPORTED_EXCHANGES, EXCHANGE_GROUPS, fetchPriceForExchange } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -36,6 +36,16 @@ const EXCHANGE_STYLES: Record<string, { badge: string; card: string; dot: string
         card:  "border-orange-500/30 hover:border-orange-500/60 hover:bg-orange-500/5",
         dot:   "bg-orange-500",
     },
+    NYSE: {
+        badge: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+        card:  "border-green-500/30 hover:border-green-500/60 hover:bg-green-500/5",
+        dot:   "bg-green-500",
+    },
+    NASDAQ: {
+        badge: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+        card:  "border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/5",
+        dot:   "bg-purple-500",
+    },
 }
 
 const DEFAULT_STYLE = {
@@ -62,25 +72,34 @@ function ExchangeDialog({ open, pair, currentExchange, onSelect, onClose }: Exch
                         <span className="ml-2 font-mono text-sm text-muted-foreground">{pair}</span>
                     </DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-3 pt-1">
-                    {SUPPORTED_EXCHANGES.map((ex) => {
-                        const style = EXCHANGE_STYLES[ex] ?? DEFAULT_STYLE
-                        const isCurrent = ex === currentExchange
-                        return (
-                            <button
-                                key={ex}
-                                onClick={() => onSelect(ex)}
-                                disabled={isCurrent}
-                                className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${style.card} ${isCurrent ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${style.dot}`} />
-                                    <span className="font-semibold text-sm">{ex}</span>
-                                </div>
-                                {isCurrent && <Check className="h-4 w-4 text-muted-foreground" />}
-                            </button>
-                        )
-                    })}
+                <div className="space-y-4 pt-1">
+                    {Object.entries(EXCHANGE_GROUPS).map(([groupName, exchanges]) => (
+                        <div key={groupName}>
+                            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                                {groupName}
+                            </p>
+                            <div className="grid gap-2">
+                                {exchanges.map((ex) => {
+                                    const style = EXCHANGE_STYLES[ex] ?? DEFAULT_STYLE
+                                    const isCurrent = ex === currentExchange
+                                    return (
+                                        <button
+                                            key={ex}
+                                            onClick={() => onSelect(ex)}
+                                            disabled={isCurrent}
+                                            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${style.card} ${isCurrent ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${style.dot}`} />
+                                                <span className="font-semibold text-sm">{ex}</span>
+                                            </div>
+                                            {isCurrent && <Check className="h-4 w-4 text-muted-foreground" />}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </DialogContent>
         </Dialog>
@@ -189,7 +208,7 @@ export default function TradingPairs() {
                 <h2 className="text-base font-semibold mb-4">Add New Pair</h2>
                 <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
                     <Input
-                        placeholder="e.g. ADA/USDT"
+                        placeholder="e.g. BTC/USDT or AAPL"
                         value={newPair}
                         onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
                         className="flex-1 max-w-xs font-mono uppercase"

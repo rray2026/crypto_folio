@@ -9,8 +9,13 @@ export interface PairConfig {
     exchange: string;
 }
 
-export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit'] as const;
+export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit', 'NYSE', 'NASDAQ'] as const;
 export type Exchange = typeof SUPPORTED_EXCHANGES[number];
+
+export const EXCHANGE_GROUPS: Record<string, string[]> = {
+    'Crypto':    ['Binance', 'OKX', 'Bybit'],
+    'US Stocks': ['NYSE', 'NASDAQ'],
+};
 
 export async function fetchPriceForExchange(pair: string, exchange: string): Promise<string | null> {
     try {
@@ -27,6 +32,13 @@ export async function fetchPriceForExchange(pair: string, exchange: string): Pro
             if (res.ok) {
                 const data = await res.json();
                 return data?.result?.list?.[0]?.lastPrice ?? null;
+            }
+        } else if (exchange === 'NYSE' || exchange === 'NASDAQ') {
+            const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${pair}?interval=1d&range=1d`);
+            if (res.ok) {
+                const data = await res.json();
+                const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+                return price != null ? String(price) : null;
             }
         } else {
             // Binance (default)
