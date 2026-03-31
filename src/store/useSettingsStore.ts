@@ -12,7 +12,7 @@ export interface PairConfig {
 export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit'] as const;
 export type Exchange = typeof SUPPORTED_EXCHANGES[number];
 
-async function fetchPriceForExchange(pair: string, exchange: string): Promise<string | null> {
+export async function fetchPriceForExchange(pair: string, exchange: string): Promise<string | null> {
     try {
         if (exchange === 'OKX') {
             const instId = pair.replace('/', '-');
