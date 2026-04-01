@@ -6,7 +6,7 @@ import {
     useSettingsStore,
     SUPPORTED_EXCHANGES, EXCHANGE_GROUPS,
     DATA_PROVIDERS, DATA_PROVIDER_GROUPS,
-    fetchPriceFromProvider, defaultDataProvider, getCurrencySymbol,
+    fetchPriceFromProvider, defaultDataProvider, getCurrencySymbol, inferCurrency,
 } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,8 +22,9 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, AlertCircle, Check, ChevronDown } from "lucide-react"
+import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, AlertCircle, Check, ChevronDown, Database, ArrowLeftRight, Coins } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
     Binance: {
@@ -143,20 +144,185 @@ function SelectionDialog({ open, pair, current, title, groups, onSelect, onClose
     )
 }
 
-export default function TradingPairs() {
-    const { setMobileHeader } = useMobileHeader()
-    useEffect(() => { setMobileHeader({ title: "Trading Pairs" }) }, [setMobileHeader])
+interface AddPairModalProps {
+    open: boolean
+    onClose: () => void
+}
 
-    const {
-        pairConfigs, pinnedPairs, prices,
-        addPair, removePair, updatePairExchange, updatePairDataProvider, togglePinPair, fetchPrices,
-    } = useSettingsStore()
+function AddPairModal({ open, onClose }: AddPairModalProps) {
+    const { addPair } = useSettingsStore()
 
     const [newPair, setNewPair] = useState("")
     const [newExchange, setNewExchange] = useState<string>("Binance")
     const [newDataProvider, setNewDataProvider] = useState<string>("Binance")
     const [addError, setAddError] = useState<string | null>(null)
-    const [isValidatingAdd, setIsValidatingAdd] = useState(false)
+    const [isValidating, setIsValidating] = useState(false)
+
+    const inferredCurrency = inferCurrency(newPair.trim().toUpperCase(), newExchange)
+
+    const handleClose = () => {
+        setNewPair("")
+        setNewExchange("Binance")
+        setNewDataProvider("Binance")
+        setAddError(null)
+        onClose()
+    }
+
+    const handleAdd = async (e: React.FormEvent) => {
+        e.preventDefault()
+        const pair = newPair.trim().toUpperCase()
+        if (!pair) return
+
+        setIsValidating(true)
+        setAddError(null)
+
+        const price = await fetchPriceFromProvider(pair, newDataProvider, newExchange)
+        if (price === null) {
+            setAddError(`"${pair}" 在 ${newDataProvider} 上未找到，请检查交易对符号。`)
+            setIsValidating(false)
+            return
+        }
+
+        addPair(pair, newExchange, newDataProvider)
+        setIsValidating(false)
+        handleClose()
+    }
+
+    const placeholder =
+        newExchange === 'SSE'  ? '例如 601818' :
+        newExchange === 'SZSE' ? '例如 000001' :
+        '例如 BTC/USDT 或 AAPL'
+
+    return (
+        <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>添加交易对</DialogTitle>
+                    <DialogDescription>
+                        输入交易对符号，选择交易所和数据源，确认后自动验证。
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleAdd} className="space-y-4 pt-1">
+                    {/* Pair input */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium">交易对</label>
+                        <Input
+                            placeholder={placeholder}
+                            value={newPair}
+                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
+                            className="font-mono uppercase"
+                            disabled={isValidating}
+                            autoFocus
+                        />
+                    </div>
+
+                    {/* Exchange + Data provider row */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium flex items-center gap-1.5">
+                                <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                交易所
+                            </label>
+                            <Select
+                                value={newExchange}
+                                onValueChange={(val) => {
+                                    setNewExchange(val)
+                                    setNewDataProvider(defaultDataProvider(val))
+                                    setAddError(null)
+                                }}
+                                disabled={isValidating}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Exchange" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SUPPORTED_EXCHANGES.map(ex => (
+                                        <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium flex items-center gap-1.5">
+                                <Database className="h-3.5 w-3.5 text-muted-foreground" />
+                                数据源
+                            </label>
+                            <Select
+                                value={newDataProvider}
+                                onValueChange={(val) => { setNewDataProvider(val); setAddError(null) }}
+                                disabled={isValidating}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Data provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {DATA_PROVIDERS.map(dp => (
+                                        <SelectItem key={dp} value={dp}>{dp}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {/* Inferred currency */}
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50">
+                        <Coins className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-muted-foreground">计价货币</span>
+                        <span className="ml-auto font-mono font-semibold text-sm">{inferredCurrency}</span>
+                    </div>
+
+                    {addError && (
+                        <p className="flex items-center gap-1.5 text-xs text-destructive">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            {addError}
+                        </p>
+                    )}
+
+                    <div className="flex gap-2 pt-1">
+                        <Button type="button" variant="outline" className="flex-1" onClick={handleClose} disabled={isValidating}>
+                            取消
+                        </Button>
+                        <Button type="submit" className="flex-1 gap-2" disabled={isValidating || !newPair.trim()}>
+                            {isValidating
+                                ? <><Loader2 className="h-4 w-4 animate-spin" /> 验证中…</>
+                                : <><Plus className="h-4 w-4" /> 添加</>
+                            }
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+export default function TradingPairs() {
+    const { setMobileHeader } = useMobileHeader()
+    const [addModalOpen, setAddModalOpen] = useState(false)
+
+    useEffect(() => {
+        setMobileHeader({
+            title: "交易对",
+            leftAction: (
+                <Link to="/settings">
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                </Link>
+            ),
+            rightActions: (
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setAddModalOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                </Button>
+            ),
+        })
+    }, [setMobileHeader])
+
+    const {
+        pairConfigs, pinnedPairs, prices,
+        removePair, updatePairExchange, updatePairDataProvider, togglePinPair, fetchPrices,
+    } = useSettingsStore()
 
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
@@ -165,7 +331,6 @@ export default function TradingPairs() {
     const [exchangeErrors, setExchangeErrors] = useState<Record<string, string>>({})
     const [validatingProvider, setValidatingProvider] = useState<Record<string, boolean>>({})
     const [providerErrors, setProviderErrors] = useState<Record<string, string>>({})
-    // pair key whose dialog is open, or null
     const [dialogPair, setDialogPair] = useState<string | null>(null)
     const [dialogProviderPair, setDialogProviderPair] = useState<string | null>(null)
 
@@ -174,26 +339,6 @@ export default function TradingPairs() {
         const interval = setInterval(fetchPrices, 300000)
         return () => clearInterval(interval)
     }, [fetchPrices])
-
-    const handleAdd = async (e: React.FormEvent) => {
-        e.preventDefault()
-        const pair = newPair.trim().toUpperCase()
-        if (!pair) return
-
-        setIsValidatingAdd(true)
-        setAddError(null)
-
-        const price = await fetchPriceFromProvider(pair, newDataProvider, newExchange)
-        if (price === null) {
-            setAddError(`"${pair}" not found on ${newDataProvider}. Check the symbol and try again.`)
-            setIsValidatingAdd(false)
-            return
-        }
-
-        addPair(pair, newExchange, newDataProvider)
-        setNewPair("")
-        setIsValidatingAdd(false)
-    }
 
     const handleProviderSelect = async (pair: string, provider: string) => {
         setDialogProviderPair(null)
@@ -205,7 +350,7 @@ export default function TradingPairs() {
         if (price === null) {
             setProviderErrors(prev => ({
                 ...prev,
-                [pair]: `"${pair}" not found on ${provider}`,
+                [pair]: `"${pair}" 在 ${provider} 上未找到`,
             }))
         } else {
             updatePairDataProvider(pair, provider)
@@ -220,7 +365,6 @@ export default function TradingPairs() {
         setExchangeErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
 
         const config = pairConfigs.find(p => p.pair === pair)
-        // If the current data provider matches the old exchange's default, sync it to the new exchange's default
         const oldDefault = defaultDataProvider(config?.exchange ?? '')
         const newDefault = defaultDataProvider(newExch)
         const shouldSyncProvider = config?.dataProvider === oldDefault
@@ -230,7 +374,7 @@ export default function TradingPairs() {
         if (price === null) {
             setExchangeErrors(prev => ({
                 ...prev,
-                [pair]: `"${pair}" not found on ${newExch}`,
+                [pair]: `"${pair}" 在 ${newExch} 上未找到`,
             }))
         } else {
             updatePairExchange(pair, newExch)
@@ -260,112 +404,65 @@ export default function TradingPairs() {
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
             {/* Desktop header */}
-            <div className="hidden md:flex items-center gap-3">
-                <Link to="/settings">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Trading Pairs</h1>
-                    <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                        Manage pre-defined pairs used as quick-select options across the app.
-                    </p>
-                </div>
-            </div>
-
-            {/* Add form */}
-            <div className="bg-card p-6 rounded-xl border shadow-sm">
-                <h2 className="text-base font-semibold mb-4">Add New Pair</h2>
-                <form onSubmit={handleAdd}>
-                    <div className="flex flex-col sm:flex-row gap-3 items-end">
-                        <Input
-                            placeholder={
-                                newExchange === 'SSE'  ? 'e.g. 601818' :
-                                newExchange === 'SZSE' ? 'e.g. 000001' :
-                                'e.g. BTC/USDT or AAPL'
-                            }
-                            value={newPair}
-                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
-                            className="flex-1 max-w-xs font-mono uppercase self-end"
-                            disabled={isValidatingAdd}
-                        />
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-muted-foreground px-1">交易所</span>
-                            <Select
-                                value={newExchange}
-                                onValueChange={(val) => {
-                                    setNewExchange(val)
-                                    setNewDataProvider(defaultDataProvider(val))
-                                    setAddError(null)
-                                }}
-                                disabled={isValidatingAdd}
-                            >
-                                <SelectTrigger className="w-[140px]">
-                                    <SelectValue placeholder="Exchange" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {SUPPORTED_EXCHANGES.map(ex => (
-                                        <SelectItem key={ex} value={ex}>{ex}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-muted-foreground px-1">数据提供商</span>
-                            <Select
-                                value={newDataProvider}
-                                onValueChange={(val) => { setNewDataProvider(val); setAddError(null) }}
-                                disabled={isValidatingAdd}
-                            >
-                                <SelectTrigger className="w-[140px]">
-                                    <SelectValue placeholder="Data provider" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {DATA_PROVIDERS.map(dp => (
-                                        <SelectItem key={dp} value={dp}>{dp}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <Button type="submit" variant="secondary" className="gap-2" disabled={isValidatingAdd}>
-                            {isValidatingAdd
-                                ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking…</>
-                                : <><Plus className="h-4 w-4" /> Add</>
-                            }
+            <div className="hidden md:flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Link to="/settings">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <ArrowLeft className="h-4 w-4" />
                         </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">交易对</h1>
+                        <p className="text-muted-foreground mt-1 text-sm md:text-base">
+                            管理预定义交易对，用于全局快速选择。
+                        </p>
                     </div>
-                </form>
-                {addError && (
-                    <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                        {addError}
-                    </p>
-                )}
+                </div>
+                <Button onClick={() => setAddModalOpen(true)} className="gap-2 shrink-0">
+                    <Plus className="h-4 w-4" />
+                    添加交易对
+                </Button>
             </div>
 
             {/* Pairs list */}
             <div className="bg-card rounded-xl border shadow-sm">
-                <div className="flex items-center justify-between p-6 pb-4">
-                    <h2 className="text-base font-semibold">
-                        {pairConfigs.length} {pairConfigs.length === 1 ? 'Pair' : 'Pairs'}
-                    </h2>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSyncAll}
-                        disabled={isSyncingAll}
-                        className="gap-2"
-                    >
-                        <RefreshCw className={`h-4 w-4 ${isSyncingAll ? 'animate-spin' : ''}`} />
-                        Sync All
-                    </Button>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                    <span className="text-sm font-semibold text-muted-foreground">
+                        共 {pairConfigs.length} 个交易对
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSyncAll}
+                            disabled={isSyncingAll}
+                            className="gap-1.5 h-8 text-xs"
+                        >
+                            <RefreshCw className={`h-3.5 w-3.5 ${isSyncingAll ? 'animate-spin' : ''}`} />
+                            同步全部
+                        </Button>
+                        {/* Mobile add button (also visible here as secondary path) */}
+                        <Button
+                            size="sm"
+                            className="gap-1.5 h-8 text-xs md:hidden"
+                            onClick={() => setAddModalOpen(true)}
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            添加
+                        </Button>
+                    </div>
                 </div>
 
                 {pairConfigs.length === 0 ? (
-                    <p className="px-6 pb-6 text-sm text-muted-foreground">No pairs added yet.</p>
+                    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                        <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                            <Plus className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">暂无交易对</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">点击「添加交易对」开始配置</p>
+                    </div>
                 ) : (
-                    <div className="divide-y divide-border/50">
+                    <div className="divide-y divide-border/40">
                         {pairConfigs.map(({ pair, exchange, dataProvider, currency }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
@@ -373,7 +470,7 @@ export default function TradingPairs() {
                                 : '—'
                             const lastSync = priceData
                                 ? format(new Date(priceData.timestamp), "HH:mm:ss")
-                                : 'Never'
+                                : null
                             const isPinned = pinnedPairs.includes(pair)
                             const exStyle = ENTITY_STYLES[exchange] ?? DEFAULT_STYLE
                             const dpStyle = ENTITY_STYLES[dataProvider] ?? DEFAULT_STYLE
@@ -384,22 +481,33 @@ export default function TradingPairs() {
                             const providerIsDefault = dataProvider === defaultDataProvider(exchange)
 
                             return (
-                                <div key={pair} className="px-6 py-4 group hover:bg-muted/20 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                <span className="font-mono font-bold text-sm">{pair}</span>
+                                <div key={pair} className="px-4 py-3.5 group hover:bg-muted/20 transition-colors">
+                                    <div className="flex items-start gap-3">
+                                        {/* Main content */}
+                                        <div className="flex-1 min-w-0 space-y-2">
+                                            {/* Top row: pair name + price */}
+                                            <div className="flex items-baseline justify-between gap-2">
+                                                <span className="font-mono font-bold text-base leading-none">{pair}</span>
+                                                <span className="font-mono text-sm font-semibold tabular-nums shrink-0">
+                                                    {priceDisplay}
+                                                </span>
+                                            </div>
 
-                                                {/* Trading exchange badge */}
+                                            {/* Meta row: exchange, data source, currency */}
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                {/* Exchange badge */}
+                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                    <ArrowLeftRight className="h-2.5 w-2.5 shrink-0" />
+                                                </div>
                                                 {isValidatingExch ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${exStyle.badge}`}>
+                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {exchange}
                                                     </span>
                                                 ) : (
                                                     <button
                                                         onClick={() => setDialogPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-75 transition-opacity active:scale-95 ${exStyle.badge}`}
+                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${exStyle.badge}`}
                                                         title="切换交易所"
                                                     >
                                                         {exchange}
@@ -407,86 +515,102 @@ export default function TradingPairs() {
                                                     </button>
                                                 )}
 
+                                                <span className="text-[10px] text-border">·</span>
+
                                                 {/* Data provider badge */}
+                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                    <Database className="h-2.5 w-2.5 shrink-0" />
+                                                </div>
                                                 {isValidatingProv ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${dpStyle.badge} opacity-60`}>
+                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${dpStyle.badge} opacity-60`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {dataProvider}
                                                     </span>
                                                 ) : (
                                                     <button
                                                         onClick={() => setDialogProviderPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-75 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-40' : 'font-semibold'}`}
-                                                        title="切换数据提供商"
+                                                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
+                                                        title="切换数据源"
                                                     >
-                                                        <span className="opacity-70 mr-0.5">via</span>
                                                         {dataProvider}
                                                         <ChevronDown className="h-2.5 w-2.5 opacity-50" />
                                                     </button>
                                                 )}
 
+                                                <span className="text-[10px] text-border">·</span>
+
                                                 {/* Currency badge */}
-                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-muted/40 text-muted-foreground border-border/50">
+                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                    <Coins className="h-2.5 w-2.5 shrink-0" />
+                                                </div>
+                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
                                                     {currency}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                                <span className="font-mono">{priceDisplay}</span>
-                                                <span className="text-[10px]">sync {lastSync}</span>
-                                            </div>
+
+                                            {/* Sync time */}
+                                            {lastSync && (
+                                                <p className="text-[10px] text-muted-foreground/50">
+                                                    同步于 {lastSync}
+                                                </p>
+                                            )}
+
+                                            {/* Errors */}
+                                            {rowError && (
+                                                <p className="flex items-center gap-1.5 text-xs text-destructive">
+                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                                    {rowError}
+                                                </p>
+                                            )}
+                                            {provError && (
+                                                <p className="flex items-center gap-1.5 text-xs text-destructive">
+                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                                    {provError}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-0.5 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pt-0.5">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => togglePinPair(pair)}
-                                                className={`h-8 w-8 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
+                                                className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
                                                 title={isPinned ? "从 Dashboard 取消固定" : "固定到 Dashboard"}
                                             >
-                                                <Pin className={`h-3.5 w-3.5 ${isPinned ? 'fill-current' : ''}`} />
+                                                <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 disabled={syncingPairs[pair]}
                                                 onClick={() => handleManualSync(pair)}
-                                                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                className="h-7 w-7 text-muted-foreground hover:text-primary"
                                                 title="同步价格"
                                             >
-                                                <RefreshCw className={`h-3.5 w-3.5 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
+                                                <RefreshCw className={`h-3 w-3 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => removePair(pair)}
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                                 title="删除交易对"
                                             >
-                                                <Trash2 className="h-3.5 w-3.5" />
+                                                <Trash2 className="h-3 w-3" />
                                             </Button>
                                         </div>
                                     </div>
-
-                                    {rowError && (
-                                        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
-                                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                                            {rowError}
-                                        </p>
-                                    )}
-                                    {provError && (
-                                        <p className="mt-1 flex items-center gap-1.5 text-xs text-destructive">
-                                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                                            {provError}
-                                        </p>
-                                    )}
                                 </div>
                             )
                         })}
                     </div>
                 )}
             </div>
+
+            {/* Add pair modal */}
+            <AddPairModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
 
             {/* Trading exchange dialog */}
             {dialogConfig && (
@@ -507,7 +631,7 @@ export default function TradingPairs() {
                     open={dialogProviderPair !== null}
                     pair={dialogProviderConfig.pair}
                     current={dialogProviderConfig.dataProvider}
-                    title="切换数据提供商"
+                    title="切换数据源"
                     groups={DATA_PROVIDER_GROUPS}
                     onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
                     onClose={() => setDialogProviderPair(null)}
