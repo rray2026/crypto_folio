@@ -129,18 +129,19 @@ export async function importData(file: File): Promise<void> {
                         useSettingsStore.setState({ predefinedPairs: payload.settings.predefinedPairs });
                     }
                     if (payload.settings.pairConfigs !== undefined) {
-                        // Backfill currency for backups that predate the currency field
+                        // Backfill currency and dataSource for backups that predate those fields
                         useSettingsStore.setState({
                             pairConfigs: payload.settings.pairConfigs.map((c: any) => ({
                                 ...c,
                                 currency: c.currency ?? inferCurrency(c.pair, c.exchange),
+                                dataSource: c.dataSource ?? c.exchange,
                             })),
                         });
                     } else if (payload.settings.predefinedPairs !== undefined) {
                         // Derive pairConfigs from predefinedPairs for older backups
                         useSettingsStore.setState({
                             pairConfigs: payload.settings.predefinedPairs.map(p => ({
-                                pair: p, exchange: 'Binance', currency: inferCurrency(p, 'Binance'),
+                                pair: p, exchange: 'Binance', dataSource: 'Binance', currency: inferCurrency(p, 'Binance'),
                             })),
                         });
                     }

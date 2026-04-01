@@ -83,17 +83,18 @@ interface ExchangeDialogProps {
     open: boolean
     pair: string
     currentExchange: string
+    title?: string
     onSelect: (exchange: string) => void
     onClose: () => void
 }
 
-function ExchangeDialog({ open, pair, currentExchange, onSelect, onClose }: ExchangeDialogProps) {
+function ExchangeDialog({ open, pair, currentExchange, title = 'Switch exchange', onSelect, onClose }: ExchangeDialogProps) {
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="text-base">
-                        Switch exchange
+                        {title}
                         <span className="ml-2 font-mono text-sm text-muted-foreground">{pair}</span>
                     </DialogTitle>
                 </DialogHeader>
@@ -137,11 +138,12 @@ export default function TradingPairs() {
 
     const {
         pairConfigs, pinnedPairs, prices,
-        addPair, removePair, updatePairExchange, togglePinPair, fetchPrices,
+        addPair, removePair, updatePairExchange, updatePairDataSource, togglePinPair, fetchPrices,
     } = useSettingsStore()
 
     const [newPair, setNewPair] = useState("")
     const [newExchange, setNewExchange] = useState<string>("Binance")
+    const [newDataSource, setNewDataSource] = useState<string>("Binance")
     const [addError, setAddError] = useState<string | null>(null)
     const [isValidatingAdd, setIsValidatingAdd] = useState(false)
 
@@ -150,8 +152,11 @@ export default function TradingPairs() {
 
     const [validatingExchange, setValidatingExchange] = useState<Record<string, boolean>>({})
     const [exchangeErrors, setExchangeErrors] = useState<Record<string, string>>({})
-    // pair key whose exchange dialog is open, or null
+    const [validatingDataSource, setValidatingDataSource] = useState<Record<string, boolean>>({})
+    const [dataSourceErrors, setDataSourceErrors] = useState<Record<string, string>>({})
+    // pair key whose dialog is open, or null
     const [dialogPair, setDialogPair] = useState<string | null>(null)
+    const [dialogDataSourcePair, setDialogDataSourcePair] = useState<string | null>(null)
 
     useEffect(() => {
         fetchPrices()
@@ -167,16 +172,34 @@ export default function TradingPairs() {
         setIsValidatingAdd(true)
         setAddError(null)
 
-        const price = await fetchPriceForExchange(pair, newExchange)
+        const price = await fetchPriceForExchange(pair, newDataSource)
         if (price === null) {
-            setAddError(`"${pair}" not found on ${newExchange}. Check the symbol and try again.`)
+            setAddError(`"${pair}" not found on ${newDataSource}. Check the symbol and try again.`)
             setIsValidatingAdd(false)
             return
         }
 
-        addPair(pair, newExchange)
+        addPair(pair, newExchange, newDataSource)
         setNewPair("")
         setIsValidatingAdd(false)
+    }
+
+    const handleDataSourceSelect = async (pair: string, newDS: string) => {
+        setDialogDataSourcePair(null)
+        setValidatingDataSource(prev => ({ ...prev, [pair]: true }))
+        setDataSourceErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
+
+        const price = await fetchPriceForExchange(pair, newDS)
+        if (price === null) {
+            setDataSourceErrors(prev => ({
+                ...prev,
+                [pair]: `"${pair}" not found on ${newDS}`,
+            }))
+        } else {
+            updatePairDataSource(pair, newDS)
+        }
+
+        setValidatingDataSource(prev => ({ ...prev, [pair]: false }))
     }
 
     const handleExchangeSelect = async (pair: string, newExch: string) => {
@@ -210,6 +233,7 @@ export default function TradingPairs() {
     }
 
     const dialogConfig = dialogPair ? pairConfigs.find(p => p.pair === dialogPair) : null
+    const dialogDSConfig = dialogDataSourcePair ? pairConfigs.find(p => p.pair === dialogDataSourcePair) : null
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -231,34 +255,52 @@ export default function TradingPairs() {
             {/* Add form */}
             <div className="bg-card p-6 rounded-xl border shadow-sm">
                 <h2 className="text-base font-semibold mb-4">Add New Pair</h2>
-                <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
-                    <Input
-                        placeholder={
-                            newExchange === 'SSE'  ? 'e.g. 601818' :
-                            newExchange === 'SZSE' ? 'e.g. 000001' :
-                            'e.g. BTC/USDT or AAPL'
-                        }
-                        value={newPair}
-                        onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
-                        className="flex-1 max-w-xs font-mono uppercase"
-                        disabled={isValidatingAdd}
-                    />
-                    <Select value={newExchange} onValueChange={(val) => { setNewExchange(val); setAddError(null) }} disabled={isValidatingAdd}>
-                        <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Exchange" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {SUPPORTED_EXCHANGES.map(ex => (
-                                <SelectItem key={ex} value={ex}>{ex}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Button type="submit" variant="secondary" className="gap-2" disabled={isValidatingAdd}>
-                        {isValidatingAdd
-                            ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking…</>
-                            : <><Plus className="h-4 w-4" /> Add</>
-                        }
-                    </Button>
+                <form onSubmit={handleAdd}>
+                    <div className="flex flex-col sm:flex-row gap-3 items-end">
+                        <Input
+                            placeholder={
+                                newExchange === 'SSE'  ? 'e.g. 601818' :
+                                newExchange === 'SZSE' ? 'e.g. 000001' :
+                                'e.g. BTC/USDT or AAPL'
+                            }
+                            value={newPair}
+                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
+                            className="flex-1 max-w-xs font-mono uppercase self-end"
+                            disabled={isValidatingAdd}
+                        />
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-muted-foreground px-1">Trading on</span>
+                            <Select value={newExchange} onValueChange={(val) => { setNewExchange(val); setNewDataSource(val); setAddError(null) }} disabled={isValidatingAdd}>
+                                <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Exchange" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SUPPORTED_EXCHANGES.map(ex => (
+                                        <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-muted-foreground px-1">Price from</span>
+                            <Select value={newDataSource} onValueChange={(val) => { setNewDataSource(val); setAddError(null) }} disabled={isValidatingAdd}>
+                                <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Data source" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SUPPORTED_EXCHANGES.map(ex => (
+                                        <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button type="submit" variant="secondary" className="gap-2" disabled={isValidatingAdd}>
+                            {isValidatingAdd
+                                ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking…</>
+                                : <><Plus className="h-4 w-4" /> Add</>
+                            }
+                        </Button>
+                    </div>
                 </form>
                 {addError && (
                     <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
@@ -290,7 +332,7 @@ export default function TradingPairs() {
                     <p className="px-6 pb-6 text-sm text-muted-foreground">No pairs added yet.</p>
                 ) : (
                     <div className="divide-y divide-border/50">
-                        {pairConfigs.map(({ pair, exchange, currency }) => {
+                        {pairConfigs.map(({ pair, exchange, dataSource, currency }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
                                 ? `${getCurrencySymbol(currency)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
@@ -299,30 +341,51 @@ export default function TradingPairs() {
                                 ? format(new Date(priceData.timestamp), "HH:mm:ss")
                                 : 'Never'
                             const isPinned = pinnedPairs.includes(pair)
-                            const style = EXCHANGE_STYLES[exchange] ?? DEFAULT_STYLE
-                            const isValidating = !!validatingExchange[pair]
+                            const exStyle = EXCHANGE_STYLES[exchange] ?? DEFAULT_STYLE
+                            const dsStyle = EXCHANGE_STYLES[dataSource] ?? DEFAULT_STYLE
+                            const isValidatingExch = !!validatingExchange[pair]
+                            const isValidatingDS = !!validatingDataSource[pair]
                             const rowError = exchangeErrors[pair]
+                            const dsError = dataSourceErrors[pair]
 
                             return (
                                 <div key={pair} className="px-6 py-4 group hover:bg-muted/20 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
+                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                 <span className="font-mono font-bold text-sm">{pair}</span>
 
-                                                {/* Exchange badge — click to open dialog */}
-                                                {isValidating ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${style.badge}`}>
+                                                {/* Trading exchange badge */}
+                                                {isValidatingExch ? (
+                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${exStyle.badge}`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {exchange}
                                                     </span>
                                                 ) : (
                                                     <button
                                                         onClick={() => setDialogPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-75 transition-opacity active:scale-95 ${style.badge}`}
-                                                        title="Change exchange"
+                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-75 transition-opacity active:scale-95 ${exStyle.badge}`}
+                                                        title="Change trading exchange"
                                                     >
                                                         {exchange}
+                                                        <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                                                    </button>
+                                                )}
+
+                                                {/* Data source badge */}
+                                                {isValidatingDS ? (
+                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${dsStyle.badge} opacity-60`}>
+                                                        <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                                        via {dataSource}
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setDialogDataSourcePair(pair)}
+                                                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-75 transition-opacity active:scale-95 ${dsStyle.badge} ${dataSource === exchange ? 'opacity-40' : 'font-semibold'}`}
+                                                        title="Change price data source"
+                                                    >
+                                                        <span className="opacity-70 mr-0.5">via</span>
+                                                        {dataSource}
                                                         <ChevronDown className="h-2.5 w-2.5 opacity-50" />
                                                     </button>
                                                 )}
@@ -372,6 +435,12 @@ export default function TradingPairs() {
                                             {rowError}
                                         </p>
                                     )}
+                                    {dsError && (
+                                        <p className="mt-1 flex items-center gap-1.5 text-xs text-destructive">
+                                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                            {dsError}
+                                        </p>
+                                    )}
                                 </div>
                             )
                         })}
@@ -379,14 +448,27 @@ export default function TradingPairs() {
                 )}
             </div>
 
-            {/* Exchange selection dialog */}
+            {/* Trading exchange dialog */}
             {dialogConfig && (
                 <ExchangeDialog
                     open={dialogPair !== null}
                     pair={dialogConfig.pair}
                     currentExchange={dialogConfig.exchange}
+                    title="Change trading exchange"
                     onSelect={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
                     onClose={() => setDialogPair(null)}
+                />
+            )}
+
+            {/* Data source dialog */}
+            {dialogDSConfig && (
+                <ExchangeDialog
+                    open={dialogDataSourcePair !== null}
+                    pair={dialogDSConfig.pair}
+                    currentExchange={dialogDSConfig.dataSource}
+                    title="Change price data source"
+                    onSelect={(ex) => handleDataSourceSelect(dialogDSConfig.pair, ex)}
+                    onClose={() => setDialogDataSourcePair(null)}
                 />
             )}
         </div>

@@ -265,12 +265,12 @@ describe('getCurrencySymbol', () => {
 
 describe('getCurrencySymbolForPair', () => {
     it('returns ¥ for a CNY pair', () => {
-        const configs = [{ pair: '600036', exchange: 'SSE', currency: 'CNY' }];
+        const configs = [{ pair: '600036', exchange: 'SSE', dataSource: 'SSE', currency: 'CNY' }];
         expect(getCurrencySymbolForPair('600036', configs)).toBe('¥');
     });
 
     it('returns $ for a USD pair', () => {
-        const configs = [{ pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' }];
+        const configs = [{ pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' }];
         expect(getCurrencySymbolForPair('BTC/USDT', configs)).toBe('$');
     });
 
@@ -314,7 +314,7 @@ describe('useSettingsStore', () => {
         addPair('DOGE/USDT');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('DOGE/USDT');
-        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' });
     });
 
     it('adds pair with explicit exchange and infers USD currency for stocks', () => {
@@ -322,21 +322,28 @@ describe('useSettingsStore', () => {
         addPair('AAPL', 'NASDAQ');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('AAPL');
-        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ', dataSource: 'NASDAQ', currency: 'USD' });
     });
 
     it('adds SSE pair and infers CNY currency', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: '600036', exchange: 'SSE', currency: 'CNY' });
+        expect(state.pairConfigs).toContainEqual({ pair: '600036', exchange: 'SSE', dataSource: 'SSE', currency: 'CNY' });
     });
 
     it('adds pair with NYSE exchange and infers USD currency', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('JPM', 'NYSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE', dataSource: 'NYSE', currency: 'USD' });
+    });
+
+    it('adds pair with explicit dataSource different from exchange', () => {
+        const { addPair } = useSettingsStore.getState();
+        addPair('BTC/USDT', 'HTX', 'Binance');
+        const state = useSettingsStore.getState();
+        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', exchange: 'HTX', dataSource: 'Binance', currency: 'USD' });
     });
 
     it('does not add duplicate pair', () => {
@@ -382,10 +389,10 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().pinnedPairs).not.toContain('ETH/USDT');
     });
 
-    it('fetchPrices uses exchange from pairConfigs for Binance pair', async () => {
+    it('fetchPrices uses dataSource from pairConfigs for Binance pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -398,10 +405,26 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().prices['BTC/USDT']?.price).toBe('50000.00');
     });
 
+    it('fetchPrices uses dataSource (not exchange) to fetch prices', async () => {
+        useSettingsStore.setState({
+            predefinedPairs: ['BTC/USDT'],
+            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'HTX', dataSource: 'Binance', currency: 'USD' }],
+        });
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '50000.00' }),
+        });
+        await useSettingsStore.getState().fetchPrices(['BTC/USDT'], true, true);
+        // Should hit Binance (dataSource), not HTX (exchange)
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringContaining('api.binance.com')
+        );
+    });
+
     it('fetchPrices uses proxy for NYSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', currency: 'USD' }],
+            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', dataSource: 'NYSE', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -417,7 +440,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses proxy for NASDAQ pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['TSLA'],
-            pairConfigs: [{ pair: 'TSLA', exchange: 'NASDAQ', currency: 'USD' }],
+            pairConfigs: [{ pair: 'TSLA', exchange: 'NASDAQ', dataSource: 'NASDAQ', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -433,11 +456,21 @@ describe('useSettingsStore', () => {
     it('fetchPrices does not update store when price fetch fails', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NASDAQ', currency: 'USD' }],
+            pairConfigs: [{ pair: 'AAPL', exchange: 'NASDAQ', dataSource: 'NASDAQ', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
         await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);
         expect(useSettingsStore.getState().prices['AAPL']).toBeUndefined();
+    });
+
+    it('updatePairDataSource changes only the dataSource of the target pair', () => {
+        const { addPair, updatePairDataSource } = useSettingsStore.getState();
+        addPair('BTC/USDT', 'HTX');
+        updatePairDataSource('BTC/USDT', 'Binance');
+        const state = useSettingsStore.getState();
+        const config = state.pairConfigs.find(p => p.pair === 'BTC/USDT');
+        expect(config?.exchange).toBe('HTX');
+        expect(config?.dataSource).toBe('Binance');
     });
 
     it('respects cache TTL for prices', async () => {
@@ -482,5 +515,26 @@ describe('persistence migration', () => {
         const state = useSettingsStore.getState();
         expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.currency).toBe('USD');
         expect(state.pairConfigs.find(p => p.pair === '600036')?.currency).toBe('CNY');
+    });
+
+    it('v2→v3: backfills dataSource from exchange', () => {
+        // Simulate v2 state without dataSource field
+        const v2State = {
+            predefinedPairs: ['BTC/USDT', 'AAPL'],
+            pairConfigs: [
+                { pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' },
+                { pair: 'AAPL', exchange: 'NYSE', currency: 'USD' },
+            ],
+        };
+        useSettingsStore.setState({
+            predefinedPairs: v2State.predefinedPairs,
+            pairConfigs: v2State.pairConfigs.map((c: any) => ({
+                ...c,
+                dataSource: c.dataSource ?? c.exchange,
+            })),
+        });
+        const state = useSettingsStore.getState();
+        expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.dataSource).toBe('Binance');
+        expect(state.pairConfigs.find(p => p.pair === 'AAPL')?.dataSource).toBe('NYSE');
     });
 });

@@ -6,8 +6,9 @@ export type Theme = 'dark' | 'light' | 'system';
 
 export interface PairConfig {
     pair: string;
-    exchange: string;
-    currency: string;  // e.g. 'USD', 'CNY', 'ETH'
+    exchange: string;   // where the user trades
+    dataSource: string; // which API to use for price fetching
+    currency: string;   // e.g. 'USD', 'CNY', 'ETH'
 }
 
 export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit', 'NYSE', 'NASDAQ', 'HTX', 'Gate.io', 'MEXC', 'SSE', 'SZSE'] as const;
@@ -131,9 +132,10 @@ interface SettingsState {
     pinnedPairs: string[];
     setDashboardTimeRange: (range: DashboardTimeRange) => void;
     setTheme: (theme: Theme) => void;
-    addPair: (pair: string, exchange?: string) => void;
+    addPair: (pair: string, exchange?: string, dataSource?: string) => void;
     removePair: (pair: string) => void;
     updatePairExchange: (pair: string, exchange: string) => void;
+    updatePairDataSource: (pair: string, dataSource: string) => void;
     togglePinPair: (pair: string) => void;
     fetchPrices: (symbols?: string[], force?: boolean, exactSymbolsOnly?: boolean) => Promise<void>;
 }
@@ -143,9 +145,9 @@ export const useSettingsStore = create<SettingsState>()(
         (set, get) => ({
             predefinedPairs: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'],
             pairConfigs: [
-                { pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' },
-                { pair: 'ETH/USDT', exchange: 'Binance', currency: 'USD' },
-                { pair: 'SOL/USDT', exchange: 'Binance', currency: 'USD' },
+                { pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' },
+                { pair: 'ETH/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' },
+                { pair: 'SOL/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' },
             ],
             prices: {},
             dashboardTimeRange: '1Y',
@@ -153,13 +155,14 @@ export const useSettingsStore = create<SettingsState>()(
             pinnedPairs: ['BTC/USDT'],
             setDashboardTimeRange: (range) => set({ dashboardTimeRange: range }),
             setTheme: (theme) => set({ theme }),
-            addPair: (pair, exchange = 'Binance') => set((state) => {
+            addPair: (pair, exchange = 'Binance', dataSource) => set((state) => {
                 const upper = pair.toUpperCase();
                 if (state.predefinedPairs.includes(upper)) return state;
                 const currency = inferCurrency(upper, exchange);
+                const ds = dataSource ?? exchange;
                 return {
                     predefinedPairs: [...state.predefinedPairs, upper],
-                    pairConfigs: [...state.pairConfigs, { pair: upper, exchange, currency }],
+                    pairConfigs: [...state.pairConfigs, { pair: upper, exchange, dataSource: ds, currency }],
                 };
             }),
             removePair: (pair) => set((state) => {
@@ -174,6 +177,13 @@ export const useSettingsStore = create<SettingsState>()(
                 pairConfigs: state.pairConfigs.map(p =>
                     p.pair === pair.toUpperCase()
                         ? { ...p, exchange, currency: inferCurrency(pair.toUpperCase(), exchange) }
+                        : p
+                ),
+            })),
+            updatePairDataSource: (pair, dataSource) => set((state) => ({
+                pairConfigs: state.pairConfigs.map(p =>
+                    p.pair === pair.toUpperCase()
+                        ? { ...p, dataSource }
                         : p
                 ),
             })),
@@ -194,7 +204,7 @@ export const useSettingsStore = create<SettingsState>()(
                     ? Array.from(new Set(symbols))
                     : Array.from(new Set([...predefinedPairs, ...(symbols || [])]));
 
-                const exchangeMap = new Map(pairConfigs.map(p => [p.pair, p.exchange]));
+                const dataSourceMap = new Map(pairConfigs.map(p => [p.pair, p.dataSource ?? p.exchange]));
 
                 for (const pair of symbolsToFetch) {
                     const cached = prices[pair];
@@ -202,8 +212,8 @@ export const useSettingsStore = create<SettingsState>()(
                         continue;
                     }
 
-                    const exchange = exchangeMap.get(pair) ?? 'Binance';
-                    const price = await fetchPriceForExchange(pair, exchange);
+                    const dataSource = dataSourceMap.get(pair) ?? 'Binance';
+                    const price = await fetchPriceForExchange(pair, dataSource);
                     if (price !== null) {
                         newPrices[pair] = { price, timestamp: now };
                         hasUpdates = true;
@@ -217,19 +227,27 @@ export const useSettingsStore = create<SettingsState>()(
         }),
         {
             name: 'crypto-folio-settings',
-            version: 2,
+            version: 3,
             migrate: (persistedState: unknown, version: number) => {
                 const state = persistedState as Record<string, unknown>;
                 if (version < 1) {
                     const pairs = (state.predefinedPairs as string[] | undefined) ?? ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'];
-                    state.pairConfigs = pairs.map((p: string) => ({ pair: p, exchange: 'Binance', currency: 'USD' }));
+                    state.pairConfigs = pairs.map((p: string) => ({ pair: p, exchange: 'Binance', dataSource: 'Binance', currency: 'USD' }));
                 }
                 if (version < 2) {
                     // Backfill currency field for existing pairConfigs
-                    const configs = (state.pairConfigs as Array<{ pair: string; exchange: string; currency?: string }> | undefined) ?? [];
+                    const configs = (state.pairConfigs as Array<{ pair: string; exchange: string; dataSource?: string; currency?: string }> | undefined) ?? [];
                     state.pairConfigs = configs.map(c => ({
                         ...c,
                         currency: c.currency ?? inferCurrency(c.pair, c.exchange),
+                    }));
+                }
+                if (version < 3) {
+                    // Backfill dataSource field — defaults to the trading exchange
+                    const configs = (state.pairConfigs as Array<{ pair: string; exchange: string; dataSource?: string; currency: string }> | undefined) ?? [];
+                    state.pairConfigs = configs.map(c => ({
+                        ...c,
+                        dataSource: c.dataSource ?? c.exchange,
                     }));
                 }
                 return state;
