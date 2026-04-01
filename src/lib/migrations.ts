@@ -123,6 +123,9 @@ export interface BackupPayloadV3 extends Omit<BackupPayloadV2, 'version' | 'posi
 // stock exchange values (NYSE/NASDAQ/SSE/SZSE) mapped to 'Yahoo Finance'.
 // No IndexedDB schema changes — pairConfigs lives in localStorage only.
 
+/** Stock exchanges whose price data is provided by Yahoo Finance. */
+const STOCK_EXCHANGES = new Set(['NYSE', 'NASDAQ', 'SSE', 'SZSE']);
+
 /** PairConfig shape as stored in backup settings as of v3 (uses dataSource). */
 interface PairConfigV3 {
     pair: string;
@@ -170,6 +173,14 @@ export interface Migration {
      * Must perform the same logical transformation as upgradePayload.
      */
     upgradeIdb: (tx: any) => Promise<void> | void;
+
+    /**
+     * Transform the Zustand-persist localStorage state from version N to N+1.
+     * Called by useSettingsStore's persist `migrate` function.
+     * Only needed when the migration touches settings stored in localStorage.
+     * Must be semantically equivalent to the settings portion of upgradePayload.
+     */
+    upgradeLocalStorage?: (state: Record<string, any>) => Record<string, any>;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +236,6 @@ export const MIGRATIONS: Record<number, Migration> = {
     3: {
         description: 'Rename pairConfigs.dataSource → dataProvider; map stock exchanges to Yahoo Finance',
         upgradePayload: (p): BackupPayloadV4 => {
-            const STOCK_EXCHANGES = new Set(['NYSE', 'NASDAQ', 'SSE', 'SZSE']);
             const rawConfigs = (p.settings as any).pairConfigs as PairConfigV3[] | undefined;
             return {
                 ...(p as BackupPayloadV3),
@@ -243,6 +253,19 @@ export const MIGRATIONS: Record<number, Migration> = {
         },
         upgradeIdb: async (_tx) => {
             // pairConfigs lives in localStorage via Zustand persist, not in IndexedDB
+        },
+        upgradeLocalStorage: (state) => {
+            const configs = state.pairConfigs as Array<{
+                pair: string; exchange: string; dataSource?: string; dataProvider?: string; currency: string;
+            }> | undefined;
+            if (!configs) return state;
+            return {
+                ...state,
+                pairConfigs: configs.map(({ dataSource, ...rest }) => ({
+                    ...rest,
+                    dataProvider: rest.dataProvider ?? (STOCK_EXCHANGES.has(dataSource ?? '') ? 'Yahoo Finance' : (dataSource ?? rest.exchange)),
+                })),
+            };
         },
     },
 };

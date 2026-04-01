@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { MIGRATIONS } from '../lib/migrations';
 
 export type DashboardTimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 export type Theme = 'dark' | 'light' | 'system';
@@ -270,14 +271,8 @@ export const useSettingsStore = create<SettingsState>()(
                     }));
                 }
                 if (version < 4) {
-                    // Rename dataSource → dataProvider; map stock exchanges to Yahoo Finance
-                    const configs = (state.pairConfigs as Array<{ pair: string; exchange: string; dataSource?: string; dataProvider?: string; currency: string }> | undefined) ?? [];
-                    state.pairConfigs = configs.map(c => {
-                        const raw = c.dataProvider ?? c.dataSource ?? c.exchange;
-                        const dataProvider = YAHOO_EXCHANGES.has(raw) ? 'Yahoo Finance' : raw;
-                        const { dataSource: _ds, ...rest } = c as any;
-                        return { ...rest, dataProvider };
-                    });
+                    // Delegate to the unified migration registry
+                    Object.assign(state, MIGRATIONS[3].upgradeLocalStorage!(state as Record<string, any>));
                 }
                 return state;
             },

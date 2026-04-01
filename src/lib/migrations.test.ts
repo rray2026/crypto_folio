@@ -216,6 +216,29 @@ describe('MIGRATIONS[3] v3 → v4', () => {
         expect(result.version).toBe(4);
         expect(result.settings.pairConfigs).toBeUndefined();
     });
+
+    it('upgradeLocalStorage: renames dataSource → dataProvider and maps stock exchanges', () => {
+        const state = {
+            predefinedPairs: ['BTC/USDT', 'AAPL', '600036'],
+            pairConfigs: [
+                { pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' },
+                { pair: 'AAPL',     exchange: 'NYSE',    dataSource: 'NYSE',    currency: 'USD' },
+                { pair: '600036',   exchange: 'SSE',     dataSource: 'SSE',     currency: 'CNY' },
+            ],
+        };
+        const result = MIGRATIONS[3].upgradeLocalStorage!(state);
+        expect(result.pairConfigs[0]).toEqual({ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' });
+        expect(result.pairConfigs[1]).toEqual({ pair: 'AAPL',     exchange: 'NYSE',    dataProvider: 'Yahoo Finance', currency: 'USD' });
+        expect(result.pairConfigs[2]).toEqual({ pair: '600036',   exchange: 'SSE',     dataProvider: 'Yahoo Finance', currency: 'CNY' });
+        // dataSource must be removed
+        expect(result.pairConfigs[0].dataSource).toBeUndefined();
+    });
+
+    it('upgradeLocalStorage: returns state unchanged when pairConfigs is absent', () => {
+        const state = { predefinedPairs: ['BTC/USDT'] };
+        const result = MIGRATIONS[3].upgradeLocalStorage!(state);
+        expect(result).toEqual(state);
+    });
 });
 
 describe('upgradeIdb contract', () => {
