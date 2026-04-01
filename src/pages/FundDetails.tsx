@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useState, useEffect, useCallback } from "react"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
+import type { PositionMetrics } from "@/lib/metrics"
+import type { Position } from "@/lib/types"
 import { format } from "date-fns"
 import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -66,7 +68,13 @@ export default function FundDetails() {
                 </div>
             ),
         })
-    }, [fund, navigate, setMobileHeader, setIsEditOpen])
+    }, [fund, navigate, setMobileHeader, deleteFund])
+
+    const getPosMetrics = useCallback((pos: Position) => {
+        const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId))
+        const linkedTxs = transactions?.filter(tx => linkedTxIds.has(tx.id)) ?? []
+        return getPositionMetrics(pos, linkedTxs, prices)
+    }, [transactions, prices])
 
     if (!fund) {
         return (
@@ -81,23 +89,17 @@ export default function FundDetails() {
     const fundPositions = allPositions?.filter(p => p.fundId === id) ?? []
     const unassignedPositions = allPositions?.filter(p => !p.fundId) ?? []
 
-    const getPosMetrics = (pos: any) => {
-        const linkedTxIds = new Set(pos.entries.map((e: any) => e.transactionId))
-        const linkedTxs = transactions?.filter(tx => linkedTxIds.has(tx.id)) ?? []
-        return getPositionMetrics(pos, linkedTxs, prices)
-    }
-
     const allPosMetrics = fundPositions.map(getPosMetrics)
     const unassignedPosMetrics = unassignedPositions.map(getPosMetrics)
 
-    const positionSortFn = (a: { pos: any, m: any }, b: { pos: any, m: any }) => {
+    const positionSortFn = (a: { pos: Position, m: PositionMetrics }, b: { pos: Position, m: PositionMetrics }) => {
         const aOpen = a.pos.status === 'OPEN' || !a.m.derivedEndDate;
         const bOpen = b.pos.status === 'OPEN' || !b.m.derivedEndDate;
         if (aOpen && !bOpen) return -1;
         if (!aOpen && bOpen) return 1;
         if (!aOpen && !bOpen && a.m.derivedEndDate !== b.m.derivedEndDate)
             return (b.m.derivedEndDate || 0) - (a.m.derivedEndDate || 0);
-        return (b.m.derivedStartDate || b.pos.startDate || 0) - (a.m.derivedStartDate || a.pos.startDate || 0);
+        return (b.m.derivedStartDate || b.pos.startDate || 0) - (a.m.derivedStartDate || b.pos.startDate || 0);
     }
     const sortedFundPositions = fundPositions.map((pos, i) => ({ pos, m: allPosMetrics[i] })).sort(positionSortFn)
     const sortedUnassignedPositions = unassignedPositions.map((pos, i) => ({ pos, m: unassignedPosMetrics[i] })).sort(positionSortFn)

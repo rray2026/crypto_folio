@@ -25,7 +25,7 @@ import { TransactionEditForm } from "@/components/transactions/TransactionEditFo
 import { useState, useEffect } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 
 export default function PositionDetails() {
     const { id } = useParams<{ id: string }>()
@@ -98,9 +98,11 @@ export default function PositionDetails() {
         return () => clearInterval(interval);
     });
 
+    const now = useState(() => Date.now())[0]
+
     if (position?.status === 'OPEN') {
         const cached = prices[position.symbol];
-        if (!cached || (Date.now() - cached.timestamp > 300000)) {
+        if (!cached || (now - cached.timestamp > 300000)) {
             fetchPrices([position.symbol]);
         }
     }
@@ -178,7 +180,7 @@ export default function PositionDetails() {
         const name = position.strategyName || `${position.symbol.split('/')[0]} Position`
         const startStr = derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'
         const endStr = derivedEndDate ? format(new Date(derivedEndDate), "yyyy/MM/dd") : (position.status === 'OPEN' ? 'Still Open' : 'Unknown')
-        const durationDays = differenceInDays(derivedEndDate || Date.now(), derivedStartDate || Date.now())
+        const durationDays = differenceInDays(derivedEndDate || now, derivedStartDate || now)
 
         const tradesSection = linkedTxs.length === 0 ? '  (No linked trades)' : linkedTxs.map(tx => {
             const alloc = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount ?? tx.quantity
@@ -287,7 +289,7 @@ export default function PositionDetails() {
                                 </div>
                                 <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
                                     <Clock className="h-3 w-3 md:h-4 md:w-4" />
-                                    <span>Duration: {differenceInDays(derivedEndDate || Date.now(), derivedStartDate || Date.now())} days</span>
+                                    <span>Duration: {differenceInDays(derivedEndDate || now, derivedStartDate || now)} days</span>
                                 </div>
                             </div>
 

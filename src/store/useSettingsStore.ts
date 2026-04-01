@@ -267,12 +267,12 @@ export const useSettingsStore = create<SettingsState>()(
                     const configs = (state.pairConfigs as Array<{ pair: string; exchange: string; dataSource?: string; currency: string }> | undefined) ?? [];
                     state.pairConfigs = configs.map(c => ({
                         ...c,
-                        dataSource: (c as any).dataSource ?? c.exchange,
+                        dataSource: (c as Record<string, unknown>).dataSource ?? c.exchange,
                     }));
                 }
                 if (version < 4) {
                     // Delegate to the unified migration registry
-                    Object.assign(state, MIGRATIONS[3].upgradeLocalStorage!(state as Record<string, any>));
+                    Object.assign(state, MIGRATIONS[3].upgradeLocalStorage!(state as Record<string, unknown>));
                 }
                 return state;
             },

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, afterEach } from 'vitest';
 import { MIGRATIONS, migratePayload, type Migration } from './migrations';
 import { DB_VERSION } from './db';
@@ -7,7 +8,7 @@ import { DB_VERSION } from './db';
 // ---------------------------------------------------------------------------
 
 /** Build a minimal payload at the given version. */
-function makePayload(version: number, extra: Record<string, any> = {}): Record<string, any> {
+function makePayload(version: number, extra: Record<string, any> = {}): any {
     return {
         version,
         appName: 'CryptoFolio',
@@ -59,11 +60,11 @@ describe('migratePayload', () => {
         MIGRATIONS[0] = makeMigration(1, (p) => ({
             ...p,
             version: 1,
-            transactions: p.transactions.map((t: any) => ({ ...t, _migratedFromV0: true })),
+            transactions: (p.transactions as Array<Record<string, unknown>>).map((t) => ({ ...t, _migratedFromV0: true })),
         }));
 
         const payload = makePayload(0, { transactions: [{ id: 'tx1' }] });
-        const result = migratePayload(payload, 1);
+        const result = migratePayload(payload, 1) as any;
 
         expect(result.version).toBe(1);
         expect(result.transactions[0]._migratedFromV0).toBe(true);
@@ -74,7 +75,7 @@ describe('migratePayload', () => {
         MIGRATIONS[-1] = makeMigration(0, (p) => ({
             ...p,
             version: 0,
-            transactions: p.transactions.map((t: any) => ({ ...t, _step1: true })),
+            transactions: (p.transactions as Array<Record<string, unknown>>).map((t) => ({ ...t, _step1: true })),
         }));
         MIGRATIONS[0] = makeMigration(1, (p) => ({
             ...p,
@@ -83,7 +84,7 @@ describe('migratePayload', () => {
         }));
 
         const payload = makePayload(-1, { transactions: [{ id: 'tx1' }] });
-        const result = migratePayload(payload, 1);
+        const result = migratePayload(payload, 1) as any;
 
         expect(result.version).toBe(1);
         expect(result.transactions[0]._step1).toBe(true);
@@ -112,7 +113,7 @@ describe('migratePayload', () => {
         MIGRATIONS[0]  = makeMigration(1, (p) => ({ ...p, version: 1 }));
 
         const payload = makePayload(-2);
-        const result = migratePayload(payload, 1);
+        const result = migratePayload(payload, 1) as any;
         expect(result.version).toBe(1);
     });
 
@@ -145,7 +146,7 @@ describe('MIGRATIONS registry', () => {
         for (const [key, migration] of Object.entries(MIGRATIONS)) {
             const fromVersion = Number(key);
             // Use makePayload so real migrations have the arrays they expect
-            const result = migration.upgradePayload(makePayload(fromVersion));
+            const result = migration.upgradePayload(makePayload(fromVersion)) as any;
             expect(result.version).toBe(fromVersion + 1);
         }
     });
@@ -176,7 +177,7 @@ describe('MIGRATIONS[3] v3 → v4', () => {
                 ],
             },
         });
-        const result = MIGRATIONS[3].upgradePayload(payload);
+        const result = MIGRATIONS[3].upgradePayload(payload) as any;
         expect(result.version).toBe(4);
         expect(result.settings.pairConfigs[0]).toEqual({ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' });
         expect(result.settings.pairConfigs[1]).toEqual({ pair: 'ETH/USDT', exchange: 'OKX',     dataProvider: 'OKX',     currency: 'USD' });
@@ -194,7 +195,7 @@ describe('MIGRATIONS[3] v3 → v4', () => {
                 ],
             },
         });
-        const result = MIGRATIONS[3].upgradePayload(payload);
+        const result = MIGRATIONS[3].upgradePayload(payload) as any;
         for (const config of result.settings.pairConfigs) {
             expect(config.dataProvider).toBe('Yahoo Finance');
         }
@@ -204,7 +205,7 @@ describe('MIGRATIONS[3] v3 → v4', () => {
         const payload = makePayload(3, {
             settings: { predefinedPairs: ['BTC/USDT'], dashboardTimeRange: '1Y', theme: 'dark' },
         });
-        const result = MIGRATIONS[3].upgradePayload(payload);
+        const result = MIGRATIONS[3].upgradePayload(payload) as any;
         expect(result.settings.predefinedPairs).toEqual(['BTC/USDT']);
         expect(result.settings.dashboardTimeRange).toBe('1Y');
         expect(result.settings.theme).toBe('dark');
@@ -212,7 +213,7 @@ describe('MIGRATIONS[3] v3 → v4', () => {
 
     it('handles missing pairConfigs gracefully (no settings.pairConfigs key)', () => {
         const payload = makePayload(3, { settings: { predefinedPairs: [] } });
-        const result = MIGRATIONS[3].upgradePayload(payload);
+        const result = MIGRATIONS[3].upgradePayload(payload) as any;
         expect(result.version).toBe(4);
         expect(result.settings.pairConfigs).toBeUndefined();
     });
@@ -226,7 +227,7 @@ describe('MIGRATIONS[3] v3 → v4', () => {
                 { pair: '600036',   exchange: 'SSE',     dataSource: 'SSE',     currency: 'CNY' },
             ],
         };
-        const result = MIGRATIONS[3].upgradeLocalStorage!(state);
+        const result = MIGRATIONS[3].upgradeLocalStorage!(state) as any;
         expect(result.pairConfigs[0]).toEqual({ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' });
         expect(result.pairConfigs[1]).toEqual({ pair: 'AAPL',     exchange: 'NYSE',    dataProvider: 'Yahoo Finance', currency: 'USD' });
         expect(result.pairConfigs[2]).toEqual({ pair: '600036',   exchange: 'SSE',     dataProvider: 'Yahoo Finance', currency: 'CNY' });
@@ -236,7 +237,7 @@ describe('MIGRATIONS[3] v3 → v4', () => {
 
     it('upgradeLocalStorage: returns state unchanged when pairConfigs is absent', () => {
         const state = { predefinedPairs: ['BTC/USDT'] };
-        const result = MIGRATIONS[3].upgradeLocalStorage!(state);
+        const result = MIGRATIONS[3].upgradeLocalStorage!(state) as any;
         expect(result).toEqual(state);
     });
 });
@@ -248,7 +249,7 @@ describe('upgradeIdb contract', () => {
             // This test verifies the function signature, not the IDB effect.
             const fakeTx = {
                 table: () => ({ toCollection: () => ({ modify: async () => {} }) }),
-            };
+            } as any;
             const result = migration.upgradeIdb(fakeTx);
             if (result !== undefined) {
                 await expect(Promise.resolve(result)).resolves.not.toThrow();

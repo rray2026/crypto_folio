@@ -154,6 +154,10 @@ export interface BackupPayloadV4 extends Omit<BackupPayloadV3, 'version'> {
 // Migration interface
 // ---------------------------------------------------------------------------
 
+import type { Transaction as DexieTransaction } from 'dexie';
+
+type MigrationState = Record<string, unknown>;
+
 export interface Migration {
     /** One-line description shown in logs / error messages. */
     description: string;
@@ -163,7 +167,7 @@ export interface Migration {
      * Must set `payload.version` to N+1 in the returned object.
      * Input is typed loosely because the caller may have deserialized old JSON.
      */
-    upgradePayload: (payload: Record<string, any>) => Record<string, any>;
+    upgradePayload: (payload: MigrationState) => MigrationState;
 
     /**
      * Called by Dexie's `.upgrade()` to transform live IndexedDB records.
@@ -172,7 +176,7 @@ export interface Migration {
      *
      * Must perform the same logical transformation as upgradePayload.
      */
-    upgradeIdb: (tx: any) => Promise<void> | void;
+    upgradeIdb: (tx: DexieTransaction) => Promise<void> | void;
 
     /**
      * Transform the Zustand-persist localStorage state from version N to N+1.
@@ -180,7 +184,7 @@ export interface Migration {
      * Only needed when the migration touches settings stored in localStorage.
      * Must be semantically equivalent to the settings portion of upgradePayload.
      */
-    upgradeLocalStorage?: (state: Record<string, any>) => Record<string, any>;
+    upgradeLocalStorage?: (state: MigrationState) => MigrationState;
 }
 
 // ---------------------------------------------------------------------------
@@ -194,18 +198,21 @@ export const MIGRATIONS: Record<number, Migration> = {
     // v1 → v2
     1: {
         description: 'Backfill Position.type (→ PRIMARY) and Transaction.orderId for numeric-id records',
-        upgradePayload: (p): BackupPayloadV2 => ({
-            ...(p as BackupPayloadV1),
-            version: 2,
-            positions: (p.positions as PositionV1[]).map(pos => ({
-                ...pos,
-                type: pos.type ?? 'PRIMARY',
-            })),
-            transactions: (p.transactions as TransactionV1[]).map(t => ({
-                ...t,
-                orderId: t.orderId ?? (/^\d{8,}$/.test(t.id) ? t.id : undefined),
-            })),
-        }),
+        upgradePayload: (p): MigrationState => {
+            const v1 = p as unknown as BackupPayloadV1;
+            return {
+                ...v1,
+                version: 2,
+                positions: v1.positions.map(pos => ({
+                    ...pos,
+                    type: pos.type ?? 'PRIMARY',
+                })),
+                transactions: v1.transactions.map(t => ({
+                    ...t,
+                    orderId: t.orderId ?? (/^\d{8,}$/.test(t.id) ? t.id : undefined),
+                })),
+            } as unknown as MigrationState;
+        },
         upgradeIdb: async (tx) => {
             await tx.table('positions').toCollection().modify((pos: PositionV1) => {
                 if (!pos.type) pos.type = 'PRIMARY';
@@ -220,13 +227,15 @@ export const MIGRATIONS: Record<number, Migration> = {
     2: {
         description: 'Add funds table; add optional fundId to positions (no backfill needed)',
 
-        upgradePayload: (p): BackupPayloadV3 => ({
-            ...(p as BackupPayloadV2),
-            version: 3,
-            funds: (p as any).funds ?? [],
-            // positions are structurally compatible; fundId is optional so no map needed
-        }),
-        upgradeIdb: async (_tx) => {
+        upgradePayload: (p): MigrationState => {
+            const v2 = p as unknown as BackupPayloadV2;
+            return {
+                ...v2,
+                version: 3,
+                funds: (v2 as unknown as { funds?: FundV3[] }).funds ?? [],
+            } as unknown as MigrationState;
+        },
+        upgradeIdb: async () => {
             // funds table is created by .stores() in db.ts
             // Position.fundId is optional — no existing records need modification
         },
@@ -235,13 +244,14 @@ export const MIGRATIONS: Record<number, Migration> = {
     // v3 → v4
     3: {
         description: 'Rename pairConfigs.dataSource → dataProvider; map stock exchanges to Yahoo Finance',
-        upgradePayload: (p): BackupPayloadV4 => {
-            const rawConfigs = (p.settings as any).pairConfigs as PairConfigV3[] | undefined;
+        upgradePayload: (p): MigrationState => {
+            const v3 = p as unknown as BackupPayloadV3;
+            const rawConfigs = (v3.settings as unknown as { pairConfigs?: PairConfigV3[] }).pairConfigs;
             return {
-                ...(p as BackupPayloadV3),
+                ...v3,
                 version: 4,
                 settings: {
-                    ...p.settings,
+                    ...v3.settings,
                     ...(rawConfigs !== undefined && {
                         pairConfigs: rawConfigs.map(({ dataSource, ...rest }) => ({
                             ...rest,
@@ -249,9 +259,9 @@ export const MIGRATIONS: Record<number, Migration> = {
                         })),
                     }),
                 },
-            };
+            } as unknown as MigrationState;
         },
-        upgradeIdb: async (_tx) => {
+        upgradeIdb: async () => {
             // pairConfigs lives in localStorage via Zustand persist, not in IndexedDB
         },
         upgradeLocalStorage: (state) => {
@@ -280,15 +290,16 @@ export const MIGRATIONS: Record<number, Migration> = {
  * Throws when a required migration step is absent.
  */
 export function migratePayload(
-    payload: Record<string, any>,
+    payload: Record<string, unknown>,
     targetVersion: number,
-): Record<string, any> {
+): Record<string, unknown> {
     let p = payload;
-    while (p.version < targetVersion) {
-        const step = MIGRATIONS[p.version];
+    while ((p.version as number) < targetVersion) {
+        const currentVersion = p.version as number;
+        const step = MIGRATIONS[currentVersion];
         if (!step) {
             throw new Error(
-                `No migration defined for v${p.version} → v${p.version + 1}. ` +
+                `No migration defined for v${currentVersion} → v${currentVersion + 1}. ` +
                 `Add an entry to MIGRATIONS in migrations.ts.`
             );
         }

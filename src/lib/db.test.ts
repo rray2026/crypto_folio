@@ -95,7 +95,7 @@ describe('getActualDbVersion', () => {
             db.close();
         });
         beforeAll(ctx.beforeAll);
-        beforeAll(ctx.run as any);
+        beforeAll(ctx.run as () => Promise<void>);
         afterAll(ctx.afterAll);
 
         it('reports the correct version', async () => {
@@ -111,7 +111,7 @@ describe('getActualDbVersion', () => {
             db.close();
         });
         beforeAll(ctx.beforeAll);
-        beforeAll(ctx.run as any);
+        beforeAll(ctx.run as () => Promise<void>);
         afterAll(ctx.afterAll);
 
         it('reports the higher version', async () => {
@@ -148,7 +148,7 @@ describe('checkDbCompatibility', () => {
             db.close();
         });
         beforeAll(ctx.beforeAll);
-        beforeAll(ctx.run as any);
+        beforeAll(ctx.run as () => Promise<void>);
         afterAll(ctx.afterAll);
 
         it('returns ok', async () => {
@@ -164,7 +164,7 @@ describe('checkDbCompatibility', () => {
             db.close();
         });
         beforeAll(ctx.beforeAll);
-        beforeAll(ctx.run as any);
+        beforeAll(() => ctx.run());
         afterAll(ctx.afterAll);
 
         it('returns incompatible', async () => {

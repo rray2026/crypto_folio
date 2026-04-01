@@ -9,39 +9,42 @@ globalThis.URL.createObjectURL = vi.fn(() => 'blob:url');
 globalThis.URL.revokeObjectURL = vi.fn();
 
 class MockBlob {
-    content: any;
-    options: any;
+    content: string[];
+    options?: BlobPropertyBag;
     static lastInstance: MockBlob;
-    constructor(content: any, options: any) {
+    constructor(content: string[], options?: BlobPropertyBag) {
         this.content = content;
         this.options = options;
         MockBlob.lastInstance = this;
     }
 }
-globalThis.Blob = MockBlob as any;
+globalThis.Blob = MockBlob as unknown as typeof Blob;
 
 const mockReader = {
     readAsText: vi.fn(),
-    onload: null as any,
+    onload: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null,
     result: ''
 };
 
 class MockFileReader {
-    readAsText(file: any) {
+    readAsText(file: File) {
         mockReader.readAsText(file);
         setTimeout(() => {
             if (this.onload) {
+                // @ts-expect-error - simplified mock for tests
                 this.onload({ target: { result: mockReader.result } });
             }
         }, 0);
     }
-    onload: any;
+    onload: ((ev: ProgressEvent<FileReader>) => unknown) | null = null;
 }
 vi.stubGlobal('FileReader', MockFileReader);
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+import type { Transaction, Position } from './types';
+
 function makePayload(overrides: Partial<BackupPayload> = {}): BackupPayload {
     return {
         version: DB_VERSION,
@@ -92,8 +95,8 @@ describe('backup logic', () => {
             document.body.appendChild = vi.fn();
             document.body.removeChild = vi.fn();
 
-            await db.transactions.add({ id: 'tx1', symbol: 'BTC/USDT' } as any);
-            await db.positions.add({ id: 'pos1', symbol: 'BTC/USDT' } as any);
+            await db.transactions.add({ id: 'tx1', symbol: 'BTC/USDT' } as unknown as Transaction);
+            await db.positions.add({ id: 'pos1', symbol: 'BTC/USDT' } as unknown as Position);
 
             await exportData();
 
@@ -101,7 +104,7 @@ describe('backup logic', () => {
             expect(mockLink.download).toContain('cryptofolio-backup');
             expect(mockLink.click).toHaveBeenCalled();
 
-            const blobContent = (globalThis.Blob as any).lastInstance.content[0];
+            const blobContent = (globalThis.Blob as unknown as { lastInstance: MockBlob }).lastInstance.content[0];
             const payload = JSON.parse(blobContent);
 
             expect(payload.appName).toBe('CryptoFolio');
@@ -118,7 +121,7 @@ describe('backup logic', () => {
 
             await exportData();
 
-            const blobContent = (globalThis.Blob as any).lastInstance.content[0];
+            const blobContent = (globalThis.Blob as unknown as { lastInstance: MockBlob }).lastInstance.content[0];
             const payload = JSON.parse(blobContent);
             expect(payload.version).toBe(DB_VERSION);
         });
@@ -128,8 +131,8 @@ describe('backup logic', () => {
     describe('importData', () => {
         it('successfully hydrates DB and settings from a valid backup file', async () => {
             const payload = makePayload({
-                transactions: [{ id: 'new-tx', symbol: 'ETH/USDT' }],
-                positions: [{ id: 'new-pos', symbol: 'ETH/USDT' }],
+                transactions: [{ id: 'new-tx', symbol: 'ETH/USDT' } as Transaction],
+                positions: [{ id: 'new-pos', symbol: 'ETH/USDT' } as Position],
                 settings: { predefinedPairs: ['ETH/USDT'], dashboardTimeRange: '1M', theme: 'light' },
             });
 
@@ -153,7 +156,7 @@ describe('backup logic', () => {
         });
 
         it('throws if the version field is not a number', async () => {
-            const file = setMockFile(makePayload({ version: 'one' as any }));
+            const file = setMockFile(makePayload({ version: 'one' as unknown as number }));
             await expect(importData(file)).rejects.toThrow('missing or non-numeric version field');
         });
 
@@ -172,14 +175,14 @@ describe('backup logic', () => {
                 upgradePayload: (p) => ({
                     ...p,
                     version: 1,
-                    transactions: p.transactions.map((t: any) => ({ ...t, _autoMigrated: true })),
+                    transactions: (p.transactions as { id: string }[]).map((t) => ({ ...t, _autoMigrated: true })),
                 }),
                 upgradeIdb: () => {},
             };
 
             const oldPayload = makePayload({
                 version: 0,
-                transactions: [{ id: 'legacy-tx', symbol: 'BTC/USDT' }],
+                transactions: [{ id: 'legacy-tx', symbol: 'BTC/USDT' } as Transaction],
                 positions: [],
             });
 
@@ -187,7 +190,7 @@ describe('backup logic', () => {
 
             const stored = await db.transactions.toArray();
             expect(stored).toHaveLength(1);
-            expect((stored[0] as any)._autoMigrated).toBe(true);
+            expect((stored[0] as unknown as { _autoMigrated: boolean })._autoMigrated).toBe(true);
         });
     });
 });

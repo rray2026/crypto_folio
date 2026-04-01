@@ -55,7 +55,7 @@ export const useTransactionStore = create<TransactionState>(() => ({
         );
 
         if (newTxs.length > 0) {
-            await db.transactions.bulkAdd(newTxs as any);
+            await db.transactions.bulkAdd(newTxs as Transaction[]);
         }
         return newTxs.map(tx => tx.id);
     },

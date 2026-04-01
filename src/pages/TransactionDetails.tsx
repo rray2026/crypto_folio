@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { useEffect } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"

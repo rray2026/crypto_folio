@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { Plus, Layers } from "lucide-react"
