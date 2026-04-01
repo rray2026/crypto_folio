@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider } from './useSettingsStore';
+import type { PairConfig } from './useSettingsStore';
 
 // Mock localStorage for Zustand persist
 const mockLocalStorage = (() => {
@@ -514,10 +515,10 @@ describe('persistence migration', () => {
         };
         useSettingsStore.setState({
             predefinedPairs: v1State.predefinedPairs,
-            pairConfigs: v1State.pairConfigs.map((c: any) => ({
+            pairConfigs: v1State.pairConfigs.map((c) => ({
                 ...c,
-                currency: c.currency ?? inferCurrency(c.pair, c.exchange),
-            })),
+                currency: (c as { currency?: string }).currency ?? inferCurrency(c.pair, c.exchange),
+            })) as unknown as PairConfig[],
         });
         const state = useSettingsStore.getState();
         expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.currency).toBe('USD');
@@ -535,12 +536,14 @@ describe('persistence migration', () => {
         };
         useSettingsStore.setState({
             predefinedPairs: v3State.predefinedPairs,
-            pairConfigs: v3State.pairConfigs.map((c: any) => {
-                const raw = c.dataProvider ?? c.dataSource ?? c.exchange;
+            pairConfigs: v3State.pairConfigs.map((c) => {
+                const config = c as { dataProvider?: string; dataSource?: string; exchange: string };
+                const raw = config.dataProvider ?? config.dataSource ?? config.exchange;
                 const dataProvider = ['NYSE', 'NASDAQ', 'SSE', 'SZSE'].includes(raw) ? 'Yahoo Finance' : raw;
-                const { dataSource: _ds, ...rest } = c;
+                const { dataSource, ...rest } = config;
+                void dataSource;
                 return { ...rest, dataProvider };
-            }),
+            }) as unknown as PairConfig[],
         });
         const state = useSettingsStore.getState();
         expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.dataProvider).toBe('Binance');

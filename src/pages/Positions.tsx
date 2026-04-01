@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
@@ -11,6 +11,7 @@ import { PositionForm } from "@/components/positions/PositionForm"
 import { Plus, Target, Activity, Wallet, LineChart, TrendingUp } from "lucide-react"
 import { differenceInDays } from "date-fns"
 import { getPositionMetrics } from "@/lib/metrics"
+import type { PositionMetrics } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -78,9 +79,9 @@ export default function Positions() {
         }
     }, [positions, fetchPrices]); // Added dependencies
 
-    const getMetrics = (pos: any) => {
-        if (!transactions) return { realizedPnL: 0, unrealizedPnL: 0, totalPnL: 0, roi: 0, totalInvestment: 0, totalRemaining: 0, currentPrice: 0, positionType: 'LONG' as const, derivedStartDate: pos.startDate, derivedEndDate: pos.endDate, avgBuyPrice: 0, avgSellPrice: 0 };
-        const linkedTxIds = new Set(pos.entries.map((e: any) => e.transactionId));
+    const getMetrics = (pos: Position) => {
+        if (!transactions) return { realizedPnL: 0, unrealizedPnL: 0, totalPnL: 0, roi: 0, totalInvestment: 0, totalRemaining: 0, currentPrice: 0, positionType: 'LONG' as const, derivedStartDate: pos.startDate, derivedEndDate: pos.endDate, avgBuyPrice: 0, avgSellPrice: 0, breakevenPrice: 0 };
+        const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId));
         const linkedTxs = transactions.filter(tx => linkedTxIds.has(tx.id));
         return getPositionMetrics(pos, linkedTxs, prices);
     };
@@ -100,7 +101,6 @@ export default function Positions() {
     let totalInvestment = 0;
     let winningTrades = 0;
     let closedTrades = 0;
-    let activeStrategiesCount = 0;
 
     // Time Range Filtering Logic
     const now = Date.now();
@@ -128,8 +128,6 @@ export default function Positions() {
                 if (pos.status === 'CLOSED') {
                     closedTrades++;
                     if (metrics.realizedPnL > 0) winningTrades++;
-                } else if (pos.status === 'OPEN') {
-                    activeStrategiesCount++;
                 }
             }
         });
@@ -146,7 +144,7 @@ export default function Positions() {
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <Select value={dashboardTimeRange} onValueChange={(val: any) => setDashboardTimeRange(val)}>
+                    <Select value={dashboardTimeRange} onValueChange={(val) => setDashboardTimeRange(val as '1M' | '3M' | '6M' | '1Y' | 'ALL')}>
                         <SelectTrigger className="h-9 w-[150px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
                             <div className="flex items-center gap-2">
                                 <Activity className="h-3.5 w-3.5 text-muted-foreground" />
@@ -169,7 +167,7 @@ export default function Positions() {
             </div>
             {/* Mobile: time range filter row */}
             <div className="flex sm:hidden items-center gap-2 mb-4">
-                <Select value={dashboardTimeRange} onValueChange={(val: any) => setDashboardTimeRange(val)}>
+                <Select value={dashboardTimeRange} onValueChange={(val) => setDashboardTimeRange(val as '1M' | '3M' | '6M' | '1Y' | 'ALL')}>
                     <SelectTrigger className="h-9 flex-1 bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
                         <div className="flex items-center gap-2">
                             <Activity className="h-3.5 w-3.5 text-muted-foreground" />
@@ -280,22 +278,22 @@ export default function Positions() {
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                         {filteredPositions
-                                            ?.filter((p: any) => {
+                                            ?.filter((p) => {
                                                 if (timeThreshold === 0) return true;
                                                 const metrics = getMetrics(p);
                                                 return (metrics.derivedStartDate || p.startDate) >= timeThreshold;
                                             })
-                                            .map((pos: any) => ({ pos, metrics: getMetrics(pos) }))
-                                            .sort((a: any, b: any) => {
+                                            .map((pos) => ({ pos, metrics: getMetrics(pos) }))
+                                            .sort((a: { pos: Position, metrics: PositionMetrics }, b: { pos: Position, metrics: PositionMetrics }) => {
                                                 const aOpen = a.pos.status === 'OPEN' || !a.metrics.derivedEndDate;
                                                 const bOpen = b.pos.status === 'OPEN' || !b.metrics.derivedEndDate;
                                                 if (aOpen && !bOpen) return -1;
                                                 if (!aOpen && bOpen) return 1;
                                                 if (!aOpen && !bOpen && a.metrics.derivedEndDate !== b.metrics.derivedEndDate)
                                                     return (b.metrics.derivedEndDate || 0) - (a.metrics.derivedEndDate || 0);
-                                                return (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0);
+                                                return (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || b.pos.startDate || 0);
                                             })
-                                            .map(({ pos, metrics }: { pos: any, metrics: any }) => {
+                                            .map(({ pos, metrics }: { pos: Position, metrics: PositionMetrics }) => {
                                                 const duration = metrics.derivedStartDate ? differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate) : 0;
                                                 const isActive = pos.status === 'OPEN';
 

@@ -4,7 +4,7 @@ import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsS
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 
 export default function Dashboard() {
     const navigate = useNavigate()

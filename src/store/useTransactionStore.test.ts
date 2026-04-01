@@ -52,7 +52,7 @@ describe('useTransactionStore', () => {
             { date: Date.now(), symbol: 'ETH/USDT', type: 'BUY', price: 3000, quantity: 1, amount: 3000, fee: 5 },
         ];
 
-        const ids = await bulkAddTransactions(txs as any);
+        const ids = await bulkAddTransactions(txs as unknown as Parameters<typeof bulkAddTransactions>[0]);
         expect(ids).toHaveLength(2);
 
         const count = await db.transactions.count();

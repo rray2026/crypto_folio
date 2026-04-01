@@ -38,6 +38,22 @@ export interface Position {
     fundId?: string; // optional: which Fund this position belongs to
 }
 
+export interface PositionMetrics {
+    realizedPnL: number;
+    unrealizedPnL: number;
+    totalPnL: number;
+    roi: number;
+    totalInvestment: number;
+    totalRemaining: number;
+    currentPrice: number;
+    positionType: 'LONG' | 'SHORT';
+    derivedStartDate: number;
+    derivedEndDate?: number;
+    avgBuyPrice: number;
+    avgSellPrice: number;
+    breakevenPrice: number;
+}
+
 export interface Fund {
     id: string;
     name: string;

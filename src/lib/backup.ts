@@ -1,20 +1,21 @@
 import { db, DB_VERSION } from './db';
 import { migratePayload } from './migrations';
+import type { Transaction, Position, Fund } from './types';
 import { useSettingsStore, inferCurrency, defaultDataProvider } from '@/store/useSettingsStore';
-import type { PairConfig } from '@/store/useSettingsStore';
+import type { PairConfig, DashboardTimeRange, Theme } from '@/store/useSettingsStore';
 
 export interface BackupPayload {
     version: number;
     timestamp: number;
     appName: string;
-    transactions: any[];
-    positions: any[];
-    funds: any[];
+    transactions: Transaction[];
+    positions: Position[];
+    funds: Fund[];
     settings: {
         predefinedPairs: string[];
         pairConfigs?: PairConfig[];
-        dashboardTimeRange: string;
-        theme: string;
+        dashboardTimeRange: DashboardTimeRange;
+        theme: Theme;
     };
 }
 
@@ -96,7 +97,7 @@ export async function importData(file: File): Promise<void> {
 
                 // Migrate older backups up to current version
                 const payload = raw.version < DB_VERSION
-                    ? migratePayload(raw, DB_VERSION) as BackupPayload
+                    ? migratePayload(raw as unknown as Record<string, unknown>, DB_VERSION) as unknown as BackupPayload
                     : raw;
 
                 if (!Array.isArray(payload.transactions) || !Array.isArray(payload.positions)) {
@@ -131,10 +132,10 @@ export async function importData(file: File): Promise<void> {
                     if (payload.settings.pairConfigs !== undefined) {
                         // Backfill currency and dataProvider for backups that predate those fields
                         useSettingsStore.setState({
-                            pairConfigs: payload.settings.pairConfigs.map((c: any) => ({
+                            pairConfigs: payload.settings.pairConfigs.map((c) => ({
                                 ...c,
                                 currency: c.currency ?? inferCurrency(c.pair, c.exchange),
-                                dataProvider: c.dataProvider ?? defaultDataProvider(c.dataSource ?? c.exchange),
+                                dataProvider: c.dataProvider ?? defaultDataProvider((c as unknown as Record<string, unknown>).dataSource as string ?? c.exchange),
                             })),
                         });
                     } else if (payload.settings.predefinedPairs !== undefined) {
@@ -146,10 +147,10 @@ export async function importData(file: File): Promise<void> {
                         });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {
-                        store.setDashboardTimeRange(payload.settings.dashboardTimeRange as any);
+                        store.setDashboardTimeRange(payload.settings.dashboardTimeRange);
                     }
                     if (payload.settings.theme !== undefined) {
-                        store.setTheme(payload.settings.theme as any);
+                        store.setTheme(payload.settings.theme);
                     }
                 }
 

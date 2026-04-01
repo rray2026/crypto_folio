@@ -1,6 +1,8 @@
 import { getAveragePrice, mul, sub, add, div } from "./math"
 import type { Position, Transaction, Fund } from "./types"
 
+export type PositionMetrics = ReturnType<typeof getPositionMetrics>;
+
 export function getPositionMetrics(pos: Position, linkedTxs: Transaction[], prices: Record<string, { price: string; timestamp: number }>) {
     let tBought = 0;
     let tSold = 0;

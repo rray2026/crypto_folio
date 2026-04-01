@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
@@ -79,6 +79,7 @@ export default function Transactions() {
 
     // Get unique symbols for filter
     const uniqueSymbols = Array.from(new Set(allTransactions?.map(tx => tx.symbol) || [])).sort();
+    const now = useState(() => Date.now())[0]
 
     // Filter logic
     const transactions = allTransactions?.filter(tx => {
@@ -86,7 +87,6 @@ export default function Transactions() {
         
         let timeMatch = true;
         if (filterTimeRange !== "ALL") {
-            const now = Date.now();
             const txDate = new Date(tx.date).getTime();
             const dayMs = 24 * 60 * 60 * 1000;
             
@@ -534,7 +534,7 @@ export default function Transactions() {
 
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Type</Label>
-                            <Select value={newPositionType} onValueChange={(val: any) => setNewPositionType(val)}>
+                            <Select value={newPositionType} onValueChange={(val) => setNewPositionType(val as 'PRIMARY' | 'SHADOW')}>
                                 <SelectTrigger className="w-full h-11 rounded-xl font-bold border-border/50">
                                     <SelectValue />
                                 </SelectTrigger>

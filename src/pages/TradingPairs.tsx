@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import {
     useSettingsStore,
     SUPPORTED_EXCHANGES, EXCHANGE_GROUPS,
@@ -24,7 +24,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, AlertCircle, Check, ChevronDown, Database, ArrowLeftRight, Coins } from "lucide-react"
+import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
     Binance: {
@@ -195,7 +195,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Add Trading Pair</DialogTitle>
                     <DialogDescription>
@@ -219,8 +219,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                     {/* Exchange + Data provider row */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium flex items-center gap-1.5">
-                                <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground" />
+                            <label className="text-sm font-medium">
                                 Exchange
                             </label>
                             <Select
@@ -244,8 +243,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium flex items-center gap-1.5">
-                                <Database className="h-3.5 w-3.5 text-muted-foreground" />
+                            <label className="text-sm font-medium">
                                 Data Source
                             </label>
                             <Select
@@ -267,14 +265,12 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
 
                     {/* Inferred currency */}
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50">
-                        <Coins className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         <span className="text-sm text-muted-foreground">Quote Currency</span>
                         <span className="ml-auto font-mono font-semibold text-sm">{inferredCurrency}</span>
                     </div>
 
                     {addError && (
                         <p className="flex items-center gap-1.5 text-xs text-destructive">
-                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                             {addError}
                         </p>
                     )}
@@ -536,13 +532,11 @@ export default function TradingPairs() {
                                             {/* Errors */}
                                             {rowError && (
                                                 <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                                                     {rowError}
                                                 </p>
                                             )}
                                             {provError && (
                                                 <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                                                     {provError}
                                                 </p>
                                             )}

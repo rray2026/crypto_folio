@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { Link } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import type { Theme } from "@/store/useSettingsStore"

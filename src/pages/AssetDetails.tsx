@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getPositionMetrics } from "@/lib/metrics"
 import { useEffect, useState } from "react"
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { PositionCard } from "@/components/shared/PositionCard"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 
@@ -56,6 +56,8 @@ export default function AssetDetails() {
             ),
         })
     }, [decodedSymbol, navigate, setMobileHeader]);
+
+    const now = useState(() => Date.now())[0]
 
     if (!decodedSymbol) return <div className="p-8 text-center text-muted-foreground">Invalid Symbol</div>
 
@@ -118,7 +120,7 @@ export default function AssetDetails() {
                             </Card>
                         ) : (
                             enrichedPositions.map(({ pos, metrics }) => {
-                                const duration = differenceInDays(metrics.derivedEndDate || Date.now(), metrics.derivedStartDate || Date.now())
+                                const duration = differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate || now)
                                 return (
                                     <PositionCard
                                         key={pos.id}

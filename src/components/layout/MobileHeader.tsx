@@ -1,4 +1,4 @@
-import { useMobileHeader } from "@/contexts/MobileHeaderContext"
+import { useMobileHeader } from "@/hooks/useMobileHeader"
 
 export function MobileHeader() {
     const { title, leftAction, rightActions } = useMobileHeader()

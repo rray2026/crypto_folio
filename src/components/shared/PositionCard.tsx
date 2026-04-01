@@ -2,11 +2,11 @@ import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { TrendingUp, TrendingDown, Eye, Calendar, Clock, Circle, Layers } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import type { Position } from "@/lib/types"
+import type { Position, PositionMetrics } from "@/lib/types"
 
 interface PositionCardProps {
     position: Position;
-    metrics: any;
+    metrics: PositionMetrics;
     isActive: boolean;
     duration: number;
     fundName?: string;

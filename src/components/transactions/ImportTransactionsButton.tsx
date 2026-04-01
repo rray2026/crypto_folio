@@ -19,6 +19,12 @@ interface ImportTransactionsButtonProps {
     children?: React.ReactNode;
 }
 
+import type { Transaction } from "@/lib/types"
+
+interface BinanceOrder extends Omit<Transaction, 'associatedPositionIds'> {
+    orderId: string;
+}
+
 export function ImportTransactionsButton({ variant = "outline", size, className, iconOnly, children }: ImportTransactionsButtonProps) {
     const [isImporting, setIsImporting] = useState(false)
     const [showUnavailableDialog, setShowUnavailableDialog] = useState(false)
@@ -40,7 +46,7 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
             const workbook = xlsx.read(data)
             const sheetName = workbook.SheetNames[0]
             const worksheet = workbook.Sheets[sheetName]
-            const rows = xlsx.utils.sheet_to_json<any>(worksheet, { header: 1 }) // Use array of arrays to preserve exact ordering
+            const rows = xlsx.utils.sheet_to_json<unknown[]>(worksheet, { header: 1 }) // Use array of arrays to preserve exact ordering
 
             if (rows.length < 2) {
                 alert("No data found in the provided Excel file.");
@@ -48,12 +54,12 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
             }
 
             // Assume the first row is always headers, e.g. ["委托时间", "订单号", "交易对", "基准货币", "计价货币", "类型", "委托价格", "委托数量", "成交均价 ", "成交量", "成交额", "触发条件", "状态"]
-            const ordersMap = new Map<string, any>();
+            const ordersMap = new Map<string, BinanceOrder>();
 
             // Start iterating from row index 1.
             // In Binance exports, actual orders have a length usually > 5 and include trade details.
             // Child trades typically are placed immediately after, and have a different column structure.
-            let currentOrderId = null;
+            let currentOrderId: string | null = null;
 
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
@@ -62,25 +68,27 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                 // Check if this row is a Main Order row based on row length and presence of 'BUY'/'SELL'
                 // Main order rows typically have the 'Type' (BUY or SELL) at index 5.
                 if (row.length >= 10 && (row[5] === 'BUY' || row[5] === 'SELL')) {
-                    currentOrderId = row[1]; // 订单号 is at index 1
-                    ordersMap.set(currentOrderId, {
-                        id: currentOrderId.toString(), // Explicitly bind Binance Order Id
-                        orderId: currentOrderId.toString(),
-                        date: new Date(row[0]).getTime(), // 委托时间
-                        symbol: row[2], // BTC/USDT (Keep the slash as requested)
-                        type: row[5],
-                        price: parseFloat(row[8] || row[6]), // 成交均价 is at index 8, fallback to 委托价格 at 6
-                        quantity: parseFloat(row[9] || row[7]), // 成交量 at 9, fallback to 委托数量 at 7
-                        amount: parseFloat(row[10]), // 成交额
-                        fee: 0, // Will be aggregated from child rows
-                    });
+                    currentOrderId = (row[1] as string | number)?.toString(); // 订单号 is at index 1
+                    if (currentOrderId) {
+                        ordersMap.set(currentOrderId, {
+                            id: currentOrderId, // Explicitly bind Binance Order Id
+                            orderId: currentOrderId,
+                            date: new Date(row[0] as string).getTime(), // 委托时间
+                            symbol: row[2] as string, // BTC/USDT (Keep the slash as requested)
+                            type: row[5] as "BUY" | "SELL",
+                            price: parseFloat((row[8] || row[6]) as string), // 成交均价 is at index 8, fallback to 委托价格 at 6
+                            quantity: parseFloat((row[9] || row[7]) as string), // 成交量 at 9, fallback to 委托数量 at 7
+                            amount: parseFloat(row[10] as string), // 成交额
+                            fee: 0, // Will be aggregated from child rows
+                        });
+                    }
                 }
                 // Check if this row is a Trade (child) row. 
                 // Trade rows come under a header like ["委托时间", "订单号", "交易对", "基准货币", "计价货币"] 
                 // but actually their data aligns functionally.
                 else if (currentOrderId && row.length >= 4 && typeof row[4] === 'string' && (row[4].includes('USDT') || row[4].includes('BNB') || row[4].includes('BTC') || row[4].includes('ETH'))) {
                     // Extract the generic numeric fee from the string, e.g. "7.099898USDT" -> 7.099898
-                    const feeString = row[4];
+                    const feeString = row[4] as string;
                     const numMatch = feeString.match(/([\d.]+)/);
                     if (numMatch && numMatch[1]) {
                         const feeValue = parseFloat(numMatch[1]);
@@ -92,7 +100,7 @@ export function ImportTransactionsButton({ variant = "outline", size, className,
                 }
             }
 
-            const transactionsToInsert = Array.from(ordersMap.values()) as any;
+            const transactionsToInsert = Array.from(ordersMap.values()) as unknown as Parameters<typeof bulkAddTransactions>[0];
 
             if (transactionsToInsert.length > 0) {
                 const importedIds = await bulkAddTransactions(transactionsToInsert);

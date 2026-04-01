@@ -1,19 +1,5 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react"
-
-interface MobileHeaderConfig {
-    title: string
-    leftAction?: ReactNode
-    rightActions?: ReactNode
-}
-
-interface MobileHeaderContextType extends MobileHeaderConfig {
-    setMobileHeader: (config: MobileHeaderConfig) => void
-}
-
-const MobileHeaderContext = createContext<MobileHeaderContextType>({
-    title: "",
-    setMobileHeader: () => {},
-})
+import { useCallback, useState, type ReactNode } from "react"
+import { MobileHeaderContext, type MobileHeaderConfig } from "./MobileHeaderContextDefinition"
 
 export function MobileHeaderProvider({ children }: { children: ReactNode }) {
     const [config, setConfig] = useState<MobileHeaderConfig>({ title: "" })
@@ -28,5 +14,3 @@ export function MobileHeaderProvider({ children }: { children: ReactNode }) {
         </MobileHeaderContext.Provider>
     )
 }
-
-export const useMobileHeader = () => useContext(MobileHeaderContext)
