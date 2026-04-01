@@ -4,7 +4,7 @@ import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { mul, add, div } from "@/lib/math"
-import { useSettingsStore, getCurrencySymbolForPair, CN_EXCHANGES } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair, getCurrencySymbol } from "@/store/useSettingsStore"
 import type { Position } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 
@@ -86,18 +86,13 @@ export default function Positions() {
     };
 
 
-    // Detect mixed currencies
-    const hasCNPositions = positions?.some(pos => {
-        const exchange = pairConfigs.find(p => p.pair === pos.symbol)?.exchange ?? '';
-        return CN_EXCHANGES.has(exchange);
-    }) ?? false;
-    const hasUSDPositions = positions?.some(pos => {
-        const exchange = pairConfigs.find(p => p.pair === pos.symbol)?.exchange ?? '';
-        return !CN_EXCHANGES.has(exchange);
-    }) ?? false;
-    const mixedCurrencies = hasCNPositions && hasUSDPositions;
-    const allCNY = hasCNPositions && !hasUSDPositions;
-    const totalsCurrencySymbol = allCNY ? '¥' : '$';
+    // Detect mixed currencies across the portfolio
+    const portfolioCurrencies = new Set(
+        (positions ?? []).map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
+    );
+    const mixedCurrencies = portfolioCurrencies.size > 1;
+    const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD';
+    const totalsCurrencySymbol = getCurrencySymbol(singleCurrency);
 
     // Calculate global metrics
     let totalRealizedPnL = 0;

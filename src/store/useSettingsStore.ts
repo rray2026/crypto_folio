@@ -7,6 +7,7 @@ export type Theme = 'dark' | 'light' | 'system';
 export interface PairConfig {
     pair: string;
     exchange: string;
+    currency: string;  // e.g. 'USD', 'CNY', 'ETH'
 }
 
 export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit', 'NYSE', 'NASDAQ', 'HTX', 'Gate.io', 'MEXC', 'SSE', 'SZSE'] as const;
@@ -19,15 +20,38 @@ export const EXCHANGE_GROUPS: Record<string, string[]> = {
     'CN Stocks': ['SSE', 'SZSE'],
 };
 
-export const CN_EXCHANGES = new Set(['SSE', 'SZSE']);
+// Stablecoin quote currencies that are pegged to USD
+const STABLECOINS = new Set(['USDT', 'USDC', 'BUSD', 'DAI', 'FDUSD', 'TUSD']);
 
-export function getCurrencySymbol(exchange: string): string {
-    return CN_EXCHANGES.has(exchange) ? '¥' : '$';
+/** Derive the quote currency for a pair on a given exchange. */
+export function inferCurrency(pair: string, exchange: string): string {
+    if (exchange === 'SSE' || exchange === 'SZSE') return 'CNY';
+    if (pair.includes('/')) {
+        const quote = pair.split('/')[1];
+        if (STABLECOINS.has(quote)) return 'USD';
+        return quote; // e.g. BTC/ETH → priced in ETH
+    }
+    return 'USD'; // stocks and bare symbols default to USD
 }
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    USD: '$',
+    CNY: '¥',
+    EUR: '€',
+    GBP: '£',
+    JPY: '¥',
+    KRW: '₩',
+};
+
+/** Map a currency code (e.g. 'CNY') to its display symbol (e.g. '¥'). */
+export function getCurrencySymbol(currency: string): string {
+    return CURRENCY_SYMBOLS[currency] ?? currency;
+}
+
+/** Look up the currency symbol for a pair from the stored pairConfigs. */
 export function getCurrencySymbolForPair(pair: string, pairConfigs: PairConfig[]): string {
-    const exchange = pairConfigs.find(p => p.pair === pair)?.exchange ?? '';
-    return getCurrencySymbol(exchange);
+    const config = pairConfigs.find(p => p.pair === pair);
+    return getCurrencySymbol(config?.currency ?? 'USD');
 }
 
 export async function fetchPriceForExchange(pair: string, exchange: string): Promise<string | null> {
@@ -110,9 +134,9 @@ export const useSettingsStore = create<SettingsState>()(
         (set, get) => ({
             predefinedPairs: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'],
             pairConfigs: [
-                { pair: 'BTC/USDT', exchange: 'Binance' },
-                { pair: 'ETH/USDT', exchange: 'Binance' },
-                { pair: 'SOL/USDT', exchange: 'Binance' },
+                { pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' },
+                { pair: 'ETH/USDT', exchange: 'Binance', currency: 'USD' },
+                { pair: 'SOL/USDT', exchange: 'Binance', currency: 'USD' },
             ],
             prices: {},
             dashboardTimeRange: '1Y',
@@ -123,9 +147,10 @@ export const useSettingsStore = create<SettingsState>()(
             addPair: (pair, exchange = 'Binance') => set((state) => {
                 const upper = pair.toUpperCase();
                 if (state.predefinedPairs.includes(upper)) return state;
+                const currency = inferCurrency(upper, exchange);
                 return {
                     predefinedPairs: [...state.predefinedPairs, upper],
-                    pairConfigs: [...state.pairConfigs, { pair: upper, exchange }],
+                    pairConfigs: [...state.pairConfigs, { pair: upper, exchange, currency }],
                 };
             }),
             removePair: (pair) => set((state) => {
@@ -138,7 +163,9 @@ export const useSettingsStore = create<SettingsState>()(
             }),
             updatePairExchange: (pair, exchange) => set((state) => ({
                 pairConfigs: state.pairConfigs.map(p =>
-                    p.pair === pair.toUpperCase() ? { ...p, exchange } : p
+                    p.pair === pair.toUpperCase()
+                        ? { ...p, exchange, currency: inferCurrency(pair.toUpperCase(), exchange) }
+                        : p
                 ),
             })),
             togglePinPair: (pair) => set((state) => ({
@@ -181,12 +208,20 @@ export const useSettingsStore = create<SettingsState>()(
         }),
         {
             name: 'crypto-folio-settings',
-            version: 1,
+            version: 2,
             migrate: (persistedState: unknown, version: number) => {
                 const state = persistedState as Record<string, unknown>;
                 if (version < 1) {
                     const pairs = (state.predefinedPairs as string[] | undefined) ?? ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'];
-                    state.pairConfigs = pairs.map((p: string) => ({ pair: p, exchange: 'Binance' }));
+                    state.pairConfigs = pairs.map((p: string) => ({ pair: p, exchange: 'Binance', currency: 'USD' }));
+                }
+                if (version < 2) {
+                    // Backfill currency field for existing pairConfigs
+                    const configs = (state.pairConfigs as Array<{ pair: string; exchange: string; currency?: string }> | undefined) ?? [];
+                    state.pairConfigs = configs.map(c => ({
+                        ...c,
+                        currency: c.currency ?? inferCurrency(c.pair, c.exchange),
+                    }));
                 }
                 return state;
             },

@@ -1,6 +1,6 @@
 import { db, DB_VERSION } from './db';
 import { migratePayload } from './migrations';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { useSettingsStore, inferCurrency } from '@/store/useSettingsStore';
 import type { PairConfig } from '@/store/useSettingsStore';
 
 export interface BackupPayload {
@@ -129,11 +129,19 @@ export async function importData(file: File): Promise<void> {
                         useSettingsStore.setState({ predefinedPairs: payload.settings.predefinedPairs });
                     }
                     if (payload.settings.pairConfigs !== undefined) {
-                        useSettingsStore.setState({ pairConfigs: payload.settings.pairConfigs });
+                        // Backfill currency for backups that predate the currency field
+                        useSettingsStore.setState({
+                            pairConfigs: payload.settings.pairConfigs.map((c: any) => ({
+                                ...c,
+                                currency: c.currency ?? inferCurrency(c.pair, c.exchange),
+                            })),
+                        });
                     } else if (payload.settings.predefinedPairs !== undefined) {
                         // Derive pairConfigs from predefinedPairs for older backups
                         useSettingsStore.setState({
-                            pairConfigs: payload.settings.predefinedPairs.map(p => ({ pair: p, exchange: 'Binance' })),
+                            pairConfigs: payload.settings.predefinedPairs.map(p => ({
+                                pair: p, exchange: 'Binance', currency: inferCurrency(p, 'Binance'),
+                            })),
                         });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {

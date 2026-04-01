@@ -297,10 +297,10 @@ export default function TradingPairs() {
                     <p className="px-6 pb-6 text-sm text-muted-foreground">No pairs added yet.</p>
                 ) : (
                     <div className="divide-y divide-border/50">
-                        {pairConfigs.map(({ pair, exchange }) => {
+                        {pairConfigs.map(({ pair, exchange, currency }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
-                                ? `${getCurrencySymbol(exchange)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
+                                ? `${getCurrencySymbol(currency)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
                                 : '—'
                             const lastSync = priceData
                                 ? format(new Date(priceData.timestamp), "HH:mm:ss")

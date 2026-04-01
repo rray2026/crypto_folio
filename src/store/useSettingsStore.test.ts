@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useSettingsStore, fetchPriceForExchange } from './useSettingsStore';
+import { useSettingsStore, fetchPriceForExchange, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair } from './useSettingsStore';
 
 // Mock localStorage for Zustand persist
 const mockLocalStorage = (() => {
@@ -213,6 +213,64 @@ describe('fetchPriceForExchange', () => {
 });
 
 // ---------------------------------------------------------------------------
+// inferCurrency
+// ---------------------------------------------------------------------------
+describe('inferCurrency', () => {
+    it('returns CNY for SSE', () => {
+        expect(inferCurrency('600036.SS', 'SSE')).toBe('CNY');
+    });
+
+    it('returns CNY for SZSE', () => {
+        expect(inferCurrency('000001.SZ', 'SZSE')).toBe('CNY');
+    });
+
+    it('returns USD for stablecoin-quoted crypto pairs (USDT)', () => {
+        expect(inferCurrency('BTC/USDT', 'Binance')).toBe('USD');
+    });
+
+    it('returns USD for USDC-quoted pairs', () => {
+        expect(inferCurrency('ETH/USDC', 'Binance')).toBe('USD');
+    });
+
+    it('returns the quote currency for non-stablecoin crypto pairs', () => {
+        expect(inferCurrency('BTC/ETH', 'Binance')).toBe('ETH');
+    });
+
+    it('returns USD for bare stock symbols (NYSE/NASDAQ)', () => {
+        expect(inferCurrency('AAPL', 'NYSE')).toBe('USD');
+        expect(inferCurrency('TSLA', 'NASDAQ')).toBe('USD');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getCurrencySymbol / getCurrencySymbolForPair
+// ---------------------------------------------------------------------------
+describe('getCurrencySymbol', () => {
+    it('maps USD to $', () => expect(getCurrencySymbol('USD')).toBe('$'));
+    it('maps CNY to ¥', () => expect(getCurrencySymbol('CNY')).toBe('¥'));
+    it('maps EUR to €', () => expect(getCurrencySymbol('EUR')).toBe('€'));
+    it('falls back to the currency code for unknown currencies', () => {
+        expect(getCurrencySymbol('BNB')).toBe('BNB');
+    });
+});
+
+describe('getCurrencySymbolForPair', () => {
+    it('returns ¥ for a CNY pair', () => {
+        const configs = [{ pair: '600036.SS', exchange: 'SSE', currency: 'CNY' }];
+        expect(getCurrencySymbolForPair('600036.SS', configs)).toBe('¥');
+    });
+
+    it('returns $ for a USD pair', () => {
+        const configs = [{ pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' }];
+        expect(getCurrencySymbolForPair('BTC/USDT', configs)).toBe('$');
+    });
+
+    it('defaults to $ when pair is not in configs', () => {
+        expect(getCurrencySymbolForPair('UNKNOWN', [])).toBe('$');
+    });
+});
+
+// ---------------------------------------------------------------------------
 // useSettingsStore
 // ---------------------------------------------------------------------------
 describe('useSettingsStore', () => {
@@ -242,27 +300,34 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().theme).toBe('dark');
     });
 
-    it('adds pair with default Binance exchange and keeps both arrays in sync', () => {
+    it('adds pair with default Binance exchange and infers USD currency', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('DOGE/USDT');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('DOGE/USDT');
-        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance', currency: 'USD' });
     });
 
-    it('adds pair with explicit exchange', () => {
+    it('adds pair with explicit exchange and infers USD currency for stocks', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('AAPL', 'NASDAQ');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('AAPL');
-        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ', currency: 'USD' });
     });
 
-    it('adds pair with NYSE exchange', () => {
+    it('adds SSE pair and infers CNY currency', () => {
+        const { addPair } = useSettingsStore.getState();
+        addPair('600036.SS', 'SSE');
+        const state = useSettingsStore.getState();
+        expect(state.pairConfigs).toContainEqual({ pair: '600036.SS', exchange: 'SSE', currency: 'CNY' });
+    });
+
+    it('adds pair with NYSE exchange and infers USD currency', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('JPM', 'NYSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE', currency: 'USD' });
     });
 
     it('does not add duplicate pair', () => {
@@ -292,6 +357,14 @@ describe('useSettingsStore', () => {
         expect(state.pairConfigs.find(p => p.pair === 'TSLA')?.exchange).toBe('NASDAQ');
     });
 
+    it('updatePairExchange re-infers currency when exchange changes', () => {
+        const { addPair, updatePairExchange } = useSettingsStore.getState();
+        addPair('600036.SS', 'NYSE');   // wrong exchange, currency = USD
+        updatePairExchange('600036.SS', 'SSE');
+        const state = useSettingsStore.getState();
+        expect(state.pairConfigs.find(p => p.pair === '600036.SS')?.currency).toBe('CNY');
+    });
+
     it('toggles pinned pairs', () => {
         const { togglePinPair } = useSettingsStore.getState();
         togglePinPair('ETH/USDT');
@@ -303,7 +376,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses exchange from pairConfigs for Binance pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance' }],
+            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -319,7 +392,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses proxy for NYSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE' }],
+            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -335,7 +408,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses proxy for NASDAQ pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['TSLA'],
-            pairConfigs: [{ pair: 'TSLA', exchange: 'NASDAQ' }],
+            pairConfigs: [{ pair: 'TSLA', exchange: 'NASDAQ', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -351,7 +424,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices does not update store when price fetch fails', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NASDAQ' }],
+            pairConfigs: [{ pair: 'AAPL', exchange: 'NASDAQ', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
         await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);
@@ -373,5 +446,32 @@ describe('useSettingsStore', () => {
         });
         await useSettingsStore.getState().fetchPrices(['BTC/USDT'], true);
         expect(fetchSpy).toHaveBeenCalled();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Persistence migration
+// ---------------------------------------------------------------------------
+describe('persistence migration', () => {
+    it('v1→v2: backfills currency from exchange and pair', () => {
+        // Simulate v1 state without currency field
+        const v1State = {
+            predefinedPairs: ['BTC/USDT', '600036.SS'],
+            pairConfigs: [
+                { pair: 'BTC/USDT', exchange: 'Binance' },
+                { pair: '600036.SS', exchange: 'SSE' },
+            ],
+        };
+        // Apply migration manually
+        useSettingsStore.setState({
+            predefinedPairs: v1State.predefinedPairs,
+            pairConfigs: v1State.pairConfigs.map((c: any) => ({
+                ...c,
+                currency: c.currency ?? inferCurrency(c.pair, c.exchange),
+            })),
+        });
+        const state = useSettingsStore.getState();
+        expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.currency).toBe('USD');
+        expect(state.pairConfigs.find(p => p.pair === '600036.SS')?.currency).toBe('CNY');
     });
 });
