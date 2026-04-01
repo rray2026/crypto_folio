@@ -91,9 +91,18 @@ export async function fetchPriceForExchange(pair: string, exchange: string): Pro
                 const data = await res.json();
                 return data?.price ?? null;
             }
-        } else if (exchange === 'NYSE' || exchange === 'NASDAQ' || exchange === 'SSE' || exchange === 'SZSE') {
+        } else if (exchange === 'NYSE' || exchange === 'NASDAQ') {
             // Route through Cloudflare Pages Function to avoid CORS
             const res = await fetch(`/api/stock-price?symbol=${encodeURIComponent(pair)}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data?.price ?? null;
+            }
+        } else if (exchange === 'SSE' || exchange === 'SZSE') {
+            // Append Yahoo Finance suffix if not already present
+            const suffix = exchange === 'SSE' ? '.SS' : '.SZ';
+            const yahooSymbol = pair.includes('.') ? pair : `${pair}${suffix}`;
+            const res = await fetch(`/api/stock-price?symbol=${encodeURIComponent(yahooSymbol)}`);
             if (res.ok) {
                 const data = await res.json();
                 return data?.price ?? null;

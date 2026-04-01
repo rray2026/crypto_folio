@@ -138,22 +138,31 @@ describe('fetchPriceForExchange', () => {
         );
     });
 
-    it('SSE: calls proxy endpoint /api/stock-price with symbol', async () => {
+    it('SSE: appends .SS suffix and calls proxy', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '12.34' }),
         });
-        const price = await fetchPriceForExchange('600036.SS', 'SSE');
+        const price = await fetchPriceForExchange('600036', 'SSE');
         expect(price).toBe('12.34');
         expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
     });
 
-    it('SZSE: calls proxy endpoint /api/stock-price with symbol', async () => {
+    it('SSE: does not double-append suffix when already present', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '12.34' }),
+        });
+        await fetchPriceForExchange('600036.SS', 'SSE');
+        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
+    });
+
+    it('SZSE: appends .SZ suffix and calls proxy', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '56.78' }),
         });
-        const price = await fetchPriceForExchange('000001.SZ', 'SZSE');
+        const price = await fetchPriceForExchange('000001', 'SZSE');
         expect(price).toBe('56.78');
         expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=000001.SZ');
     });
@@ -217,11 +226,11 @@ describe('fetchPriceForExchange', () => {
 // ---------------------------------------------------------------------------
 describe('inferCurrency', () => {
     it('returns CNY for SSE', () => {
-        expect(inferCurrency('600036.SS', 'SSE')).toBe('CNY');
+        expect(inferCurrency('600036', 'SSE')).toBe('CNY');
     });
 
     it('returns CNY for SZSE', () => {
-        expect(inferCurrency('000001.SZ', 'SZSE')).toBe('CNY');
+        expect(inferCurrency('000001', 'SZSE')).toBe('CNY');
     });
 
     it('returns USD for stablecoin-quoted crypto pairs (USDT)', () => {
@@ -256,8 +265,8 @@ describe('getCurrencySymbol', () => {
 
 describe('getCurrencySymbolForPair', () => {
     it('returns ¥ for a CNY pair', () => {
-        const configs = [{ pair: '600036.SS', exchange: 'SSE', currency: 'CNY' }];
-        expect(getCurrencySymbolForPair('600036.SS', configs)).toBe('¥');
+        const configs = [{ pair: '600036', exchange: 'SSE', currency: 'CNY' }];
+        expect(getCurrencySymbolForPair('600036', configs)).toBe('¥');
     });
 
     it('returns $ for a USD pair', () => {
@@ -318,9 +327,9 @@ describe('useSettingsStore', () => {
 
     it('adds SSE pair and infers CNY currency', () => {
         const { addPair } = useSettingsStore.getState();
-        addPair('600036.SS', 'SSE');
+        addPair('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: '600036.SS', exchange: 'SSE', currency: 'CNY' });
+        expect(state.pairConfigs).toContainEqual({ pair: '600036', exchange: 'SSE', currency: 'CNY' });
     });
 
     it('adds pair with NYSE exchange and infers USD currency', () => {
@@ -359,10 +368,10 @@ describe('useSettingsStore', () => {
 
     it('updatePairExchange re-infers currency when exchange changes', () => {
         const { addPair, updatePairExchange } = useSettingsStore.getState();
-        addPair('600036.SS', 'NYSE');   // wrong exchange, currency = USD
-        updatePairExchange('600036.SS', 'SSE');
+        addPair('600036', 'NYSE');   // wrong exchange, currency = USD
+        updatePairExchange('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs.find(p => p.pair === '600036.SS')?.currency).toBe('CNY');
+        expect(state.pairConfigs.find(p => p.pair === '600036')?.currency).toBe('CNY');
     });
 
     it('toggles pinned pairs', () => {
@@ -456,10 +465,10 @@ describe('persistence migration', () => {
     it('v1→v2: backfills currency from exchange and pair', () => {
         // Simulate v1 state without currency field
         const v1State = {
-            predefinedPairs: ['BTC/USDT', '600036.SS'],
+            predefinedPairs: ['BTC/USDT', '600036'],
             pairConfigs: [
                 { pair: 'BTC/USDT', exchange: 'Binance' },
-                { pair: '600036.SS', exchange: 'SSE' },
+                { pair: '600036', exchange: 'SSE' },
             ],
         };
         // Apply migration manually
@@ -472,6 +481,6 @@ describe('persistence migration', () => {
         });
         const state = useSettingsStore.getState();
         expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.currency).toBe('USD');
-        expect(state.pairConfigs.find(p => p.pair === '600036.SS')?.currency).toBe('CNY');
+        expect(state.pairConfigs.find(p => p.pair === '600036')?.currency).toBe('CNY');
     });
 });

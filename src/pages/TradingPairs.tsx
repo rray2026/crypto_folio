@@ -159,16 +159,9 @@ export default function TradingPairs() {
         return () => clearInterval(interval)
     }, [fetchPrices])
 
-    const normalizePairForExchange = (raw: string, exchange: string): string => {
-        const upper = raw.trim().toUpperCase()
-        if (exchange === 'SSE' && !upper.includes('.')) return `${upper}.SS`
-        if (exchange === 'SZSE' && !upper.includes('.')) return `${upper}.SZ`
-        return upper
-    }
-
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault()
-        const pair = normalizePairForExchange(newPair, newExchange)
+        const pair = newPair.trim().toUpperCase()
         if (!pair) return
 
         setIsValidatingAdd(true)
@@ -241,8 +234,8 @@ export default function TradingPairs() {
                 <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
                     <Input
                         placeholder={
-                            newExchange === 'SSE'  ? 'e.g. 601818 → 601818.SS' :
-                            newExchange === 'SZSE' ? 'e.g. 000001 → 000001.SZ' :
+                            newExchange === 'SSE'  ? 'e.g. 601818' :
+                            newExchange === 'SZSE' ? 'e.g. 000001' :
                             'e.g. BTC/USDT or AAPL'
                         }
                         value={newPair}
