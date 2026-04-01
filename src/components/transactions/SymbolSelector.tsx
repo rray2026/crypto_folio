@@ -25,6 +25,7 @@ interface SymbolSelectorProps {
 export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const predefinedPairs = useSettingsStore((state) => state.predefinedPairs)
+  const pairConfigs = useSettingsStore((state) => state.pairConfigs)
   const [searchValue, setSearchValue] = React.useState("")
 
   const commonAssets = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"]
@@ -45,20 +46,19 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
         </PopoverTrigger>
         <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-[--radix-popover-trigger-width] p-0 rounded-xl border-border/40 shadow-2xl" align="start">
           <Command className="rounded-xl">
-            <CommandInput 
-              placeholder="Search or enter custom..." 
+            <CommandInput
+              placeholder="Search or enter custom..."
               value={searchValue}
               onValueChange={(val) => {
                 setSearchValue(val.toUpperCase())
-                // Optionally allow typing to directly update value if no matches favored
               }}
             />
-            <CommandList className="max-h-[220px]">
+            <CommandList className="max-h-[260px]">
               <CommandEmpty className="p-4 py-6 text-center">
                 <p className="text-sm text-muted-foreground mb-3">No matching assets found.</p>
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
+                <Button
+                  size="sm"
+                  variant="secondary"
                   className="w-full h-10 rounded-lg font-bold gap-2"
                   onClick={() => {
                     onChange(searchValue)
@@ -71,25 +71,40 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
                 </Button>
               </CommandEmpty>
               <CommandGroup heading="Suggestions">
-                {predefinedPairs.map((pair) => (
-                  <CommandItem
-                    key={pair}
-                    value={pair}
-                    onSelect={(currentValue) => {
-                      onChange(currentValue === value ? "" : currentValue)
-                      setOpen(false)
-                    }}
-                    className="flex justify-between items-center py-2.5 px-3 rounded-lg"
-                  >
-                    <span className="font-bold">{pair}</span>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4 text-primary",
-                        value === pair ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+                {predefinedPairs.map((pair) => {
+                  const config = pairConfigs.find(p => p.pair === pair)
+                  return (
+                    <CommandItem
+                      key={pair}
+                      value={pair}
+                      onSelect={(currentValue) => {
+                        onChange(currentValue === value ? "" : currentValue)
+                        setOpen(false)
+                      }}
+                      className="flex justify-between items-center py-2.5 px-3 rounded-lg"
+                    >
+                      <span className="font-bold">{pair}</span>
+                      <div className="flex items-center gap-1.5 ml-2">
+                        {config && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-0.5 bg-muted/30">
+                              {config.exchange}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-0.5 bg-muted/30 opacity-60">
+                              {config.dataProvider}
+                            </span>
+                          </>
+                        )}
+                        <Check
+                          className={cn(
+                            "h-4 w-4 text-primary shrink-0",
+                            value === pair ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                      </div>
+                    </CommandItem>
+                  )
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
@@ -104,8 +119,8 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
             type="button"
             onClick={() => onChange(asset)}
             className={`px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${
-              value === asset 
-              ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20" 
+              value === asset
+              ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
               : "bg-muted/30 text-muted-foreground border-border/50 hover:border-primary/50 hover:bg-muted/50"
             }`}
           >

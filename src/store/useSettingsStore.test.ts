@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useSettingsStore, fetchPriceForExchange, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair } from './useSettingsStore';
+import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider } from './useSettingsStore';
 
 // Mock localStorage for Zustand persist
 const mockLocalStorage = (() => {
@@ -14,9 +14,9 @@ const mockLocalStorage = (() => {
 Object.defineProperty(globalThis, 'localStorage', { value: mockLocalStorage });
 
 // ---------------------------------------------------------------------------
-// fetchPriceForExchange
+// fetchPriceFromProvider
 // ---------------------------------------------------------------------------
-describe('fetchPriceForExchange', () => {
+describe('fetchPriceFromProvider', () => {
     beforeEach(() => { vi.restoreAllMocks(); });
 
     it('Binance: calls correct URL and parses .price', async () => {
@@ -24,7 +24,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ symbol: 'BTCUSDT', price: '50000.00' }),
         });
-        const price = await fetchPriceForExchange('BTC/USDT', 'Binance');
+        const price = await fetchPriceFromProvider('BTC/USDT', 'Binance');
         expect(price).toBe('50000.00');
         expect(fetch).toHaveBeenCalledWith(
             'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'
@@ -36,7 +36,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ price: '2000.00' }),
         });
-        await fetchPriceForExchange('ETH/USDT', 'Binance');
+        await fetchPriceFromProvider('ETH/USDT', 'Binance');
         expect(fetch).toHaveBeenCalledWith(
             'https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT'
         );
@@ -47,7 +47,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ data: [{ last: '2000.00' }] }),
         });
-        const price = await fetchPriceForExchange('ETH/USDT', 'OKX');
+        const price = await fetchPriceFromProvider('ETH/USDT', 'OKX');
         expect(price).toBe('2000.00');
         expect(fetch).toHaveBeenCalledWith(
             'https://www.okx.com/api/v5/market/ticker?instId=ETH-USDT'
@@ -59,7 +59,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ data: [] }),
         });
-        const price = await fetchPriceForExchange('ETH/USDT', 'OKX');
+        const price = await fetchPriceFromProvider('ETH/USDT', 'OKX');
         expect(price).toBeNull();
     });
 
@@ -68,7 +68,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ result: { list: [{ lastPrice: '150.50' }] } }),
         });
-        const price = await fetchPriceForExchange('SOL/USDT', 'Bybit');
+        const price = await fetchPriceFromProvider('SOL/USDT', 'Bybit');
         expect(price).toBe('150.50');
         expect(fetch).toHaveBeenCalledWith(
             'https://api.bybit.com/v5/market/tickers?category=spot&symbol=SOLUSDT'
@@ -80,7 +80,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ result: { list: [] } }),
         });
-        const price = await fetchPriceForExchange('SOL/USDT', 'Bybit');
+        const price = await fetchPriceFromProvider('SOL/USDT', 'Bybit');
         expect(price).toBeNull();
     });
 
@@ -89,7 +89,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ status: 'ok', tick: { close: 50000 } }),
         });
-        const price = await fetchPriceForExchange('BTC/USDT', 'HTX');
+        const price = await fetchPriceFromProvider('BTC/USDT', 'HTX');
         expect(price).toBe('50000');
         expect(fetch).toHaveBeenCalledWith(
             'https://api.huobi.pro/market/detail/merged?symbol=btcusdt'
@@ -101,7 +101,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ status: 'ok', tick: {} }),
         });
-        const price = await fetchPriceForExchange('BTC/USDT', 'HTX');
+        const price = await fetchPriceFromProvider('BTC/USDT', 'HTX');
         expect(price).toBeNull();
     });
 
@@ -110,7 +110,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ([{ currency_pair: 'BTC_USDT', last: '50000.00' }]),
         });
-        const price = await fetchPriceForExchange('BTC/USDT', 'Gate.io');
+        const price = await fetchPriceFromProvider('BTC/USDT', 'Gate.io');
         expect(price).toBe('50000.00');
         expect(fetch).toHaveBeenCalledWith(
             'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT'
@@ -122,7 +122,7 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ([]),
         });
-        const price = await fetchPriceForExchange('BTC/USDT', 'Gate.io');
+        const price = await fetchPriceFromProvider('BTC/USDT', 'Gate.io');
         expect(price).toBeNull();
     });
 
@@ -131,94 +131,106 @@ describe('fetchPriceForExchange', () => {
             ok: true,
             json: async () => ({ symbol: 'ETHUSDT', price: '2000.00' }),
         });
-        const price = await fetchPriceForExchange('ETH/USDT', 'MEXC');
+        const price = await fetchPriceFromProvider('ETH/USDT', 'MEXC');
         expect(price).toBe('2000.00');
         expect(fetch).toHaveBeenCalledWith(
             'https://api.mexc.com/api/v3/ticker/price?symbol=ETHUSDT'
         );
     });
 
-    it('SSE: appends .SS suffix and calls proxy', async () => {
+    it('Yahoo Finance: appends .SS suffix for SSE exchange hint', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '12.34' }),
         });
-        const price = await fetchPriceForExchange('600036', 'SSE');
+        const price = await fetchPriceFromProvider('600036', 'Yahoo Finance', 'SSE');
         expect(price).toBe('12.34');
         expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
     });
 
-    it('SSE: does not double-append suffix when already present', async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({ price: '12.34' }),
-        });
-        await fetchPriceForExchange('600036.SS', 'SSE');
-        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
-    });
-
-    it('SZSE: appends .SZ suffix and calls proxy', async () => {
+    it('Yahoo Finance: appends .SZ suffix for SZSE exchange hint', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '56.78' }),
         });
-        const price = await fetchPriceForExchange('000001', 'SZSE');
+        const price = await fetchPriceFromProvider('000001', 'Yahoo Finance', 'SZSE');
         expect(price).toBe('56.78');
         expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=000001.SZ');
     });
 
-    it('NYSE: calls proxy endpoint /api/stock-price with symbol', async () => {
+    it('Yahoo Finance: no suffix for NYSE exchange hint', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '175.23' }),
         });
-        const price = await fetchPriceForExchange('AAPL', 'NYSE');
+        const price = await fetchPriceFromProvider('AAPL', 'Yahoo Finance', 'NYSE');
         expect(price).toBe('175.23');
         expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=AAPL');
     });
 
-    it('NASDAQ: calls proxy endpoint /api/stock-price with symbol', async () => {
+    it('Yahoo Finance: no suffix for NASDAQ exchange hint', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '420.69' }),
         });
-        const price = await fetchPriceForExchange('TSLA', 'NASDAQ');
+        const price = await fetchPriceFromProvider('TSLA', 'Yahoo Finance', 'NASDAQ');
         expect(price).toBe('420.69');
         expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=TSLA');
     });
 
-    it('NYSE/NASDAQ: returns null when proxy returns no price field', async () => {
+    it('Yahoo Finance: does not double-append suffix when already present', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '12.34' }),
+        });
+        await fetchPriceFromProvider('600036.SS', 'Yahoo Finance', 'SSE');
+        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
+    });
+
+    it('Yahoo Finance: returns null when proxy returns no price field', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ error: 'Symbol not found' }),
         });
-        const price = await fetchPriceForExchange('INVALID', 'NASDAQ');
+        const price = await fetchPriceFromProvider('INVALID', 'Yahoo Finance', 'NASDAQ');
         expect(price).toBeNull();
     });
 
-    it('NYSE/NASDAQ: returns null when proxy returns non-ok status', async () => {
+    it('Yahoo Finance: returns null when proxy returns non-ok status', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: false,
             json: async () => ({ error: 'Yahoo Finance returned 404' }),
         });
-        const price = await fetchPriceForExchange('AAPL', 'NYSE');
+        const price = await fetchPriceFromProvider('AAPL', 'Yahoo Finance', 'NYSE');
         expect(price).toBeNull();
     });
 
-    it('returns null when exchange API returns non-ok status', async () => {
+    it('returns null when provider API returns non-ok status', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
-        expect(await fetchPriceForExchange('BTC/USDT', 'Binance')).toBeNull();
-        expect(await fetchPriceForExchange('ETH/USDT', 'OKX')).toBeNull();
-        expect(await fetchPriceForExchange('SOL/USDT', 'Bybit')).toBeNull();
-        expect(await fetchPriceForExchange('AAPL', 'NYSE')).toBeNull();
-        expect(await fetchPriceForExchange('TSLA', 'NASDAQ')).toBeNull();
+        expect(await fetchPriceFromProvider('BTC/USDT', 'Binance')).toBeNull();
+        expect(await fetchPriceFromProvider('ETH/USDT', 'OKX')).toBeNull();
+        expect(await fetchPriceFromProvider('SOL/USDT', 'Bybit')).toBeNull();
+        expect(await fetchPriceFromProvider('AAPL', 'Yahoo Finance', 'NYSE')).toBeNull();
     });
 
     it('returns null on network error (fetch throws)', async () => {
         globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
-        expect(await fetchPriceForExchange('BTC/USDT', 'Binance')).toBeNull();
-        expect(await fetchPriceForExchange('AAPL', 'NYSE')).toBeNull();
+        expect(await fetchPriceFromProvider('BTC/USDT', 'Binance')).toBeNull();
+        expect(await fetchPriceFromProvider('AAPL', 'Yahoo Finance', 'NYSE')).toBeNull();
     });
+});
+
+// ---------------------------------------------------------------------------
+// defaultDataProvider
+// ---------------------------------------------------------------------------
+describe('defaultDataProvider', () => {
+    it('returns Yahoo Finance for NYSE', () => expect(defaultDataProvider('NYSE')).toBe('Yahoo Finance'));
+    it('returns Yahoo Finance for NASDAQ', () => expect(defaultDataProvider('NASDAQ')).toBe('Yahoo Finance'));
+    it('returns Yahoo Finance for SSE', () => expect(defaultDataProvider('SSE')).toBe('Yahoo Finance'));
+    it('returns Yahoo Finance for SZSE', () => expect(defaultDataProvider('SZSE')).toBe('Yahoo Finance'));
+    it('returns the exchange itself for Binance', () => expect(defaultDataProvider('Binance')).toBe('Binance'));
+    it('returns the exchange itself for OKX', () => expect(defaultDataProvider('OKX')).toBe('OKX'));
+    it('returns the exchange itself for HTX', () => expect(defaultDataProvider('HTX')).toBe('HTX'));
 });
 
 // ---------------------------------------------------------------------------
@@ -265,12 +277,12 @@ describe('getCurrencySymbol', () => {
 
 describe('getCurrencySymbolForPair', () => {
     it('returns ¥ for a CNY pair', () => {
-        const configs = [{ pair: '600036', exchange: 'SSE', dataSource: 'SSE', currency: 'CNY' }];
+        const configs = [{ pair: '600036', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }];
         expect(getCurrencySymbolForPair('600036', configs)).toBe('¥');
     });
 
     it('returns $ for a USD pair', () => {
-        const configs = [{ pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' }];
+        const configs = [{ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' }];
         expect(getCurrencySymbolForPair('BTC/USDT', configs)).toBe('$');
     });
 
@@ -314,7 +326,7 @@ describe('useSettingsStore', () => {
         addPair('DOGE/USDT');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('DOGE/USDT');
-        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' });
     });
 
     it('adds pair with explicit exchange and infers USD currency for stocks', () => {
@@ -322,28 +334,28 @@ describe('useSettingsStore', () => {
         addPair('AAPL', 'NASDAQ');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('AAPL');
-        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ', dataSource: 'NASDAQ', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ', dataProvider: 'Yahoo Finance', currency: 'USD' });
     });
 
-    it('adds SSE pair and infers CNY currency', () => {
+    it('adds SSE pair and infers CNY currency with Yahoo Finance provider', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: '600036', exchange: 'SSE', dataSource: 'SSE', currency: 'CNY' });
+        expect(state.pairConfigs).toContainEqual({ pair: '600036', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' });
     });
 
-    it('adds pair with NYSE exchange and infers USD currency', () => {
+    it('adds pair with NYSE exchange and infers USD currency with Yahoo Finance provider', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('JPM', 'NYSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE', dataSource: 'NYSE', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' });
     });
 
-    it('adds pair with explicit dataSource different from exchange', () => {
+    it('adds pair with explicit dataProvider different from exchange default', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('BTC/USDT', 'HTX', 'Binance');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', exchange: 'HTX', dataSource: 'Binance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' });
     });
 
     it('does not add duplicate pair', () => {
@@ -389,10 +401,10 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().pinnedPairs).not.toContain('ETH/USDT');
     });
 
-    it('fetchPrices uses dataSource from pairConfigs for Binance pair', async () => {
+    it('fetchPrices uses dataProvider from pairConfigs for Binance pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -405,26 +417,26 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().prices['BTC/USDT']?.price).toBe('50000.00');
     });
 
-    it('fetchPrices uses dataSource (not exchange) to fetch prices', async () => {
+    it('fetchPrices uses dataProvider (not exchange) to fetch prices', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'HTX', dataSource: 'Binance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ price: '50000.00' }),
         });
         await useSettingsStore.getState().fetchPrices(['BTC/USDT'], true, true);
-        // Should hit Binance (dataSource), not HTX (exchange)
+        // Should hit Binance (dataProvider), not HTX (exchange)
         expect(fetch).toHaveBeenCalledWith(
             expect.stringContaining('api.binance.com')
         );
     });
 
-    it('fetchPrices uses proxy for NYSE pair', async () => {
+    it('fetchPrices uses Yahoo Finance proxy for NYSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', dataSource: 'NYSE', currency: 'USD' }],
+            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -437,40 +449,37 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().prices['AAPL']?.price).toBe('175.23');
     });
 
-    it('fetchPrices uses proxy for NASDAQ pair', async () => {
+    it('fetchPrices uses Yahoo Finance proxy and appends .SS for SSE pair', async () => {
         useSettingsStore.setState({
-            predefinedPairs: ['TSLA'],
-            pairConfigs: [{ pair: 'TSLA', exchange: 'NASDAQ', dataSource: 'NASDAQ', currency: 'USD' }],
+            predefinedPairs: ['600036'],
+            pairConfigs: [{ pair: '600036', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ price: '250' }),
+            json: async () => ({ price: '12.34' }),
         });
-        await useSettingsStore.getState().fetchPrices(['TSLA'], true, true);
-        expect(fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/api/stock-price?symbol=TSLA')
-        );
-        expect(useSettingsStore.getState().prices['TSLA']?.price).toBe('250');
+        await useSettingsStore.getState().fetchPrices(['600036'], true, true);
+        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
     });
 
     it('fetchPrices does not update store when price fetch fails', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NASDAQ', dataSource: 'NASDAQ', currency: 'USD' }],
+            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
         await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);
         expect(useSettingsStore.getState().prices['AAPL']).toBeUndefined();
     });
 
-    it('updatePairDataSource changes only the dataSource of the target pair', () => {
-        const { addPair, updatePairDataSource } = useSettingsStore.getState();
+    it('updatePairDataProvider changes only the dataProvider of the target pair', () => {
+        const { addPair, updatePairDataProvider } = useSettingsStore.getState();
         addPair('BTC/USDT', 'HTX');
-        updatePairDataSource('BTC/USDT', 'Binance');
+        updatePairDataProvider('BTC/USDT', 'Binance');
         const state = useSettingsStore.getState();
         const config = state.pairConfigs.find(p => p.pair === 'BTC/USDT');
         expect(config?.exchange).toBe('HTX');
-        expect(config?.dataSource).toBe('Binance');
+        expect(config?.dataProvider).toBe('Binance');
     });
 
     it('respects cache TTL for prices', async () => {
@@ -496,7 +505,6 @@ describe('useSettingsStore', () => {
 // ---------------------------------------------------------------------------
 describe('persistence migration', () => {
     it('v1→v2: backfills currency from exchange and pair', () => {
-        // Simulate v1 state without currency field
         const v1State = {
             predefinedPairs: ['BTC/USDT', '600036'],
             pairConfigs: [
@@ -504,7 +512,6 @@ describe('persistence migration', () => {
                 { pair: '600036', exchange: 'SSE' },
             ],
         };
-        // Apply migration manually
         useSettingsStore.setState({
             predefinedPairs: v1State.predefinedPairs,
             pairConfigs: v1State.pairConfigs.map((c: any) => ({
@@ -517,24 +524,27 @@ describe('persistence migration', () => {
         expect(state.pairConfigs.find(p => p.pair === '600036')?.currency).toBe('CNY');
     });
 
-    it('v2→v3: backfills dataSource from exchange', () => {
-        // Simulate v2 state without dataSource field
-        const v2State = {
-            predefinedPairs: ['BTC/USDT', 'AAPL'],
+    it('v3→v4: renames dataSource to dataProvider and maps stock exchanges to Yahoo Finance', () => {
+        const v3State = {
+            predefinedPairs: ['BTC/USDT', 'AAPL', '600036'],
             pairConfigs: [
-                { pair: 'BTC/USDT', exchange: 'Binance', currency: 'USD' },
-                { pair: 'AAPL', exchange: 'NYSE', currency: 'USD' },
+                { pair: 'BTC/USDT', exchange: 'Binance', dataSource: 'Binance', currency: 'USD' },
+                { pair: 'AAPL', exchange: 'NYSE', dataSource: 'NYSE', currency: 'USD' },
+                { pair: '600036', exchange: 'SSE', dataSource: 'SSE', currency: 'CNY' },
             ],
         };
         useSettingsStore.setState({
-            predefinedPairs: v2State.predefinedPairs,
-            pairConfigs: v2State.pairConfigs.map((c: any) => ({
-                ...c,
-                dataSource: c.dataSource ?? c.exchange,
-            })),
+            predefinedPairs: v3State.predefinedPairs,
+            pairConfigs: v3State.pairConfigs.map((c: any) => {
+                const raw = c.dataProvider ?? c.dataSource ?? c.exchange;
+                const dataProvider = ['NYSE', 'NASDAQ', 'SSE', 'SZSE'].includes(raw) ? 'Yahoo Finance' : raw;
+                const { dataSource: _ds, ...rest } = c;
+                return { ...rest, dataProvider };
+            }),
         });
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.dataSource).toBe('Binance');
-        expect(state.pairConfigs.find(p => p.pair === 'AAPL')?.dataSource).toBe('NYSE');
+        expect(state.pairConfigs.find(p => p.pair === 'BTC/USDT')?.dataProvider).toBe('Binance');
+        expect(state.pairConfigs.find(p => p.pair === 'AAPL')?.dataProvider).toBe('Yahoo Finance');
+        expect(state.pairConfigs.find(p => p.pair === '600036')?.dataProvider).toBe('Yahoo Finance');
     });
 });
