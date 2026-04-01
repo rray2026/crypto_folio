@@ -91,6 +91,8 @@ export interface BackupPayloadV2 extends Omit<BackupPayloadV1, 'version' | 'posi
 
 // ---- v3 -------------------------------------------------------------------
 // New funds table added. Position gains optional fundId field (no backfill needed).
+// Note: settings.pairConfigs (in backup payload) gained a `dataSource` field around
+// this time, but was never formally typed here — that field is renamed in v4.
 
 /** Positions table as of schema v3 — adds optional fundId. */
 export interface PositionV3 extends PositionV2 {
@@ -116,6 +118,38 @@ export interface BackupPayloadV3 extends Omit<BackupPayloadV2, 'version' | 'posi
     funds: FundV3[];
 }
 
+// ---- v4 -------------------------------------------------------------------
+// settings.pairConfigs: dataSource field renamed to dataProvider;
+// stock exchange values (NYSE/NASDAQ/SSE/SZSE) mapped to 'Yahoo Finance'.
+// No IndexedDB schema changes — pairConfigs lives in localStorage only.
+
+/** Stock exchanges whose price data is provided by Yahoo Finance. */
+const STOCK_EXCHANGES = new Set(['NYSE', 'NASDAQ', 'SSE', 'SZSE']);
+
+/** PairConfig shape as stored in backup settings as of v3 (uses dataSource). */
+interface PairConfigV3 {
+    pair: string;
+    exchange: string;
+    dataSource: string;
+    currency: string;
+}
+
+/** PairConfig shape as stored in backup settings as of v4 (uses dataProvider). */
+export interface PairConfigV4 {
+    pair: string;
+    exchange: string;
+    dataProvider: string;
+    currency: string;
+}
+
+/** Full backup payload shape as of v4. */
+export interface BackupPayloadV4 extends Omit<BackupPayloadV3, 'version'> {
+    version: 4;
+    settings: BackupPayloadV3['settings'] & {
+        pairConfigs?: PairConfigV4[];
+    };
+}
+
 // ---------------------------------------------------------------------------
 // Migration interface
 // ---------------------------------------------------------------------------
@@ -139,6 +173,14 @@ export interface Migration {
      * Must perform the same logical transformation as upgradePayload.
      */
     upgradeIdb: (tx: any) => Promise<void> | void;
+
+    /**
+     * Transform the Zustand-persist localStorage state from version N to N+1.
+     * Called by useSettingsStore's persist `migrate` function.
+     * Only needed when the migration touches settings stored in localStorage.
+     * Must be semantically equivalent to the settings portion of upgradePayload.
+     */
+    upgradeLocalStorage?: (state: Record<string, any>) => Record<string, any>;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +219,7 @@ export const MIGRATIONS: Record<number, Migration> = {
     // v2 → v3
     2: {
         description: 'Add funds table; add optional fundId to positions (no backfill needed)',
+
         upgradePayload: (p): BackupPayloadV3 => ({
             ...(p as BackupPayloadV2),
             version: 3,
@@ -186,6 +229,43 @@ export const MIGRATIONS: Record<number, Migration> = {
         upgradeIdb: async (_tx) => {
             // funds table is created by .stores() in db.ts
             // Position.fundId is optional — no existing records need modification
+        },
+    },
+
+    // v3 → v4
+    3: {
+        description: 'Rename pairConfigs.dataSource → dataProvider; map stock exchanges to Yahoo Finance',
+        upgradePayload: (p): BackupPayloadV4 => {
+            const rawConfigs = (p.settings as any).pairConfigs as PairConfigV3[] | undefined;
+            return {
+                ...(p as BackupPayloadV3),
+                version: 4,
+                settings: {
+                    ...p.settings,
+                    ...(rawConfigs !== undefined && {
+                        pairConfigs: rawConfigs.map(({ dataSource, ...rest }) => ({
+                            ...rest,
+                            dataProvider: STOCK_EXCHANGES.has(dataSource) ? 'Yahoo Finance' : dataSource,
+                        })),
+                    }),
+                },
+            };
+        },
+        upgradeIdb: async (_tx) => {
+            // pairConfigs lives in localStorage via Zustand persist, not in IndexedDB
+        },
+        upgradeLocalStorage: (state) => {
+            const configs = state.pairConfigs as Array<{
+                pair: string; exchange: string; dataSource?: string; dataProvider?: string; currency: string;
+            }> | undefined;
+            if (!configs) return state;
+            return {
+                ...state,
+                pairConfigs: configs.map(({ dataSource, ...rest }) => ({
+                    ...rest,
+                    dataProvider: rest.dataProvider ?? (STOCK_EXCHANGES.has(dataSource ?? '') ? 'Yahoo Finance' : (dataSource ?? rest.exchange)),
+                })),
+            };
         },
     },
 };

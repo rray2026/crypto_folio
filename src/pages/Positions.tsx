@@ -4,7 +4,7 @@ import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { mul, add, div } from "@/lib/math"
-import { useSettingsStore } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair, getCurrencySymbol } from "@/store/useSettingsStore"
 import type { Position } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 
@@ -48,7 +48,7 @@ export default function Positions() {
             ),
         })
     }, [setMobileHeader, openAdd])
-    const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange } = useSettingsStore()
+    const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange, pairConfigs } = useSettingsStore()
 
     const positions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
@@ -85,6 +85,14 @@ export default function Positions() {
         return getPositionMetrics(pos, linkedTxs, prices);
     };
 
+
+    // Detect mixed currencies across the portfolio
+    const portfolioCurrencies = new Set(
+        (positions ?? []).map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
+    );
+    const mixedCurrencies = portfolioCurrencies.size > 1;
+    const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD';
+    const totalsCurrencySymbol = getCurrencySymbol(singleCurrency);
 
     // Calculate global metrics
     let totalRealizedPnL = 0;
@@ -200,8 +208,9 @@ export default function Positions() {
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
                             </div>
                             <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                ${totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
+                                {totalsCurrencySymbol}{totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
                             </div>
+                            {mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
@@ -210,8 +219,9 @@ export default function Positions() {
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
                             </div>
                             <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                ${totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
+                                {totalsCurrencySymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
                             </div>
+                            {mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
@@ -297,6 +307,7 @@ export default function Positions() {
                                                         isActive={isActive}
                                                         duration={duration}
                                                         fundName={pos.fundId ? fundMap[pos.fundId] : undefined}
+                                                        currencySymbol={getCurrencySymbolForPair(pos.symbol, pairConfigs)}
                                                     />
                                                 );
                                             })}

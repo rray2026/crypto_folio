@@ -11,7 +11,7 @@ import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
 import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
-import { useSettingsStore } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
 import { useNavigate } from "react-router-dom"
 
@@ -70,7 +70,7 @@ export default function Transactions() {
     const createPosition = usePositionStore((state) => state.createPosition)
     const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
     const positions = useLiveQuery(() => db.positions.toArray())
-    const { prices, fetchPrices } = useSettingsStore()
+    const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     // Reactively fetch all transactions
     const allTransactions = useLiveQuery(
@@ -420,9 +420,10 @@ export default function Transactions() {
                         <TransactionListHeader showAsset={true} />
                         
                         {transactions.map((tx) => (
-                            <TransactionCard 
+                            <TransactionCard
                                 key={tx.id}
                                 tx={tx}
+                                currencySymbol={getCurrencySymbolForPair(tx.symbol, pairConfigs)}
                                 isSelected={selectedIds.has(tx.id)}
                                 onToggleSelection={toggleSelection}
                                 onViewDetail={(id) => navigate(`/transactions/${id}`)}
@@ -474,6 +475,7 @@ export default function Transactions() {
                             if (selectedTxs.length === 0) return null
                             
                             const symbol = selectedTxs[0].symbol
+                            const previewCurrencySymbol = getCurrencySymbolForPair(symbol, pairConfigs)
                             const virtualPos = {
                                 symbol,
                                 status: 'OPEN' as const,
@@ -494,7 +496,7 @@ export default function Transactions() {
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/30">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">Avg Buy</span>
-                                            <span className="text-sm font-mono font-bold">{metrics.avgBuyPrice > 0 ? `$${metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}` : '--'}</span>
+                                            <span className="text-sm font-mono font-bold">{metrics.avgBuyPrice > 0 ? `${previewCurrencySymbol}${metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}` : '--'}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Qty</span>
@@ -503,7 +505,7 @@ export default function Transactions() {
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">PnL (Est.)</span>
                                             <span className={`text-sm font-mono font-bold ${metrics.totalPnL > 0 ? 'text-green-500' : metrics.totalPnL < 0 ? 'text-red-500' : ''}`}>
-                                                ${metrics.totalPnL > 0 ? '+' : ''}{metrics.totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                {previewCurrencySymbol}{metrics.totalPnL > 0 ? '+' : ''}{metrics.totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                         <div className="flex flex-col">

@@ -4,6 +4,7 @@ import { useMobileHeader } from "@/contexts/MobileHeaderContext"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
+import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { format } from "date-fns"
 import { ArrowLeft, Trash2, Edit, Calendar, Clock, Wallet, Activity, Hash, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -70,9 +71,12 @@ export default function TransactionDetails() {
     if (transaction === null) return <div className="p-8 text-center text-foreground">Transaction not found.</div>
 
     // Find positions that use this transaction
-    const linkedPositions = allPositions?.filter(pos => 
+    const linkedPositions = allPositions?.filter(pos =>
         pos.entries.some(e => e.transactionId === transaction.id)
     ) || []
+
+    const { pairConfigs } = useSettingsStore.getState()
+    const currencySymbol = getCurrencySymbolForPair(transaction.symbol, pairConfigs)
 
     const handleDelete = async () => {
         if (!id) return
@@ -138,7 +142,7 @@ export default function TransactionDetails() {
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight flex items-center gap-1.5">
                                     <Wallet className="h-3 w-3" /> Execution Price
                                 </span>
-                                <p className="text-xl md:text-2xl font-mono font-black">${transaction.price.toLocaleString()}</p>
+                                <p className="text-xl md:text-2xl font-mono font-black">{currencySymbol}{transaction.price.toLocaleString()}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight flex items-center gap-1.5">
@@ -148,11 +152,11 @@ export default function TransactionDetails() {
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Total Value</span>
-                                <p className="text-xl md:text-2xl font-mono font-black text-primary">${transaction.amount.toLocaleString()}</p>
+                                <p className="text-xl md:text-2xl font-mono font-black text-primary">{currencySymbol}{transaction.amount.toLocaleString()}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Fee Paid</span>
-                                <p className="text-xl md:text-2xl font-mono font-black text-muted-foreground">${transaction.fee.toLocaleString()}</p>
+                                <p className="text-xl md:text-2xl font-mono font-black text-muted-foreground">{currencySymbol}{transaction.fee.toLocaleString()}</p>
                             </div>
                         </div>
 
