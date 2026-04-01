@@ -213,7 +213,6 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                             onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
                             className="font-mono uppercase"
                             disabled={isValidating}
-                            autoFocus
                         />
                     </div>
 
@@ -441,16 +440,7 @@ export default function TradingPairs() {
                             <RefreshCw className={`h-3.5 w-3.5 ${isSyncingAll ? 'animate-spin' : ''}`} />
                             Sync All
                         </Button>
-                        {/* Mobile add button (also visible here as secondary path) */}
-                        <Button
-                            size="sm"
-                            className="gap-1.5 h-8 text-xs md:hidden"
-                            onClick={() => setAddModalOpen(true)}
-                        >
-                            <Plus className="h-3.5 w-3.5" />
-                            Add
-                        </Button>
-                    </div>
+                                            </div>
                 </div>
 
                 {pairConfigs.length === 0 ? (
@@ -495,11 +485,7 @@ export default function TradingPairs() {
 
                                             {/* Meta row: exchange, data source, currency */}
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                {/* Exchange badge */}
-                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                    <ArrowLeftRight className="h-2.5 w-2.5 shrink-0" />
-                                                </div>
-                                                {isValidatingExch ? (
+                                                                                                {isValidatingExch ? (
                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {exchange}
@@ -517,11 +503,7 @@ export default function TradingPairs() {
 
                                                 <span className="text-[10px] text-border">·</span>
 
-                                                {/* Data provider badge */}
-                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                    <Database className="h-2.5 w-2.5 shrink-0" />
-                                                </div>
-                                                {isValidatingProv ? (
+                                                                                                {isValidatingProv ? (
                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${dpStyle.badge} opacity-60`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {dataProvider}
@@ -539,11 +521,7 @@ export default function TradingPairs() {
 
                                                 <span className="text-[10px] text-border">·</span>
 
-                                                {/* Currency badge */}
-                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                    <Coins className="h-2.5 w-2.5 shrink-0" />
-                                                </div>
-                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
+                                                                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
                                                     {currency}
                                                 </span>
                                             </div>
@@ -571,7 +549,7 @@ export default function TradingPairs() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex items-center gap-0.5 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pt-0.5">
+                                        <div className="flex items-center gap-0.5 shrink-0 opacity-100 transition-opacity pt-0.5">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
