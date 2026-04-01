@@ -9,12 +9,14 @@ export interface PairConfig {
     exchange: string;
 }
 
-export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit', 'NYSE', 'NASDAQ'] as const;
+export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit', 'NYSE', 'NASDAQ', 'HTX', 'Gate.io', 'MEXC', 'SSE', 'SZSE'] as const;
 export type Exchange = typeof SUPPORTED_EXCHANGES[number];
 
 export const EXCHANGE_GROUPS: Record<string, string[]> = {
     'Crypto':    ['Binance', 'OKX', 'Bybit'],
     'US Stocks': ['NYSE', 'NASDAQ'],
+    'CN Crypto': ['HTX', 'Gate.io', 'MEXC'],
+    'CN Stocks': ['SSE', 'SZSE'],
 };
 
 export async function fetchPriceForExchange(pair: string, exchange: string): Promise<string | null> {
@@ -33,7 +35,28 @@ export async function fetchPriceForExchange(pair: string, exchange: string): Pro
                 const data = await res.json();
                 return data?.result?.list?.[0]?.lastPrice ?? null;
             }
-        } else if (exchange === 'NYSE' || exchange === 'NASDAQ') {
+        } else if (exchange === 'HTX') {
+            const symbol = pair.replace('/', '').toLowerCase();
+            const res = await fetch(`https://api.huobi.pro/market/detail/merged?symbol=${symbol}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data?.tick?.close != null ? String(data.tick.close) : null;
+            }
+        } else if (exchange === 'Gate.io') {
+            const currencyPair = pair.replace('/', '_');
+            const res = await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${currencyPair}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data?.[0]?.last ?? null;
+            }
+        } else if (exchange === 'MEXC') {
+            const symbol = pair.replace(/[^A-Z0-9]/g, '');
+            const res = await fetch(`https://api.mexc.com/api/v3/ticker/price?symbol=${symbol}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data?.price ?? null;
+            }
+        } else if (exchange === 'NYSE' || exchange === 'NASDAQ' || exchange === 'SSE' || exchange === 'SZSE') {
             // Route through Cloudflare Pages Function to avoid CORS
             const res = await fetch(`/api/stock-price?symbol=${encodeURIComponent(pair)}`);
             if (res.ok) {

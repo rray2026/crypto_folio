@@ -46,6 +46,31 @@ const EXCHANGE_STYLES: Record<string, { badge: string; card: string; dot: string
         card:  "border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/5",
         dot:   "bg-purple-500",
     },
+    HTX: {
+        badge: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
+        card:  "border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/5",
+        dot:   "bg-cyan-500",
+    },
+    "Gate.io": {
+        badge: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
+        card:  "border-teal-500/30 hover:border-teal-500/60 hover:bg-teal-500/5",
+        dot:   "bg-teal-500",
+    },
+    MEXC: {
+        badge: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+        card:  "border-rose-500/30 hover:border-rose-500/60 hover:bg-rose-500/5",
+        dot:   "bg-rose-500",
+    },
+    SSE: {
+        badge: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        card:  "border-red-500/30 hover:border-red-500/60 hover:bg-red-500/5",
+        dot:   "bg-red-500",
+    },
+    SZSE: {
+        badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        card:  "border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/5",
+        dot:   "bg-amber-500",
+    },
 }
 
 const DEFAULT_STYLE = {

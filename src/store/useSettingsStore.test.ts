@@ -84,6 +84,80 @@ describe('fetchPriceForExchange', () => {
         expect(price).toBeNull();
     });
 
+    it('HTX: calls correct URL with lowercase symbol and parses tick.close', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ status: 'ok', tick: { close: 50000 } }),
+        });
+        const price = await fetchPriceForExchange('BTC/USDT', 'HTX');
+        expect(price).toBe('50000');
+        expect(fetch).toHaveBeenCalledWith(
+            'https://api.huobi.pro/market/detail/merged?symbol=btcusdt'
+        );
+    });
+
+    it('HTX: returns null when tick.close is missing', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ status: 'ok', tick: {} }),
+        });
+        const price = await fetchPriceForExchange('BTC/USDT', 'HTX');
+        expect(price).toBeNull();
+    });
+
+    it('Gate.io: calls correct URL with underscore separator and parses last', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ([{ currency_pair: 'BTC_USDT', last: '50000.00' }]),
+        });
+        const price = await fetchPriceForExchange('BTC/USDT', 'Gate.io');
+        expect(price).toBe('50000.00');
+        expect(fetch).toHaveBeenCalledWith(
+            'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT'
+        );
+    });
+
+    it('Gate.io: returns null when response array is empty', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ([]),
+        });
+        const price = await fetchPriceForExchange('BTC/USDT', 'Gate.io');
+        expect(price).toBeNull();
+    });
+
+    it('MEXC: calls correct URL and parses price', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ symbol: 'ETHUSDT', price: '2000.00' }),
+        });
+        const price = await fetchPriceForExchange('ETH/USDT', 'MEXC');
+        expect(price).toBe('2000.00');
+        expect(fetch).toHaveBeenCalledWith(
+            'https://api.mexc.com/api/v3/ticker/price?symbol=ETHUSDT'
+        );
+    });
+
+    it('SSE: calls proxy endpoint /api/stock-price with symbol', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '12.34' }),
+        });
+        const price = await fetchPriceForExchange('600036.SS', 'SSE');
+        expect(price).toBe('12.34');
+        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
+    });
+
+    it('SZSE: calls proxy endpoint /api/stock-price with symbol', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '56.78' }),
+        });
+        const price = await fetchPriceForExchange('000001.SZ', 'SZSE');
+        expect(price).toBe('56.78');
+        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=000001.SZ');
+    });
+
     it('NYSE: calls proxy endpoint /api/stock-price with symbol', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
