@@ -424,6 +424,11 @@ export default function TradingPairs() {
                                                         <ChevronDown className="h-2.5 w-2.5 opacity-50" />
                                                     </button>
                                                 )}
+
+                                                {/* Currency badge */}
+                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-muted/40 text-muted-foreground border-border/50">
+                                                    {currency}
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                 <span className="font-mono">{priceDisplay}</span>
