@@ -178,7 +178,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
 
         const price = await fetchPriceFromProvider(pair, newDataProvider, newExchange)
         if (price === null) {
-            setAddError(`"${pair}" 在 ${newDataProvider} 上未找到，请检查交易对符号。`)
+            setAddError(`"${pair}" not found on ${newDataProvider}. Check the symbol and try again.`)
             setIsValidating(false)
             return
         }
@@ -189,24 +189,24 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     }
 
     const placeholder =
-        newExchange === 'SSE'  ? '例如 601818' :
-        newExchange === 'SZSE' ? '例如 000001' :
-        '例如 BTC/USDT 或 AAPL'
+        newExchange === 'SSE'  ? 'e.g. 601818' :
+        newExchange === 'SZSE' ? 'e.g. 000001' :
+        'e.g. BTC/USDT or AAPL'
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>添加交易对</DialogTitle>
+                    <DialogTitle>Add Trading Pair</DialogTitle>
                     <DialogDescription>
-                        输入交易对符号，选择交易所和数据源，确认后自动验证。
+                        Enter a symbol, select the exchange and data source. The pair will be validated before saving.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleAdd} className="space-y-4 pt-1">
                     {/* Pair input */}
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium">交易对</label>
+                        <label className="text-sm font-medium">Symbol</label>
                         <Input
                             placeholder={placeholder}
                             value={newPair}
@@ -222,7 +222,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium flex items-center gap-1.5">
                                 <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground" />
-                                交易所
+                                Exchange
                             </label>
                             <Select
                                 value={newExchange}
@@ -247,7 +247,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium flex items-center gap-1.5">
                                 <Database className="h-3.5 w-3.5 text-muted-foreground" />
-                                数据源
+                                Data Source
                             </label>
                             <Select
                                 value={newDataProvider}
@@ -269,7 +269,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                     {/* Inferred currency */}
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50">
                         <Coins className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-sm text-muted-foreground">计价货币</span>
+                        <span className="text-sm text-muted-foreground">Quote Currency</span>
                         <span className="ml-auto font-mono font-semibold text-sm">{inferredCurrency}</span>
                     </div>
 
@@ -282,12 +282,12 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
 
                     <div className="flex gap-2 pt-1">
                         <Button type="button" variant="outline" className="flex-1" onClick={handleClose} disabled={isValidating}>
-                            取消
+                            Cancel
                         </Button>
                         <Button type="submit" className="flex-1 gap-2" disabled={isValidating || !newPair.trim()}>
                             {isValidating
-                                ? <><Loader2 className="h-4 w-4 animate-spin" /> 验证中…</>
-                                : <><Plus className="h-4 w-4" /> 添加</>
+                                ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking…</>
+                                : <><Plus className="h-4 w-4" /> Add</>
                             }
                         </Button>
                     </div>
@@ -303,7 +303,7 @@ export default function TradingPairs() {
 
     useEffect(() => {
         setMobileHeader({
-            title: "交易对",
+            title: "Trading Pairs",
             leftAction: (
                 <Link to="/settings">
                     <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -350,7 +350,7 @@ export default function TradingPairs() {
         if (price === null) {
             setProviderErrors(prev => ({
                 ...prev,
-                [pair]: `"${pair}" 在 ${provider} 上未找到`,
+                [pair]: `"${pair}" not found on ${provider}`,
             }))
         } else {
             updatePairDataProvider(pair, provider)
@@ -374,7 +374,7 @@ export default function TradingPairs() {
         if (price === null) {
             setExchangeErrors(prev => ({
                 ...prev,
-                [pair]: `"${pair}" 在 ${newExch} 上未找到`,
+                [pair]: `"${pair}" not found on ${newExch}`,
             }))
         } else {
             updatePairExchange(pair, newExch)
@@ -412,15 +412,15 @@ export default function TradingPairs() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">交易对</h1>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Trading Pairs</h1>
                         <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                            管理预定义交易对，用于全局快速选择。
+                            Manage pre-defined pairs used as quick-select options across the app.
                         </p>
                     </div>
                 </div>
                 <Button onClick={() => setAddModalOpen(true)} className="gap-2 shrink-0">
                     <Plus className="h-4 w-4" />
-                    添加交易对
+                    Add Pair
                 </Button>
             </div>
 
@@ -428,7 +428,7 @@ export default function TradingPairs() {
             <div className="bg-card rounded-xl border shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                     <span className="text-sm font-semibold text-muted-foreground">
-                        共 {pairConfigs.length} 个交易对
+                        {pairConfigs.length} {pairConfigs.length === 1 ? 'Pair' : 'Pairs'}
                     </span>
                     <div className="flex items-center gap-2">
                         <Button
@@ -439,7 +439,7 @@ export default function TradingPairs() {
                             className="gap-1.5 h-8 text-xs"
                         >
                             <RefreshCw className={`h-3.5 w-3.5 ${isSyncingAll ? 'animate-spin' : ''}`} />
-                            同步全部
+                            Sync All
                         </Button>
                         {/* Mobile add button (also visible here as secondary path) */}
                         <Button
@@ -448,7 +448,7 @@ export default function TradingPairs() {
                             onClick={() => setAddModalOpen(true)}
                         >
                             <Plus className="h-3.5 w-3.5" />
-                            添加
+                            Add
                         </Button>
                     </div>
                 </div>
@@ -458,8 +458,8 @@ export default function TradingPairs() {
                         <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
                             <Plus className="h-6 w-6 text-muted-foreground" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">暂无交易对</p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">点击「添加交易对」开始配置</p>
+                        <p className="text-sm font-medium text-muted-foreground">No pairs yet</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">Click "Add Pair" to get started</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">
@@ -508,7 +508,7 @@ export default function TradingPairs() {
                                                     <button
                                                         onClick={() => setDialogPair(pair)}
                                                         className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${exStyle.badge}`}
-                                                        title="切换交易所"
+                                                        title="Change exchange"
                                                     >
                                                         {exchange}
                                                         <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -530,7 +530,7 @@ export default function TradingPairs() {
                                                     <button
                                                         onClick={() => setDialogProviderPair(pair)}
                                                         className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
-                                                        title="切换数据源"
+                                                        title="Change data source"
                                                     >
                                                         {dataProvider}
                                                         <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -551,7 +551,7 @@ export default function TradingPairs() {
                                             {/* Sync time */}
                                             {lastSync && (
                                                 <p className="text-[10px] text-muted-foreground/50">
-                                                    同步于 {lastSync}
+                                                    synced {lastSync}
                                                 </p>
                                             )}
 
@@ -577,7 +577,7 @@ export default function TradingPairs() {
                                                 size="icon"
                                                 onClick={() => togglePinPair(pair)}
                                                 className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
-                                                title={isPinned ? "从 Dashboard 取消固定" : "固定到 Dashboard"}
+                                                title={isPinned ? "Unpin from Dashboard" : "Pin to Dashboard"}
                                             >
                                                 <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
                                             </Button>
@@ -587,7 +587,7 @@ export default function TradingPairs() {
                                                 disabled={syncingPairs[pair]}
                                                 onClick={() => handleManualSync(pair)}
                                                 className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                                title="同步价格"
+                                                title="Sync price"
                                             >
                                                 <RefreshCw className={`h-3 w-3 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
                                             </Button>
@@ -596,7 +596,7 @@ export default function TradingPairs() {
                                                 size="icon"
                                                 onClick={() => removePair(pair)}
                                                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                                title="删除交易对"
+                                                title="Remove pair"
                                             >
                                                 <Trash2 className="h-3 w-3" />
                                             </Button>
@@ -618,7 +618,7 @@ export default function TradingPairs() {
                     open={dialogPair !== null}
                     pair={dialogConfig.pair}
                     current={dialogConfig.exchange}
-                    title="切换交易所"
+                    title="Change Exchange"
                     groups={EXCHANGE_GROUPS}
                     onSelect={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
                     onClose={() => setDialogPair(null)}
@@ -631,7 +631,7 @@ export default function TradingPairs() {
                     open={dialogProviderPair !== null}
                     pair={dialogProviderConfig.pair}
                     current={dialogProviderConfig.dataProvider}
-                    title="切换数据源"
+                    title="Change Data Source"
                     groups={DATA_PROVIDER_GROUPS}
                     onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
                     onClose={() => setDialogProviderPair(null)}
