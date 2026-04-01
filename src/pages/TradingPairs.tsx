@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { useMobileHeader } from "@/contexts/MobileHeaderContext"
-import { useSettingsStore, SUPPORTED_EXCHANGES, EXCHANGE_GROUPS, fetchPriceForExchange } from "@/store/useSettingsStore"
+import { useSettingsStore, SUPPORTED_EXCHANGES, EXCHANGE_GROUPS, fetchPriceForExchange, getCurrencySymbol } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -300,7 +300,7 @@ export default function TradingPairs() {
                         {pairConfigs.map(({ pair, exchange }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
-                                ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
+                                ? `${getCurrencySymbol(exchange)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
                                 : '—'
                             const lastSync = priceData
                                 ? format(new Date(priceData.timestamp), "HH:mm:ss")

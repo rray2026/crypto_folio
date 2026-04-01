@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
-import { useSettingsStore } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays } from "date-fns"
 import { ArrowLeft, Activity, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,8 @@ export default function AssetDetails() {
     const { symbol } = useParams<{ symbol: string }>()
     const decodedSymbol = symbol?.replace('_', '/') || ""
     const navigate = useNavigate()
-    const { prices, fetchPrices } = useSettingsStore()
+    const { prices, fetchPrices, pairConfigs } = useSettingsStore()
+    const currencySymbol = getCurrencySymbolForPair(decodedSymbol, pairConfigs)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const { setMobileHeader } = useMobileHeader()
 
@@ -89,7 +90,7 @@ export default function AssetDetails() {
                         <h1 className="hidden md:block text-3xl font-bold tracking-tight">{base} <span className="text-muted-foreground text-xl">/ {quote}</span></h1>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-2xl font-mono font-bold text-primary">
-                                {Number(currentPrice) > 0 ? `$${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
+                                {Number(currentPrice) > 0 ? `${currencySymbol}${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
                             </span>
                             <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-0.5 rounded font-bold tracking-tighter">Live Price</span>
                         </div>
@@ -119,12 +120,13 @@ export default function AssetDetails() {
                             enrichedPositions.map(({ pos, metrics }) => {
                                 const duration = differenceInDays(metrics.derivedEndDate || Date.now(), metrics.derivedStartDate || Date.now())
                                 return (
-                                    <PositionCard 
+                                    <PositionCard
                                         key={pos.id}
                                         position={pos}
                                         metrics={metrics}
                                         isActive={pos.status === 'OPEN'}
                                         duration={duration}
+                                        currencySymbol={currencySymbol}
                                     />
                                 )
                             })
@@ -141,13 +143,14 @@ export default function AssetDetails() {
                         </div>
                     ) : (
                         transactions?.map(tx => (
-                            <TransactionCard 
+                            <TransactionCard
                                 key={tx.id}
                                 tx={tx}
                                 showAsset={false}
+                                currencySymbol={currencySymbol}
                                 onViewDetail={(id) => navigate(`/transactions/${id}`)}
                                 onEdit={(id) => setEditingTxId(id)}
-                                onDelete={() => {}} 
+                                onDelete={() => {}}
                                 isEditing={editingTxId === tx.id}
                                 setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
                             />

@@ -3,7 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
-import { useSettingsStore } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
 import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -35,7 +35,7 @@ export default function PositionDetails() {
     const closePosition = usePositionStore(state => state.closePosition)
     const openPosition = usePositionStore(state => state.openPosition)
     const deletePosition = usePositionStore(state => state.deletePosition)
-    const { prices, fetchPrices } = useSettingsStore()
+    const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
@@ -166,6 +166,8 @@ export default function PositionDetails() {
         derivedEndDate, avgBuyPrice, avgSellPrice, breakevenPrice
     } = getPositionMetrics(position, linkedTxs, prices);
 
+    const currencySymbol = getCurrencySymbolForPair(position.symbol, pairConfigs);
+
     const totalFee = linkedTxs.reduce((sum, tx) => {
         const allocated = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount || 0;
         const ratio = tx.quantity > 0 ? allocated / tx.quantity : 0;
@@ -180,7 +182,7 @@ export default function PositionDetails() {
 
         const tradesSection = linkedTxs.length === 0 ? '  (No linked trades)' : linkedTxs.map(tx => {
             const alloc = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount ?? tx.quantity
-            return `  - [${tx.type}] ${format(new Date(tx.date), "yyyy/MM/dd HH:mm")}  Price: $${tx.price.toLocaleString()}  Qty: ${tx.quantity}  Allocated: ${alloc}  Fee: $${(tx.fee || 0).toFixed(2)}${tx.notes ? `  Note: ${tx.notes}` : ''}`
+            return `  - [${tx.type}] ${format(new Date(tx.date), "yyyy/MM/dd HH:mm")}  Price: ${currencySymbol}${tx.price.toLocaleString()}  Qty: ${tx.quantity}  Allocated: ${alloc}  Fee: ${currencySymbol}${(tx.fee || 0).toFixed(2)}${tx.notes ? `  Note: ${tx.notes}` : ''}`
         }).join('\n')
 
         const lines = [
@@ -197,15 +199,15 @@ export default function PositionDetails() {
             position.notes ? `- Strategy Notes: ${position.notes}` : null,
             ``,
             `## Performance Metrics`,
-            `- Avg Buy Price: ${avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
-            `- Avg Sell Price: ${avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
-            position.status === 'OPEN' && currentPrice > 0 ? `- Current Price: $${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
+            `- Avg Buy Price: ${avgBuyPrice > 0 ? `${currencySymbol}${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
+            `- Avg Sell Price: ${avgSellPrice > 0 ? `${currencySymbol}${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : 'N/A'}`,
+            position.status === 'OPEN' && currentPrice > 0 ? `- Current Price: ${currencySymbol}${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
             `- Holdings: ${totalRemaining} ${position.symbol.split('/')[0]}`,
-            `- Realized PnL: $${realizedPnL.toFixed(2)}`,
-            totalRemaining !== 0 ? `- Unrealized PnL: $${unrealizedPnL.toFixed(2)}` : null,
+            `- Realized PnL: ${currencySymbol}${realizedPnL.toFixed(2)}`,
+            totalRemaining !== 0 ? `- Unrealized PnL: ${currencySymbol}${unrealizedPnL.toFixed(2)}` : null,
             `- ROI: ${roi.toFixed(2)}%`,
-            totalFee > 0 ? `- Total Fees: $${totalFee.toFixed(2)}` : null,
-            breakevenPrice > 0 && totalRemaining !== 0 ? `- Breakeven Price: $${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
+            totalFee > 0 ? `- Total Fees: ${currencySymbol}${totalFee.toFixed(2)}` : null,
+            breakevenPrice > 0 && totalRemaining !== 0 ? `- Breakeven Price: ${currencySymbol}${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : null,
             ``,
             `## Linked Trades (${linkedTxs.length})`,
             tradesSection,
@@ -274,7 +276,7 @@ export default function PositionDetails() {
                                 <span className="text-sm md:text-lg text-muted-foreground font-mono font-bold tracking-wider">{position.symbol}</span>
                                 {position.status === 'OPEN' && currentPrice > 0 && (
                                     <span className="text-primary font-mono font-medium text-sm md:text-lg animate-in fade-in slide-in-from-left-2">
-                                        ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                                        {currencySymbol}{currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                     </span>
                                 )}
                             </div>
@@ -379,7 +381,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
                                 <span className={`text-base sm:text-xl font-bold ${realizedPnL > 0 ? 'text-green-500' : realizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                    ${realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {currencySymbol}{realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
 
@@ -387,7 +389,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
                                 <span className={`text-base sm:text-xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                    {totalRemaining !== 0 ? `$${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                                    {totalRemaining !== 0 ? `${currencySymbol}${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 
@@ -395,7 +397,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {avgBuyPrice > 0 ? `$${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                    {avgBuyPrice > 0 ? `${currencySymbol}${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
                             </div>
 
@@ -403,7 +405,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {avgSellPrice > 0 ? `$${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                    {avgSellPrice > 0 ? `${currencySymbol}${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
                             </div>
 
@@ -411,7 +413,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Fee</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {totalFee > 0 ? `$${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                                    {totalFee > 0 ? `${currencySymbol}${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 
@@ -436,7 +438,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
-                                    {(breakevenPrice > 0 && totalRemaining !== 0) ? `$${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
+                                    {(breakevenPrice > 0 && totalRemaining !== 0) ? `${currencySymbol}${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
                             </div>
                         </div>
@@ -461,7 +463,7 @@ export default function PositionDetails() {
                                                     </div>
                                                     <div className="flex flex-col min-w-0">
                                                         <p className="font-mono text-xs md:text-sm font-medium truncate">
-                                                            ${tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
+                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
                                                         </p>
                                                         <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
                                                             {editingAllocTxId === tx.id ? (
@@ -644,7 +646,7 @@ export default function PositionDetails() {
                                                 </div>
                                             </div>
                                             <div className="flex justify-between items-center mb-1">
-                                                <p className="font-mono text-muted-foreground">${tx.price} × {tx.quantity}</p>
+                                                <p className="font-mono text-muted-foreground">{currencySymbol}{tx.price} × {tx.quantity}</p>
                                                 <span className="text-xs text-muted-foreground/70 font-mono">{format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}</span>
                                             </div>
                                         </div>

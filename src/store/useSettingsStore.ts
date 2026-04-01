@@ -19,6 +19,17 @@ export const EXCHANGE_GROUPS: Record<string, string[]> = {
     'CN Stocks': ['SSE', 'SZSE'],
 };
 
+export const CN_EXCHANGES = new Set(['SSE', 'SZSE']);
+
+export function getCurrencySymbol(exchange: string): string {
+    return CN_EXCHANGES.has(exchange) ? '¥' : '$';
+}
+
+export function getCurrencySymbolForPair(pair: string, pairConfigs: PairConfig[]): string {
+    const exchange = pairConfigs.find(p => p.pair === pair)?.exchange ?? '';
+    return getCurrencySymbol(exchange);
+}
+
 export async function fetchPriceForExchange(pair: string, exchange: string): Promise<string | null> {
     try {
         if (exchange === 'OKX') {

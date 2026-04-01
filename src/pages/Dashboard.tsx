@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
-import { useSettingsStore } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
@@ -11,7 +11,7 @@ export default function Dashboard() {
     const { setMobileHeader } = useMobileHeader()
     useEffect(() => { setMobileHeader({ title: "Dashboard" }) }, [setMobileHeader])
     const positions = useLiveQuery(() => db.positions.toArray())
-    const { prices, fetchPrices } = useSettingsStore()
+    const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     // Fetch prices for all OPEN symbols and PINNED pairs periodically (every 5 mins)
     useState(() => {
@@ -59,7 +59,8 @@ export default function Dashboard() {
                     <div className="flex flex-col gap-3">
                         {useSettingsStore.getState().pinnedPairs.map(pair => {
                             const priceData = prices[pair];
-                            const priceDisplay = priceData ? `$${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
+                            const sym = getCurrencySymbolForPair(pair, pairConfigs);
+                            const priceDisplay = priceData ? `${sym}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
                             
                             return (
                                 <div 

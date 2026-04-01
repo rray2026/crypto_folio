@@ -17,6 +17,7 @@ interface TransactionCardProps {
     setIsEditing: (isOpen: boolean) => void;
     showAsset?: boolean;
     className?: string;
+    currencySymbol?: string;
 }
 
 /**
@@ -51,7 +52,8 @@ export function TransactionCard({
     isEditing,
     setIsEditing,
     showAsset = true,
-    className = ""
+    className = "",
+    currencySymbol = "$"
 }: TransactionCardProps) {
     const gridCols = showAsset 
         ? "md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]" 
@@ -85,10 +87,10 @@ export function TransactionCard({
                         {tx.type}
                     </div>
                 </div>
-                <div className="text-right font-mono font-medium text-sm text-foreground/80">${tx.price.toLocaleString()}</div>
+                <div className="text-right font-mono font-medium text-sm text-foreground/80">{currencySymbol}{tx.price.toLocaleString()}</div>
                 <div className="text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
-                <div className="text-right font-mono font-bold text-sm text-primary/90">${tx.amount.toLocaleString()}</div>
-                <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>${tx.fee.toLocaleString()}</div>
+                <div className="text-right font-mono font-bold text-sm text-primary/90">{currencySymbol}{tx.amount.toLocaleString()}</div>
+                <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
                 
                 <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                     <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); onViewDetail(tx.id); }}>
@@ -160,7 +162,7 @@ export function TransactionCard({
                     <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/20">
                         <div className="flex flex-col">
                             <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Price</span>
-                            <span className="font-mono text-sm">${tx.price.toLocaleString()}</span>
+                            <span className="font-mono text-sm">{currencySymbol}{tx.price.toLocaleString()}</span>
                         </div>
                         <div className="flex flex-col text-right">
                             <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Quantity</span>
@@ -168,11 +170,11 @@ export function TransactionCard({
                         </div>
                         <div className="flex flex-col">
                             <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Total</span>
-                            <span className="font-mono text-sm font-bold text-primary">${tx.amount.toLocaleString()}</span>
+                            <span className="font-mono text-sm font-bold text-primary">{currencySymbol}{tx.amount.toLocaleString()}</span>
                         </div>
                         <div className="flex flex-col text-right">
                             <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Fee</span>
-                            <span className="font-mono text-xs text-muted-foreground">${tx.fee.toLocaleString()}</span>
+                            <span className="font-mono text-xs text-muted-foreground">{currencySymbol}{tx.fee.toLocaleString()}</span>
                         </div>
                     </div>
                 </CardContent>

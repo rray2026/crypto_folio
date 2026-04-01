@@ -10,9 +10,10 @@ interface PositionCardProps {
     isActive: boolean;
     duration: number;
     fundName?: string;
+    currencySymbol?: string;
 }
 
-export function PositionCard({ position, metrics, isActive, duration, fundName }: PositionCardProps) {
+export function PositionCard({ position, metrics, isActive, duration, fundName, currencySymbol = '$' }: PositionCardProps) {
     const base = position.symbol.split('/')[0];
     
     return (
@@ -92,7 +93,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                                 <div className="flex flex-col text-right">
                                     <span className="text-xs text-muted-foreground mb-1">{metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}</span>
                                     <span className="font-mono text-sm font-bold">
-                                        ${metrics.currentPrice > 0
+                                        {currencySymbol}{metrics.currentPrice > 0
                                             ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
                                             : (metrics.totalRemaining !== 0 ? (metrics.totalInvestment / Math.abs(metrics.totalRemaining)).toFixed(2) : '0.00')}
                                     </span>
@@ -103,12 +104,12 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                             <div className="flex justify-between items-center pt-3 border-t border-border/30">
                                 <div className="flex flex-col">
                                     <span className="text-xs text-muted-foreground mb-1">Total Inv.</span>
-                                    <span className="font-mono text-sm">${metrics.totalInvestment.toFixed(2)}</span>
+                                    <span className="font-mono text-sm">{currencySymbol}{metrics.totalInvestment.toFixed(2)}</span>
                                 </div>
                                 <div className="flex flex-col text-right">
                                     <span className="text-xs text-muted-foreground mb-1">Realized PnL</span>
                                     <span className={`font-mono text-sm font-medium ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                                        ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
+                                        {currencySymbol}{metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
                                     </span>
                                 </div>
                             </div>
@@ -118,7 +119,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                                 <div className="flex flex-col">
                                     <span className="text-[11px] text-primary/80 mb-1 uppercase tracking-wider font-semibold">Unrealized PnL</span>
                                     <span className={`font-mono font-bold text-lg ${metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                        ${metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
+                                        {currencySymbol}{metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="flex flex-col text-right">
@@ -136,13 +137,13 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                                 <div className="flex flex-col">
                                     <span className="text-xs text-muted-foreground mb-1">Avg Buy</span>
                                     <span className="font-mono text-sm font-bold">
-                                        ${metrics.avgBuyPrice > 0 ? metrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
+                                        {currencySymbol}{metrics.avgBuyPrice > 0 ? metrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
                                     </span>
                                 </div>
                                 <div className="flex flex-col text-right">
                                     <span className="text-xs text-muted-foreground mb-1">Avg Sell</span>
                                     <span className="font-mono text-sm font-bold">
-                                        ${metrics.avgSellPrice > 0 ? metrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
+                                        {currencySymbol}{metrics.avgSellPrice > 0 ? metrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
                                     </span>
                                 </div>
                             </div>
@@ -152,7 +153,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName }
                                 <div className="flex flex-col">
                                     <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Realized PnL</span>
                                     <span className={`font-mono font-bold text-lg ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                        ${metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
+                                        {currencySymbol}{metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="flex flex-col text-right">

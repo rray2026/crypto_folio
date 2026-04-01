@@ -16,19 +16,21 @@ interface TransactionRowProps {
     setIsEditing: (isOpen: boolean) => void;
     showAsset?: boolean;
     className?: string;
+    currencySymbol?: string;
 }
 
-export function TransactionRow({ 
-    tx, 
-    isSelected, 
-    onToggleSelection, 
-    onViewDetail, 
-    onEdit, 
+export function TransactionRow({
+    tx,
+    isSelected,
+    onToggleSelection,
+    onViewDetail,
+    onEdit,
     onDelete,
     isEditing,
     setIsEditing,
     showAsset = true,
-    className = ""
+    className = "",
+    currencySymbol = "$"
 }: TransactionRowProps) {
     const gridCols = showAsset 
         ? "grid-cols-[1.2fr_0.8fr_1fr_40px] md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]" 
@@ -62,15 +64,15 @@ export function TransactionRow({
                 </div>
             </div>
 
-            <div className="hidden md:block text-right font-mono font-medium text-sm text-foreground/80">${tx.price.toLocaleString()}</div>
+            <div className="hidden md:block text-right font-mono font-medium text-sm text-foreground/80">{currencySymbol}{tx.price.toLocaleString()}</div>
             <div className="hidden md:block text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
-            
+
             <div className="text-right font-mono font-bold text-sm text-primary/90">
-                ${tx.amount.toLocaleString()}
-                {!showAsset && <div className="md:hidden text-[10px] text-muted-foreground/60 font-normal">Fee: ${tx.fee.toLocaleString()}</div>}
+                {currencySymbol}{tx.amount.toLocaleString()}
+                {!showAsset && <div className="md:hidden text-[10px] text-muted-foreground/60 font-normal">Fee: {currencySymbol}{tx.fee.toLocaleString()}</div>}
             </div>
 
-            <div className={`hidden md:block text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>${tx.fee.toLocaleString()}</div>
+            <div className={`hidden md:block text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
             <div className="flex justify-end gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-all">
                 <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); onViewDetail(tx.id); }}>
                     <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />

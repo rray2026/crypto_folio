@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
-import { useSettingsStore } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
 import { format } from "date-fns"
 import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
@@ -21,7 +21,7 @@ export default function FundDetails() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { deleteFund, assignPositionToFund, unassignPosition } = useFundStore()
-    const { prices } = useSettingsStore()
+    const { prices, pairConfigs } = useSettingsStore()
 
     const [isEditOpen, setIsEditOpen] = useState(false)
     const { setMobileHeader } = useMobileHeader()
@@ -231,6 +231,7 @@ export default function FundDetails() {
                                 const posValue = m.totalRemaining !== 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
                                 const isLong = m.positionType === 'LONG'
+                                const posCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                 return (
                                     <div key={pos.id} className="p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors">
                                         {/* Row 1: badges + name + actions */}
@@ -280,8 +281,8 @@ export default function FundDetails() {
                                         {/* Row 3: price info */}
                                         {m.avgBuyPrice > 0 && (
                                             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
-                                                <span>Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
-                                                {m.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">${m.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
+                                                <span>Avg Buy <span className="text-foreground/70">{posCurrencySymbol}{m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
+                                                {m.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">{posCurrencySymbol}{m.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
                                                 {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
@@ -313,6 +314,7 @@ export default function FundDetails() {
                         ) : (
                             sortedUnassignedPositions.map(({ pos, m }) => {
                                 const isLong = m.positionType === 'LONG'
+                                const unassignedCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                 return (
                                     <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
                                         {/* Row 1: badges + name + actions */}
@@ -361,7 +363,7 @@ export default function FundDetails() {
                                         </div>
                                         {m.avgBuyPrice > 0 && (
                                             <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
-                                                Avg Buy <span className="text-foreground/70">${m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
+                                                Avg Buy <span className="text-foreground/70">{unassignedCurrencySymbol}{m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
                                                 {m.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
