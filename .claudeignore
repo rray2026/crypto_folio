@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Logs
+*.log
+logs/
+
+# Local environment files
+*.local
+.env*
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Package lock (large, auto-generated)
+package-lock.json
+
+# Public assets (binary/media files)
+public/
+
+# shadcn/ui generated components (do not hand-edit)
+src/components/ui/
