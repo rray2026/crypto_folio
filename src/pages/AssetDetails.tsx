@@ -7,7 +7,7 @@ import { ArrowLeft, Activity, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getPositionMetrics } from "@/lib/metrics"
+import { getPositionMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 import { useEffect, useState } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { PositionCard } from "@/components/shared/PositionCard"
@@ -70,15 +70,7 @@ export default function AssetDetails() {
         const linkedTxs = transactions?.filter(tx => pos.entries.some(e => e.transactionId === tx.id)) || []
         const metrics = getPositionMetrics(pos, linkedTxs, prices)
         return { pos, metrics }
-    }).sort((a, b) => {
-        const aOpen = a.pos.status === 'OPEN' || !a.metrics.derivedEndDate;
-        const bOpen = b.pos.status === 'OPEN' || !b.metrics.derivedEndDate;
-        if (aOpen && !bOpen) return -1;
-        if (!aOpen && bOpen) return 1;
-        if (!aOpen && !bOpen && a.metrics.derivedEndDate !== b.metrics.derivedEndDate)
-            return (b.metrics.derivedEndDate || 0) - (a.metrics.derivedEndDate || 0);
-        return (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || a.pos.startDate || 0);
-    })
+    }).sort(comparePositionsByMetrics)
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">

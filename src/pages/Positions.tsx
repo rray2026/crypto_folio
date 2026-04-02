@@ -3,14 +3,13 @@ import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
-import { mul, add, div } from "@/lib/math"
 import { useSettingsStore, getCurrencySymbolForPair, getCurrencySymbol } from "@/store/useSettingsStore"
 import type { Position } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 
 import { Plus, Target, Activity, Wallet, LineChart, TrendingUp } from "lucide-react"
 import { differenceInDays } from "date-fns"
-import { getPositionMetrics } from "@/lib/metrics"
+import { getPositionMetrics, getPortfolioMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 import type { PositionMetrics } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
@@ -87,7 +86,7 @@ export default function Positions() {
     };
 
 
-    // Detect mixed currencies across the portfolio
+    // Detect mixed currencies across the portfolio (display only)
     const portfolioCurrencies = new Set(
         (positions ?? []).map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
     );
@@ -95,46 +94,11 @@ export default function Positions() {
     const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD';
     const totalsCurrencySymbol = getCurrencySymbol(singleCurrency);
 
-    // Calculate global metrics
-    let totalRealizedPnL = 0;
-    let totalUnrealizedPnL = 0;
-    let totalInvestment = 0;
-    let winningTrades = 0;
-    let closedTrades = 0;
-
-    // Time Range Filtering Logic
     const now = Date.now();
-    let timeThreshold = 0; // 0 means 'ALL'
-    if (dashboardTimeRange === '1M') timeThreshold = now - 30 * 24 * 60 * 60 * 1000;
-    if (dashboardTimeRange === '3M') timeThreshold = now - 90 * 24 * 60 * 60 * 1000;
-    if (dashboardTimeRange === '6M') timeThreshold = now - 180 * 24 * 60 * 60 * 1000;
-    if (dashboardTimeRange === '1Y') timeThreshold = now - 365 * 24 * 60 * 60 * 1000;
-
-    if (positions && transactions) {
-        positions.forEach((pos: Position) => {
-            const metrics = getMetrics(pos);
-            const endDate = metrics.derivedEndDate || now;
-            
-            // Only count towards global metrics if it's a PRIMARY position,
-            // AND if it closed within the time range OR is currently open.
-            const isPrimary = pos.type !== 'SHADOW';
-            const isWithinRange = timeThreshold === 0 || (pos.status === 'CLOSED' ? endDate >= timeThreshold : true);
-
-            if (isWithinRange && isPrimary) {
-                totalRealizedPnL = add(totalRealizedPnL, metrics.realizedPnL);
-                totalUnrealizedPnL = add(totalUnrealizedPnL, metrics.unrealizedPnL);
-                totalInvestment = add(totalInvestment, metrics.totalInvestment);
-
-                if (pos.status === 'CLOSED') {
-                    closedTrades++;
-                    if (metrics.realizedPnL > 0) winningTrades++;
-                }
-            }
-        });
-    }
-
-    const winRate = closedTrades > 0 ? (winningTrades / closedTrades) * 100 : 0;
-    const globalROI = totalInvestment > 0 ? mul(div(add(totalRealizedPnL, totalUnrealizedPnL), totalInvestment), 100) : 0;
+    const { totalRealizedPnL, totalUnrealizedPnL, globalROI, winRate, winningTrades, closedTrades, timeThreshold } =
+        (positions && transactions)
+            ? getPortfolioMetrics(positions, transactions, prices, dashboardTimeRange)
+            : { totalRealizedPnL: 0, totalUnrealizedPnL: 0, globalROI: 0, winRate: 0, winningTrades: 0, closedTrades: 0, timeThreshold: 0 };
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -284,15 +248,7 @@ export default function Positions() {
                                                 return (metrics.derivedStartDate || p.startDate) >= timeThreshold;
                                             })
                                             .map((pos) => ({ pos, metrics: getMetrics(pos) }))
-                                            .sort((a: { pos: Position, metrics: PositionMetrics }, b: { pos: Position, metrics: PositionMetrics }) => {
-                                                const aOpen = a.pos.status === 'OPEN' || !a.metrics.derivedEndDate;
-                                                const bOpen = b.pos.status === 'OPEN' || !b.metrics.derivedEndDate;
-                                                if (aOpen && !bOpen) return -1;
-                                                if (!aOpen && bOpen) return 1;
-                                                if (!aOpen && !bOpen && a.metrics.derivedEndDate !== b.metrics.derivedEndDate)
-                                                    return (b.metrics.derivedEndDate || 0) - (a.metrics.derivedEndDate || 0);
-                                                return (b.metrics.derivedStartDate || b.pos.startDate || 0) - (a.metrics.derivedStartDate || b.pos.startDate || 0);
-                                            })
+                                            .sort(comparePositionsByMetrics)
                                             .map(({ pos, metrics }: { pos: Position, metrics: PositionMetrics }) => {
                                                 const duration = metrics.derivedStartDate ? differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate) : 0;
                                                 const isActive = pos.status === 'OPEN';
