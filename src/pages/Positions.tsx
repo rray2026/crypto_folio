@@ -94,7 +94,7 @@ export default function Positions() {
     const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD';
     const totalsCurrencySymbol = getCurrencySymbol(singleCurrency);
 
-    const now = Date.now();
+    const now = useState(() => Date.now())[0];
     const { totalRealizedPnL, totalUnrealizedPnL, globalROI, winRate, winningTrades, closedTrades, timeThreshold } =
         (positions && transactions)
             ? getPortfolioMetrics(positions, transactions, prices, dashboardTimeRange)
