@@ -5,8 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { getPositionMetrics, getFundMetrics } from "@/lib/metrics"
-import type { PositionMetrics } from "@/lib/metrics"
+import { getPositionMetrics, getFundMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 import type { Position } from "@/lib/types"
 import { format } from "date-fns"
 import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
@@ -92,24 +91,10 @@ export default function FundDetails() {
     const allPosMetrics = fundPositions.map(getPosMetrics)
     const unassignedPosMetrics = unassignedPositions.map(getPosMetrics)
 
-    const positionSortFn = (a: { pos: Position, m: PositionMetrics }, b: { pos: Position, m: PositionMetrics }) => {
-        const aOpen = a.pos.status === 'OPEN' || !a.m.derivedEndDate;
-        const bOpen = b.pos.status === 'OPEN' || !b.m.derivedEndDate;
-        if (aOpen && !bOpen) return -1;
-        if (!aOpen && bOpen) return 1;
-        if (!aOpen && !bOpen && a.m.derivedEndDate !== b.m.derivedEndDate)
-            return (b.m.derivedEndDate || 0) - (a.m.derivedEndDate || 0);
-        return (b.m.derivedStartDate || b.pos.startDate || 0) - (a.m.derivedStartDate || b.pos.startDate || 0);
-    }
-    const sortedFundPositions = fundPositions.map((pos, i) => ({ pos, m: allPosMetrics[i] })).sort(positionSortFn)
-    const sortedUnassignedPositions = unassignedPositions.map((pos, i) => ({ pos, m: unassignedPosMetrics[i] })).sort(positionSortFn)
+    const sortedFundPositions = fundPositions.map((pos, i) => ({ pos, metrics: allPosMetrics[i] })).sort(comparePositionsByMetrics)
+    const sortedUnassignedPositions = unassignedPositions.map((pos, i) => ({ pos, metrics: unassignedPosMetrics[i] })).sort(comparePositionsByMetrics)
     const fundM = getFundMetrics(fund, allPosMetrics)
-
-    const assetsValue = allPosMetrics.reduce((sum, m) => {
-        if (m.totalRemaining !== 0 && m.currentPrice > 0) return sum + m.totalRemaining * m.currentPrice
-        return sum
-    }, 0)
-    const cashValue = fundM.currentValue - assetsValue
+    const { assetsValue, cashValue } = fundM
 
     const handleDelete = async () => {
         if (!window.confirm(`Delete fund "${fund.name}"? All positions will be unassigned but not deleted.`)) return
@@ -229,10 +214,10 @@ export default function FundDetails() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {sortedFundPositions.map(({ pos, m }) => {
-                                const posValue = m.totalRemaining !== 0 && m.currentPrice > 0 ? m.totalRemaining * m.currentPrice : 0
+                            {sortedFundPositions.map(({ pos, metrics }) => {
+                                const posValue = metrics.totalRemaining !== 0 && metrics.currentPrice > 0 ? metrics.totalRemaining * metrics.currentPrice : 0
                                 const alloc = fundM.currentValue > 0 ? (posValue / fundM.currentValue * 100) : 0
-                                const isLong = m.positionType === 'LONG'
+                                const isLong = metrics.positionType === 'LONG'
                                 const posCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                 return (
                                     <div key={pos.id} className="p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors">
@@ -252,7 +237,7 @@ export default function FundDetails() {
                                                     : 'bg-red-500/10 text-red-600 dark:text-red-400'
                                                 }`}>
                                                     {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
-                                                    {m.positionType}
+                                                    {metrics.positionType}
                                                 </span>
                                                 <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                             </div>
@@ -271,31 +256,31 @@ export default function FundDetails() {
                                             <span className="text-muted-foreground/40">•</span>
                                             <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
                                             <span className="text-muted-foreground/40">•</span>
-                                            <span className={`font-semibold font-mono ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                                                PnL {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
+                                            <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                PnL {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
                                             </span>
-                                            <span className={`font-mono ${m.roi >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                                                ({m.roi >= 0 ? '+' : ''}{m.roi.toFixed(2)}%)
+                                            <span className={`font-mono ${metrics.roi >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
                                             </span>
                                             <span className="text-muted-foreground/40">•</span>
                                             {alloc !== 0 && <span className="text-muted-foreground">{alloc > 0 ? '+' : ''}{alloc.toFixed(1)}% alloc</span>}
                                         </div>
                                         {/* Row 3: price info */}
-                                        {m.avgBuyPrice > 0 && (
+                                        {metrics.avgBuyPrice > 0 && (
                                             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
-                                                <span>Avg Buy <span className="text-foreground/70">{posCurrencySymbol}{m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
-                                                {m.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">{posCurrencySymbol}{m.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
-                                                {m.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
+                                                <span>Avg Buy <span className="text-foreground/70">{posCurrencySymbol}{metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
+                                                {metrics.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">{posCurrencySymbol}{metrics.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
+                                                {metrics.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{metrics.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
                                         {/* Row 4: dates */}
                                         <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
-                                                {m.derivedStartDate ? format(new Date(m.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                                {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                             </span>
                                             <span className="text-muted-foreground/40">→</span>
-                                            <span>{m.derivedEndDate ? format(new Date(m.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                            <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
                                         </div>
                                     </div>
                                 )
@@ -314,8 +299,8 @@ export default function FundDetails() {
                                 No unassigned positions.
                             </p>
                         ) : (
-                            sortedUnassignedPositions.map(({ pos, m }) => {
-                                const isLong = m.positionType === 'LONG'
+                            sortedUnassignedPositions.map(({ pos, metrics }) => {
+                                const isLong = metrics.positionType === 'LONG'
                                 const unassignedCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                 return (
                                     <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
@@ -335,7 +320,7 @@ export default function FundDetails() {
                                                     : 'bg-red-500/10 text-red-600 dark:text-red-400'
                                                 }`}>
                                                     {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
-                                                    {m.positionType}
+                                                    {metrics.positionType}
                                                 </span>
                                                 <p className="font-medium text-xs truncate">{pos.strategyName || pos.symbol}</p>
                                             </div>
@@ -353,30 +338,30 @@ export default function FundDetails() {
                                             <span className="font-mono text-muted-foreground">{pos.symbol}</span>
                                             <span className="text-muted-foreground/40">•</span>
                                             <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
-                                            {m.totalPnL !== 0 && (
+                                            {metrics.totalPnL !== 0 && (
                                                 <>
                                                     <span className="text-muted-foreground/40">•</span>
-                                                    <span className={`font-mono font-semibold ${m.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                                                        {m.totalPnL >= 0 ? '+' : ''}{fmtNum(m.totalPnL)}
-                                                        <span className="font-normal ml-0.5">({m.roi >= 0 ? '+' : ''}{m.roi.toFixed(1)}%)</span>
+                                                    <span className={`font-mono font-semibold ${metrics.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                        {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
+                                                        <span className="font-normal ml-0.5">({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(1)}%)</span>
                                                     </span>
                                                 </>
                                             )}
                                         </div>
-                                        {m.avgBuyPrice > 0 && (
+                                        {metrics.avgBuyPrice > 0 && (
                                             <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
-                                                Avg Buy <span className="text-foreground/70">{unassignedCurrencySymbol}{m.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
-                                                {m.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{m.totalRemaining.toLocaleString()}</span></span>}
+                                                Avg Buy <span className="text-foreground/70">{unassignedCurrencySymbol}{metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
+                                                {metrics.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{metrics.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
                                         {/* Dates */}
                                         <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
-                                                {m.derivedStartDate ? format(new Date(m.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                                {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                             </span>
                                             <span className="text-muted-foreground/40">→</span>
-                                            <span>{m.derivedEndDate ? format(new Date(m.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                            <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
                                         </div>
                                     </div>
                                 )
