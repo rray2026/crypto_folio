@@ -172,7 +172,7 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         expect(metrics.breakevenPrice).toBeCloseTo(2333.3333, 4);
     });
 
-    it('returns breakEven as 0 when totalRemaining is 0', () => {
+    it('returns breakevenPrice as 0 when totalRemaining is 0', () => {
         const pos: Position = {
             id: 'pos-3',
             symbol: 'BTC/USDT',
@@ -192,5 +192,77 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         const metrics = getPositionMetrics(pos, txs, mockPrices);
         expect(metrics.totalRemaining).toBe(0);
         expect(metrics.breakevenPrice).toBe(0);
+    });
+});
+
+import { getFundMetrics } from './metrics';
+import type { Fund } from './types';
+
+describe('getFundMetrics', () => {
+    const baseFund: Fund = {
+        id: 'fund-1',
+        name: 'Test Fund',
+        initialAmount: 10000,
+        initialShares: 100,
+        currency: 'USDT',
+        createdAt: Date.now(),
+        status: 'ACTIVE',
+    };
+
+    it('returns unchanged NAV with no positions', () => {
+        const m = getFundMetrics(baseFund, []);
+        expect(m.totalPnL).toBe(0);
+        expect(m.currentValue).toBe(10000);
+        expect(m.initialNAV).toBe(100);
+        expect(m.currentNAV).toBe(100);
+        expect(m.navChangePct).toBe(0);
+    });
+
+    it('reflects positive PnL across multiple positions', () => {
+        const metrics = [
+            { totalPnL: 600 },
+            { totalPnL: 400 },
+        ] as ReturnType<typeof getPositionMetrics>[];
+        const m = getFundMetrics(baseFund, metrics);
+        // totalPnL = 1000, currentValue = 11000, initialNAV = 100, currentNAV = 110
+        expect(m.totalPnL).toBe(1000);
+        expect(m.currentValue).toBe(11000);
+        expect(m.initialNAV).toBe(100);
+        expect(m.currentNAV).toBe(110);
+        expect(m.navChangePct).toBe(10);
+    });
+
+    it('reflects negative PnL (loss scenario)', () => {
+        const metrics = [
+            { totalPnL: -2000 },
+        ] as ReturnType<typeof getPositionMetrics>[];
+        const m = getFundMetrics(baseFund, metrics);
+        // currentValue = 8000, currentNAV = 80, navChangePct = -20
+        expect(m.totalPnL).toBe(-2000);
+        expect(m.currentValue).toBe(8000);
+        expect(m.currentNAV).toBe(80);
+        expect(m.navChangePct).toBe(-20);
+    });
+
+    it('returns zero NAV values when initialShares is 0', () => {
+        const zeroSharesFund: Fund = { ...baseFund, initialShares: 0 };
+        const metrics = [{ totalPnL: 500 }] as ReturnType<typeof getPositionMetrics>[];
+        const m = getFundMetrics(zeroSharesFund, metrics);
+        expect(m.initialNAV).toBe(0);
+        expect(m.currentNAV).toBe(0);
+        expect(m.navChangePct).toBe(0);
+        // currentValue still computed correctly
+        expect(m.currentValue).toBe(10500);
+    });
+
+    it('sums totalPnL from all position metrics', () => {
+        const metrics = [
+            { totalPnL: 100 },
+            { totalPnL: -50 },
+            { totalPnL: 200 },
+        ] as ReturnType<typeof getPositionMetrics>[];
+        const m = getFundMetrics(baseFund, metrics);
+        expect(m.totalPnL).toBe(250);
+        expect(m.currentValue).toBe(10250);
     });
 });

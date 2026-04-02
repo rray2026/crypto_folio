@@ -167,6 +167,92 @@ describe('backup logic', () => {
     });
 
     // -----------------------------------------------------------------------
+    describe('importData error paths', () => {
+        it('rejects on empty file content', async () => {
+            mockReader.result = '';
+            const file = new File([''], 'backup.json', { type: 'application/json' });
+            await expect(importData(file)).rejects.toThrow('Empty file payload.');
+        });
+
+        it('rejects on malformed JSON', async () => {
+            mockReader.result = 'not valid json { broken';
+            const file = new File([''], 'backup.json', { type: 'application/json' });
+            await expect(importData(file)).rejects.toThrow();
+        });
+
+        it('rejects when transactions or positions arrays are missing', async () => {
+            const file = setMockFile({ appName: 'CryptoFolio', version: DB_VERSION, settings: {} });
+            await expect(importData(file)).rejects.toThrow('Malformed backup properties');
+        });
+
+        it('normalizes missing funds array to empty array and succeeds', async () => {
+            const payloadWithoutFunds = {
+                version: DB_VERSION,
+                timestamp: Date.now(),
+                appName: 'CryptoFolio',
+                transactions: [],
+                positions: [],
+                // no funds field
+                settings: { predefinedPairs: [], dashboardTimeRange: '1Y', theme: 'dark' },
+            };
+            await expect(importData(setMockFile(payloadWithoutFunds))).resolves.toBeUndefined();
+            expect(await db.funds.count()).toBe(0);
+        });
+
+        it('rejects when FileReader encounters a native error', async () => {
+            class ErrorFileReader {
+                onerror: (() => void) | null = null;
+                onload: (() => void) | null = null;
+                readAsText() {
+                    setTimeout(() => { if (this.onerror) this.onerror(); }, 0);
+                }
+            }
+            vi.stubGlobal('FileReader', ErrorFileReader);
+            try {
+                const file = new File([''], 'test.json');
+                await expect(importData(file)).rejects.toThrow('File Reader threw a native error');
+            } finally {
+                vi.stubGlobal('FileReader', MockFileReader);
+            }
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    describe('importData pairConfigs handling', () => {
+        it('derives pairConfigs from predefinedPairs when pairConfigs is absent', async () => {
+            const payload = makePayload({
+                settings: {
+                    predefinedPairs: ['BTC/USDT', 'ETH/USDT'],
+                    dashboardTimeRange: '1Y',
+                    theme: 'dark',
+                },
+            });
+            await importData(setMockFile(payload));
+            const { pairConfigs } = useSettingsStore.getState();
+            expect(pairConfigs).toHaveLength(2);
+            expect(pairConfigs[0].pair).toBe('BTC/USDT');
+            expect(pairConfigs[1].pair).toBe('ETH/USDT');
+            expect(pairConfigs[0].exchange).toBe('Binance');
+        });
+
+        it('uses pairConfigs from backup directly when present', async () => {
+            const payload: BackupPayload = {
+                ...makePayload(),
+                settings: {
+                    predefinedPairs: ['BTC/USDT'],
+                    pairConfigs: [{ pair: 'BTC/USDT', exchange: 'OKX', dataProvider: 'OKX', currency: 'USDT' }],
+                    dashboardTimeRange: '1Y',
+                    theme: 'dark',
+                },
+            };
+            await importData(setMockFile(payload));
+            const { pairConfigs } = useSettingsStore.getState();
+            expect(pairConfigs).toHaveLength(1);
+            expect(pairConfigs[0].exchange).toBe('OKX');
+        });
+    });
+
+    // -----------------------------------------------------------------------
     describe('importData with migration', () => {
         it('auto-migrates an older backup before hydrating the DB', async () => {
             // Register a synthetic v0 → v1 migration via the shared MIGRATIONS registry
