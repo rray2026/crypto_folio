@@ -57,6 +57,7 @@ export default function Transactions() {
     }, [setMobileHeader, openAdd])
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isSelectionMode, setIsSelectionMode] = useState(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
@@ -122,6 +123,7 @@ export default function Transactions() {
         } else if (confirmDeleteState.type === 'bulk') {
             await bulkDeleteTransactions(Array.from(selectedIds));
             setSelectedIds(new Set());
+            setIsSelectionMode(false);
         }
         setConfirmDeleteState({ isOpen: false, type: 'single' });
     }
@@ -134,14 +136,21 @@ export default function Transactions() {
             } else {
                 newSet.add(id);
             }
+            if (newSet.size === 0) setIsSelectionMode(false);
             return newSet;
         });
+    }
+
+    const enterSelectionMode = (id: string) => {
+        setIsSelectionMode(true);
+        setSelectedIds(new Set([id]));
     }
 
     const toggleAll = () => {
         if (!transactions) return;
         if (selectedIds.size === transactions.length) {
             setSelectedIds(new Set());
+            setIsSelectionMode(false);
         } else {
             setSelectedIds(new Set(transactions.map(t => t.id)));
         }
@@ -188,6 +197,7 @@ export default function Transactions() {
 
         setIsCreatePositionDialogOpen(false)
         setSelectedIds(new Set())
+        setIsSelectionMode(false)
         // toast.success("Position created", {
         //     description: `Successfully created ${newPositionName} with ${selectedTxs.length} trades.`
         // })
@@ -330,9 +340,10 @@ export default function Transactions() {
                     </div>
                 ) : (
                     transactions.map((tx) => (
-                        <div 
-                            key={tx.id} 
-                            onClick={() => toggleSelection(tx.id)}
+                        <div
+                            key={tx.id}
+                            onClick={() => isSelectionMode ? toggleSelection(tx.id) : navigate(`/transactions/${tx.id}`)}
+                            onDoubleClick={() => !isSelectionMode && enterSelectionMode(tx.id)}
                             className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
                                 selectedIds.has(tx.id) 
                                 ? 'bg-primary/10 border-primary shadow-sm' 
@@ -425,7 +436,9 @@ export default function Transactions() {
                                 tx={tx}
                                 currencySymbol={getCurrencySymbolForPair(tx.symbol, pairConfigs)}
                                 isSelected={selectedIds.has(tx.id)}
+                                isSelectionMode={isSelectionMode}
                                 onToggleSelection={toggleSelection}
+                                onEnterSelectionMode={enterSelectionMode}
                                 onViewDetail={(id) => navigate(`/transactions/${id}`)}
                                 onEdit={(id) => setEditingTxId(id)}
                                 onDelete={confirmSingleDelete}
@@ -626,7 +639,7 @@ export default function Transactions() {
                         
                         <div className="h-4 w-[1px] bg-border"></div>
                         
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedIds(new Set())} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
+                        <Button variant="ghost" size="icon" onClick={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
                             <X className="h-4 w-4" />
                         </Button>
                     </div>

@@ -9,7 +9,9 @@ import type { Transaction } from "@/lib/types"
 interface TransactionCardProps {
     tx: Transaction;
     isSelected?: boolean;
+    isSelectionMode?: boolean;
     onToggleSelection?: (id: string) => void;
+    onEnterSelectionMode?: (id: string) => void;
     onViewDetail: (id: string) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string, e: React.MouseEvent) => void;
@@ -42,12 +44,14 @@ export function TransactionListHeader({ showAsset = true }: { showAsset?: boolea
     );
 }
 
-export function TransactionCard({ 
-    tx, 
-    isSelected, 
-    onToggleSelection, 
-    onViewDetail, 
-    onEdit, 
+export function TransactionCard({
+    tx,
+    isSelected,
+    isSelectionMode,
+    onToggleSelection,
+    onEnterSelectionMode,
+    onViewDetail,
+    onEdit,
     onDelete,
     isEditing,
     setIsEditing,
@@ -55,18 +59,31 @@ export function TransactionCard({
     className = "",
     currencySymbol = "$"
 }: TransactionCardProps) {
-    const gridCols = showAsset 
-        ? "md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]" 
+    const gridCols = showAsset
+        ? "md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]"
         : "md:grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px]";
 
     const [base] = tx.symbol.split('/');
 
+    const handleClick = () => {
+        if (isSelectionMode) {
+            onToggleSelection?.(tx.id);
+        } else {
+            onViewDetail(tx.id);
+        }
+    };
+
+    const handleDoubleClick = () => {
+        if (!isSelectionMode) {
+            onEnterSelectionMode?.(tx.id);
+        }
+    };
+
     return (
         <div
-            onClick={() => onToggleSelection?.(tx.id)}
-            className={`group relative transition-all duration-200 ${
-                onToggleSelection ? 'cursor-pointer' : 'cursor-default'
-            } ${className}`}
+            onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
+            className={`group relative transition-all duration-200 cursor-pointer ${className}`}
         >
             {/* Desktop View: Sleek Row Layout */}
             <div className={`hidden md:grid ${gridCols} items-center px-6 py-3 rounded-xl border ${
