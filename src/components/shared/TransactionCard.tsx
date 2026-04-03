@@ -1,6 +1,6 @@
 import { useRef } from "react"
 import { format } from "date-fns"
-import { Eye, Edit, Trash2 } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
@@ -136,9 +136,6 @@ export function TransactionCard({
                 <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
                 
                 <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); onViewDetail(tx.id); }}>
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                    </Button>
                     <Dialog open={isEditing} onOpenChange={setIsEditing}>
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); onEdit(tx.id); }}>
@@ -180,9 +177,6 @@ export function TransactionCard({
                             </span>
                         </div>
                         <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onViewDetail(tx.id); }}>
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button>
                             <Dialog open={isEditing} onOpenChange={setIsEditing}>
                                 <DialogTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(tx.id); }}>

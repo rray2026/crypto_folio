@@ -9,7 +9,7 @@ import { TransactionEditForm } from "@/components/transactions/TransactionEditFo
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -377,9 +377,6 @@ export default function Transactions() {
                                     </div>
                                 </div>
                                 <div className="flex gap-1 -mr-2 -mt-1.5">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                         <DialogTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
