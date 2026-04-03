@@ -1,104 +1,163 @@
-# Technical Architecture
+# Technical Architecture Overview
 
-This document describes the design decisions, data models, and architectural patterns used in the CryptoFolio project.
+This document describes the system design principles, technology choices, and key architectural decisions in CryptoFolio.
+For detailed implementation of each module, see the files under `docs/technical/`.
 
-## 1. System Design
-CryptoFolio is a **Client-side only** Single Page Application (SPA). 
-- **Zero Backend**: No server-side database or API required for core functionality.
-- **Privacy & Security**: All user data (transactions, positions) is stored locally in the user's browser.
-- **High Performance**: Built with Vite and React for a fast, responsive experience.
+---
 
-## 2. Technology Stack
-- **Frontend Framework**: React 19
-- **Build Tool**: Vite
-- **Language**: TypeScript
-- **State Management**: Zustand (lightweight, minimal boilerplate)
-- **Persistent Storage**: IndexedDB (via **Dexie.js**)
-  - *Why IndexedDB?* Financial data can grow to thousands of records. IndexedDB provides better performance and storage capacity compared to `localStorage`.
-- **Styling**: Tailwind CSS + Shadcn/UI
-- **Charts**: Recharts (for performance visualization)
+## 1. Design Principles
 
-## 3. Core Data Models
+### Privacy First
 
-### Transaction
-Records specific buy or sell actions.
-```typescript
-interface Transaction {
-  id: string; // UUID
-  date: number; // Unix timestamp (ms)
-  symbol: string; // e.g., "BTC/USDT"
-  type: "BUY" | "SELL";
-  price: number;
-  quantity: number;
-  amount: number; // total = price * quantity
-  fee: number;
-  associatedPositionIds: string[]; // Links to Positions
-}
+**Zero backend**: the app's core functionality requires no server. All user data — transactions, positions, and settings — is stored in the browser's local IndexedDB and is never uploaded to any server.
+
+The only network requests are:
+- Real-time price fetching (public REST APIs from each exchange)
+- A-share and US stock prices, proxied through a Cloudflare Pages Function to work around browser CORS restrictions on Yahoo Finance
+
+### Client-Side SPA
+
+A single-page application built with React 19 + Vite 7, statically hosted on Cloudflare Pages. All routing is handled client-side by React Router; the server only needs to redirect all 404s to `index.html`.
+
+---
+
+## 2. Technology Choices
+
+| Layer | Technology | Reason |
+|---|---|---|
+| UI framework | React 19 | Mature ecosystem, concurrent features |
+| Language | TypeScript (strict mode) | Type safety; `noUnusedLocals` enforced |
+| Build tool | Vite 7 | Fast HMR, native ES module support |
+| Local storage | IndexedDB (Dexie v4) | GB-scale capacity, indexed queries — more suitable for structured financial data than localStorage |
+| State management | Zustand v5 | Lightweight, zero boilerplate, decoupled from Dexie |
+| Styling | Tailwind CSS v3 + Shadcn/UI | Atomic classes for rapid development; Radix UI accessibility foundation |
+| Financial math | Decimal.js (precision 20) | Eliminates JS floating-point errors for financial-grade accuracy |
+| Charts | Recharts | React-friendly, declarative |
+| Testing | Vitest + fake-indexeddb | Fast, shares Vite config, enables testing real DB logic |
+| Deployment | Cloudflare Pages + Workers | Free CDN hosting; Pages Functions handle CORS |
+
+---
+
+## 3. Data Layer Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                   UI Components                  │
+│         (React; reads/writes via Stores)         │
+└──────────────────────┬──────────────────────────┘
+                       │ action calls
+┌──────────────────────▼──────────────────────────┐
+│                  Zustand Stores                  │
+│  TransactionStore / PositionStore / FundStore    │
+│  SettingsStore (persist → localStorage)          │
+└──────────────────────┬──────────────────────────┘
+                       │ CRUD operations
+┌──────────────────────▼──────────────────────────┐
+│                 Dexie (IndexedDB)                │
+│      transactions / positions / funds tables     │
+└─────────────────────────────────────────────────┘
+
+Reactive data flow:
+UI ←── useLiveQuery() ── Dexie (auto-subscribes to changes, re-queries)
 ```
 
-### Position
-Aggregates transactions into a strategy/trade band.
-```typescript
-interface Position {
-  id: string;
-  symbol: string;
-  strategyName: string;
-  type: 'PRIMARY' | 'SHADOW';
-  status: "OPEN" | "CLOSED";
-  entries: Array<{
-    transactionId: string;
-    allocatedAmount: number; // Supports partial allocation
-  }>;
-}
+**Key rules:**
+- Stores are the **only write path**. UI components never call Dexie directly.
+- For reading data, prefer `useLiveQuery()` (reactive). Complex aggregations are done inside store actions.
+- Settings use Zustand `persist` to write to localStorage; they do not go through IndexedDB.
+
+---
+
+## 4. Core Module Relationships
+
+```
+types.ts          ← All type definitions (single source of truth)
+    │
+    ├── db.ts         ← Dexie database instance and schema
+    │       └── migrations.ts  ← Version upgrade logic
+    │
+    ├── math.ts       ← Decimal.js wrappers (precision-safe arithmetic)
+    │
+    ├── metrics.ts    ← P&L / ROI / NAV calculations (depends on math.ts)
+    │
+    └── backup.ts     ← Import / export (depends on db.ts + migrations.ts)
+
+store/
+    ├── useTransactionStore.ts  ← Transaction CRUD (depends on db.ts)
+    ├── usePositionStore.ts     ← Position CRUD (depends on db.ts)
+    ├── useFundStore.ts         ← Fund CRUD (depends on db.ts)
+    └── useSettingsStore.ts     ← Settings + price fetching (localStorage persist)
+
+pages/            ← Route-level pages (depend on store/ + metrics.ts)
+components/       ← UI components (depend on store/ + pages/)
 ```
 
-## Data Models (ERD Logic)
+---
 
-```mermaid
-erDiagram
-    TRANSACTION ||--o{ POSITION_ENTRY : "allocated to"
-    POSITION ||--|{ POSITION_ENTRY : "contains"
-    POSITION ||--o| POSITION_JOURNAL : "has notes"
-    SETTINGS ||--o| PREDEFINED_PAIRS : "manages"
+## 5. Key Architectural Decisions and Patterns
+
+### PRIMARY vs. SHADOW Positions (the double-counting problem)
+
+**Problem:** A user may want to analyze the same transaction under multiple strategy lenses (e.g. both a "short-term trade" and a "long-term position" used the same buy). Naively summing everything would double-count assets.
+
+**Solution:**
+- `PRIMARY`: real trading strategies. Included in global dashboard statistics.
+- `SHADOW`: sandbox strategies. Can reuse transactions already in PRIMARY for "what-if" scenarios, but are completely ignored by global metrics.
+- `getPortfolioMetrics` only iterates positions where `type === 'PRIMARY'`.
+
+### Partial Allocation
+
+**Problem:** After buying 1 BTC, the user may want to attribute only 0.3 BTC to a specific strategy.
+
+**Solution:** `PositionEntry.allocatedAmount` stores the **monetary amount** allocated (not quantity). The effective quantity is `allocatedAmount / transaction.price`. The same transaction can be referenced by multiple positions, each with its own `allocatedAmount`.
+
+### Bidirectional Reference Maintenance
+
+**Problem:** Transaction and Position are in a many-to-many relationship; deleting one side must clean up references on the other.
+
+**Solution:**
+- `Transaction.associatedPositionIds` (reverse index): allows fast lookup of all positions linked to a transaction.
+- `Position.entries` (forward entries): contains `transactionId + allocatedAmount`.
+- Store actions (`deleteTransaction` / `deletePosition`) atomically maintain both sides.
+
+### On-the-fly Metric Calculation
+
+**Design choice:** Metrics are not stored in the database; they are computed fresh on demand by `getPositionMetrics()`.
+
+**Trade-offs:**
+- Pro: data is always consistent; no sync needed; logic is clear.
+- Con: computational overhead for large numbers of positions (acceptable at current scale).
+- Optimization: `useLiveQuery()` only triggers recalculation when the underlying data changes.
+
+### Immutable Migrations
+
+Each DB version's migration logic is permanently frozen once released — users' browsers may have already executed it. New requirements always require a new version; old migrations are never edited. See [Database & Migrations](technical/02-database.md).
+
+---
+
+## 6. Deployment Architecture
+
+```
+GitHub main/master ──→ GitHub Actions ──→ Cloudflare Pages (production)
+GitHub claude/**   ──→ GitHub Actions ──→ Cloudflare Pages (nightly)
+
+Cloudflare Pages hosts:
+  /dist/           ← Vite build output (React SPA)
+  /api/stock-price ← Cloudflare Pages Function (Yahoo Finance proxy)
 ```
 
-- **Relational Integrity**: 
-  - Cascading Logic: Transactions are the "source of truth". Deleting a transaction automatically removes its `transactionId` from all associated `Position` entries.
-  - Decoupling: Deleting a Position does **not** delete the linked Transactions, allowing for re-allocation.
+See [Deployment Guide](deployment.md) for details.
 
-## Technical Nuances
+---
 
-### 1. The Metric Engine
-The calculation logic in `src/lib/metrics.ts` uses a custom math wrapper (`src/lib/math.ts`) to avoid JavaScript floating-point errors.
-- **Avg Entry**: Calculated as `Total Investment / Total Quantity` for the specific direction (Long/Short).
-- **PNL Calculation**: 
-  - `Realized`: `(Selling Price - Buying Price) * Sold Quantity`.
-  - `Unrealized`: `(Current Price - Avg Entry) * Remaining Quantity`.
+## 7. Further Reading
 
-### 2. Price API & Caching
-- **Source**: Binance Public API (`ticker/price`).
-- **Caching Strategy**: 
-  - TTL: 5 minutes (300,000ms).
-  - Background Refresh: The `Dashboard` and `PositionDetails` pages trigger background updates for OPEN positions and PINNED pairs.
-  - Manual Override: Pull-to-refresh resets the cache timestamp.
-
-### 3. Binance Import Pipeline
-- **Regex Parsing**: Fees are extracted from strings (e.g., `0.00123BNB`) using greedy regex matching.
-- **Deduplication**: Uses the `OrderId` as the primary key in IndexedDB to prevent double-counting.
-
-## 4. Key Architectural Patterns
-
-### Primary vs. Shadow Positions (Double-Counting Solution)
-One of the core challenges in portfolio tracking is visualizing different strategies without double-counting assets in the total balance.
-- **PRIMARY Positions**: Represent unique allocations of capital. Global portfolio metrics (Total PnL, ROI) **only** include data from PRIMARY positions.
-- **SHADOW Positions**: Used for analysis and "what-if" scenarios. They can reuse transactions already allocated to PRIMARY positions for experimentation.
-
-### Metric Engine
-The metrics calculation logic is decoupled from the UI:
-- **`lib/math.ts`**: High-precision utility functions using standard JS numbers (future transition to `decimal.js` planned if needed).
-- **`lib/metrics.ts`**: Core logic for calculating volume-weighted average price (VWAP), Realized PnL, and ROI.
-
-## 5. Storage Flow
-1. **User Input** -> Saved to **Dexie.js** (IndexedDB).
-2. **State Sync** -> Zustand stores listen for DB changes or trigger refreshes.
-3. **Reactive UI** -> Components re-render based on Zustand state or `useLiveQuery` hooks.
+- [Data Model](technical/01-data-model.md)
+- [Database & Migration System](technical/02-database.md)
+- [State Management](technical/03-state-management.md)
+- [Metrics Engine](technical/04-metrics-engine.md)
+- [Price Fetching System](technical/05-price-fetching.md)
+- [Routing & Pages](technical/06-routing-and-pages.md)
+- [Component Architecture](technical/07-components.md)
+- [Backup & Restore](technical/08-backup-restore.md)
+- [Testing](technical/09-testing.md)
