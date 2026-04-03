@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -9,7 +9,7 @@ import { TransactionEditForm } from "@/components/transactions/TransactionEditFo
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, Eye, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -57,6 +57,9 @@ export default function Transactions() {
     }, [setMobileHeader, openAdd])
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isSelectionMode, setIsSelectionMode] = useState(false)
+    const mobileLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const mobileLongPressTriggered = useRef(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
@@ -122,6 +125,7 @@ export default function Transactions() {
         } else if (confirmDeleteState.type === 'bulk') {
             await bulkDeleteTransactions(Array.from(selectedIds));
             setSelectedIds(new Set());
+            setIsSelectionMode(false);
         }
         setConfirmDeleteState({ isOpen: false, type: 'single' });
     }
@@ -134,14 +138,21 @@ export default function Transactions() {
             } else {
                 newSet.add(id);
             }
+            if (newSet.size === 0) setIsSelectionMode(false);
             return newSet;
         });
+    }
+
+    const enterSelectionMode = (id: string) => {
+        setIsSelectionMode(true);
+        setSelectedIds(new Set([id]));
     }
 
     const toggleAll = () => {
         if (!transactions) return;
         if (selectedIds.size === transactions.length) {
             setSelectedIds(new Set());
+            setIsSelectionMode(false);
         } else {
             setSelectedIds(new Set(transactions.map(t => t.id)));
         }
@@ -188,6 +199,7 @@ export default function Transactions() {
 
         setIsCreatePositionDialogOpen(false)
         setSelectedIds(new Set())
+        setIsSelectionMode(false)
         // toast.success("Position created", {
         //     description: `Successfully created ${newPositionName} with ${selectedTxs.length} trades.`
         // })
@@ -330,10 +342,27 @@ export default function Transactions() {
                     </div>
                 ) : (
                     transactions.map((tx) => (
-                        <div 
-                            key={tx.id} 
-                            onClick={() => toggleSelection(tx.id)}
-                            className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
+                        <div
+                            key={tx.id}
+                            onPointerDown={(e) => {
+                                if (e.pointerType !== 'touch') return;
+                                mobileLongPressTriggered.current = false;
+                                mobileLongPressTimer.current = setTimeout(() => {
+                                    mobileLongPressTriggered.current = true;
+                                    if (!isSelectionMode) {
+                                        navigator.vibrate?.(40);
+                                        enterSelectionMode(tx.id);
+                                    }
+                                }, 300);
+                            }}
+                            onPointerUp={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
+                            onPointerLeave={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
+                            onDoubleClick={() => { if (!isSelectionMode) enterSelectionMode(tx.id); }}
+                            onClick={() => {
+                                if (mobileLongPressTriggered.current) return;
+                                isSelectionMode ? toggleSelection(tx.id) : navigate(`/transactions/${tx.id}`);
+                            }}
+                            className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer select-none group ${
                                 selectedIds.has(tx.id) 
                                 ? 'bg-primary/10 border-primary shadow-sm' 
                                 : 'bg-background/40 border-border hover:border-primary/40 hover:bg-background/60 shadow-sm'
@@ -351,9 +380,6 @@ export default function Transactions() {
                                     </div>
                                 </div>
                                 <div className="flex gap-1 -mr-2 -mt-1.5">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }}>
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
                                     <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
                                         <DialogTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
@@ -425,7 +451,9 @@ export default function Transactions() {
                                 tx={tx}
                                 currencySymbol={getCurrencySymbolForPair(tx.symbol, pairConfigs)}
                                 isSelected={selectedIds.has(tx.id)}
+                                isSelectionMode={isSelectionMode}
                                 onToggleSelection={toggleSelection}
+                                onEnterSelectionMode={enterSelectionMode}
                                 onViewDetail={(id) => navigate(`/transactions/${id}`)}
                                 onEdit={(id) => setEditingTxId(id)}
                                 onDelete={confirmSingleDelete}
@@ -626,7 +654,7 @@ export default function Transactions() {
                         
                         <div className="h-4 w-[1px] bg-border"></div>
                         
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedIds(new Set())} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
+                        <Button variant="ghost" size="icon" onClick={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
                             <X className="h-4 w-4" />
                         </Button>
                     </div>

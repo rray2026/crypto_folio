@@ -1,5 +1,6 @@
+import { useRef } from "react"
 import { format } from "date-fns"
-import { Eye, Edit, Trash2 } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
@@ -9,7 +10,9 @@ import type { Transaction } from "@/lib/types"
 interface TransactionCardProps {
     tx: Transaction;
     isSelected?: boolean;
+    isSelectionMode?: boolean;
     onToggleSelection?: (id: string) => void;
+    onEnterSelectionMode?: (id: string) => void;
     onViewDetail: (id: string) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string, e: React.MouseEvent) => void;
@@ -42,12 +45,14 @@ export function TransactionListHeader({ showAsset = true }: { showAsset?: boolea
     );
 }
 
-export function TransactionCard({ 
-    tx, 
-    isSelected, 
-    onToggleSelection, 
-    onViewDetail, 
-    onEdit, 
+export function TransactionCard({
+    tx,
+    isSelected,
+    isSelectionMode,
+    onToggleSelection,
+    onEnterSelectionMode,
+    onViewDetail,
+    onEdit,
     onDelete,
     isEditing,
     setIsEditing,
@@ -55,18 +60,57 @@ export function TransactionCard({
     className = "",
     currencySymbol = "$"
 }: TransactionCardProps) {
-    const gridCols = showAsset 
-        ? "md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]" 
+    const gridCols = showAsset
+        ? "md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]"
         : "md:grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px]";
 
     const [base] = tx.symbol.split('/');
 
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const longPressTriggered = useRef(false);
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (e.pointerType !== 'touch') return;
+        longPressTriggered.current = false;
+        longPressTimer.current = setTimeout(() => {
+            longPressTriggered.current = true;
+            if (!isSelectionMode) {
+                navigator.vibrate?.(40);
+                onEnterSelectionMode?.(tx.id);
+            }
+        }, 300);
+    };
+
+    const cancelLongPress = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+
+    const handleDoubleClick = () => {
+        if (!isSelectionMode) {
+            onEnterSelectionMode?.(tx.id);
+        }
+    };
+
+    const handleClick = () => {
+        if (longPressTriggered.current) return;
+        if (isSelectionMode) {
+            onToggleSelection?.(tx.id);
+        } else {
+            onViewDetail(tx.id);
+        }
+    };
+
     return (
         <div
-            onClick={() => onToggleSelection?.(tx.id)}
-            className={`group relative transition-all duration-200 ${
-                onToggleSelection ? 'cursor-pointer' : 'cursor-default'
-            } ${className}`}
+            onPointerDown={handlePointerDown}
+            onPointerUp={cancelLongPress}
+            onPointerLeave={cancelLongPress}
+            onDoubleClick={handleDoubleClick}
+            onClick={handleClick}
+            className={`group relative transition-all duration-200 cursor-pointer select-none ${className}`}
         >
             {/* Desktop View: Sleek Row Layout */}
             <div className={`hidden md:grid ${gridCols} items-center px-6 py-3 rounded-xl border ${
@@ -93,9 +137,6 @@ export function TransactionCard({
                 <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
                 
                 <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); onViewDetail(tx.id); }}>
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                    </Button>
                     <Dialog open={isEditing} onOpenChange={setIsEditing}>
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={(e) => { e.stopPropagation(); onEdit(tx.id); }}>
@@ -137,9 +178,6 @@ export function TransactionCard({
                             </span>
                         </div>
                         <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onViewDetail(tx.id); }}>
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button>
                             <Dialog open={isEditing} onOpenChange={setIsEditing}>
                                 <DialogTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(tx.id); }}>
