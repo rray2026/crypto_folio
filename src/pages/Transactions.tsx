@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -58,6 +58,8 @@ export default function Transactions() {
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isSelectionMode, setIsSelectionMode] = useState(false)
+    const mobileLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const mobileLongPressTriggered = useRef(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
@@ -342,9 +344,20 @@ export default function Transactions() {
                     transactions.map((tx) => (
                         <div
                             key={tx.id}
-                            onClick={() => isSelectionMode ? toggleSelection(tx.id) : navigate(`/transactions/${tx.id}`)}
-                            onDoubleClick={() => !isSelectionMode && enterSelectionMode(tx.id)}
-                            className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
+                            onPointerDown={() => {
+                                mobileLongPressTriggered.current = false;
+                                mobileLongPressTimer.current = setTimeout(() => {
+                                    mobileLongPressTriggered.current = true;
+                                    if (!isSelectionMode) enterSelectionMode(tx.id);
+                                }, 500);
+                            }}
+                            onPointerUp={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
+                            onPointerLeave={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
+                            onClick={() => {
+                                if (mobileLongPressTriggered.current) return;
+                                isSelectionMode ? toggleSelection(tx.id) : navigate(`/transactions/${tx.id}`);
+                            }}
+                            className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer select-none group ${
                                 selectedIds.has(tx.id) 
                                 ? 'bg-primary/10 border-primary shadow-sm' 
                                 : 'bg-background/40 border-border hover:border-primary/40 hover:bg-background/60 shadow-sm'

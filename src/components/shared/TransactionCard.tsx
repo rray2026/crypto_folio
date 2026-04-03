@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { format } from "date-fns"
 import { Eye, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -65,7 +66,28 @@ export function TransactionCard({
 
     const [base] = tx.symbol.split('/');
 
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const longPressTriggered = useRef(false);
+
+    const handlePointerDown = () => {
+        longPressTriggered.current = false;
+        longPressTimer.current = setTimeout(() => {
+            longPressTriggered.current = true;
+            if (!isSelectionMode) {
+                onEnterSelectionMode?.(tx.id);
+            }
+        }, 500);
+    };
+
+    const cancelLongPress = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+
     const handleClick = () => {
+        if (longPressTriggered.current) return;
         if (isSelectionMode) {
             onToggleSelection?.(tx.id);
         } else {
@@ -73,17 +95,13 @@ export function TransactionCard({
         }
     };
 
-    const handleDoubleClick = () => {
-        if (!isSelectionMode) {
-            onEnterSelectionMode?.(tx.id);
-        }
-    };
-
     return (
         <div
+            onPointerDown={handlePointerDown}
+            onPointerUp={cancelLongPress}
+            onPointerLeave={cancelLongPress}
             onClick={handleClick}
-            onDoubleClick={handleDoubleClick}
-            className={`group relative transition-all duration-200 cursor-pointer ${className}`}
+            className={`group relative transition-all duration-200 cursor-pointer select-none ${className}`}
         >
             {/* Desktop View: Sleek Row Layout */}
             <div className={`hidden md:grid ${gridCols} items-center px-6 py-3 rounded-xl border ${
