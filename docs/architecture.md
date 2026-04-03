@@ -1,163 +1,163 @@
-# 技术架构总览
+# Technical Architecture Overview
 
-本文档描述 CryptoFolio 的系统设计原则、技术选型和关键架构决策。
-各模块的详细实现请参阅 `docs/technical/` 目录下的专项文档。
-
----
-
-## 1. 设计原则
-
-### 隐私优先（Privacy First）
-
-**零后端**：应用所有核心功能不依赖任何服务端。用户的交易数据、持仓信息和设置全部存储在浏览器本地 IndexedDB，不会上传到任何服务器。
-
-唯一的网络请求：
-- 实时价格获取（调用各交易所的公开 API）
-- A 股/美股价格通过 Cloudflare Pages Function 代理 Yahoo Finance（CORS 限制导致需要代理）
-
-### 客户端 SPA
-
-React 19 + Vite 7 构建的单页应用，通过 Cloudflare Pages 静态托管。所有路由由 React Router 在客户端处理，服务端只需将所有 404 重定向到 `index.html`。
+This document describes the system design principles, technology choices, and key architectural decisions in CryptoFolio.
+For detailed implementation of each module, see the files under `docs/technical/`.
 
 ---
 
-## 2. 技术选型
+## 1. Design Principles
 
-| 层次 | 技术 | 选型原因 |
-|------|------|---------|
-| UI 框架 | React 19 | 生态成熟，并发特性 |
-| 语言 | TypeScript（strict 模式） | 类型安全，`noUnusedLocals` |
-| 构建 | Vite 7 | 极快的 HMR，ES Module 原生支持 |
-| 本地存储 | IndexedDB（Dexie v4） | 容量大（GB 级），支持索引查询，比 localStorage 更适合结构化财务数据 |
-| 状态管理 | Zustand v5 | 轻量，无样板代码，与 Dexie 解耦 |
-| 样式 | Tailwind CSS v3 + Shadcn/UI | 原子类快速开发，Radix UI 无障碍基础 |
-| 财务计算 | Decimal.js（精度 20） | 解决 JS 浮点问题，金融级精度 |
-| 图表 | Recharts | React 友好，声明式 |
-| 测试 | Vitest + fake-indexeddb | 速度快，与 Vite 同配置，可测试真实 DB 逻辑 |
-| 部署 | Cloudflare Pages + Workers | 免费 CDN 托管，Pages Function 处理 CORS |
+### Privacy First
+
+**Zero backend**: the app's core functionality requires no server. All user data — transactions, positions, and settings — is stored in the browser's local IndexedDB and is never uploaded to any server.
+
+The only network requests are:
+- Real-time price fetching (public REST APIs from each exchange)
+- A-share and US stock prices, proxied through a Cloudflare Pages Function to work around browser CORS restrictions on Yahoo Finance
+
+### Client-Side SPA
+
+A single-page application built with React 19 + Vite 7, statically hosted on Cloudflare Pages. All routing is handled client-side by React Router; the server only needs to redirect all 404s to `index.html`.
 
 ---
 
-## 3. 数据层架构
+## 2. Technology Choices
+
+| Layer | Technology | Reason |
+|---|---|---|
+| UI framework | React 19 | Mature ecosystem, concurrent features |
+| Language | TypeScript (strict mode) | Type safety; `noUnusedLocals` enforced |
+| Build tool | Vite 7 | Fast HMR, native ES module support |
+| Local storage | IndexedDB (Dexie v4) | GB-scale capacity, indexed queries — more suitable for structured financial data than localStorage |
+| State management | Zustand v5 | Lightweight, zero boilerplate, decoupled from Dexie |
+| Styling | Tailwind CSS v3 + Shadcn/UI | Atomic classes for rapid development; Radix UI accessibility foundation |
+| Financial math | Decimal.js (precision 20) | Eliminates JS floating-point errors for financial-grade accuracy |
+| Charts | Recharts | React-friendly, declarative |
+| Testing | Vitest + fake-indexeddb | Fast, shares Vite config, enables testing real DB logic |
+| Deployment | Cloudflare Pages + Workers | Free CDN hosting; Pages Functions handle CORS |
+
+---
+
+## 3. Data Layer Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │                   UI Components                  │
-│         (React 组件，读写通过 Store)              │
+│         (React; reads/writes via Stores)         │
 └──────────────────────┬──────────────────────────┘
-                       │ 调用 action
+                       │ action calls
 ┌──────────────────────▼──────────────────────────┐
 │                  Zustand Stores                  │
 │  TransactionStore / PositionStore / FundStore    │
-│  SettingsStore（persist → localStorage）         │
+│  SettingsStore (persist → localStorage)          │
 └──────────────────────┬──────────────────────────┘
-                       │ CRUD 操作
+                       │ CRUD operations
 ┌──────────────────────▼──────────────────────────┐
-│                   Dexie（IndexedDB）              │
-│    transactions / positions / funds 三张表        │
+│                 Dexie (IndexedDB)                │
+│      transactions / positions / funds tables     │
 └─────────────────────────────────────────────────┘
 
-响应式数据流：
-UI ←── useLiveQuery() ── Dexie（自动订阅变化，重新查询）
+Reactive data flow:
+UI ←── useLiveQuery() ── Dexie (auto-subscribes to changes, re-queries)
 ```
 
-**关键规则：**
-- Store 是**唯一写入路径**。UI 组件不直接操作 Dexie。
-- 读取数据：优先 `useLiveQuery()`（响应式），复杂聚合在 Store action 中完成。
-- Settings 使用 Zustand `persist` 存入 localStorage，不走 IndexedDB。
+**Key rules:**
+- Stores are the **only write path**. UI components never call Dexie directly.
+- For reading data, prefer `useLiveQuery()` (reactive). Complex aggregations are done inside store actions.
+- Settings use Zustand `persist` to write to localStorage; they do not go through IndexedDB.
 
 ---
 
-## 4. 核心模块关系
+## 4. Core Module Relationships
 
 ```
-types.ts          ← 所有类型定义（单一事实来源）
+types.ts          ← All type definitions (single source of truth)
     │
-    ├── db.ts         ← Dexie 数据库实例和 Schema
-    │       └── migrations.ts  ← 版本升级逻辑
+    ├── db.ts         ← Dexie database instance and schema
+    │       └── migrations.ts  ← Version upgrade logic
     │
-    ├── math.ts       ← Decimal.js 封装（精度安全的四则运算）
+    ├── math.ts       ← Decimal.js wrappers (precision-safe arithmetic)
     │
-    ├── metrics.ts    ← 盈亏/ROI/NAV 计算（依赖 math.ts）
+    ├── metrics.ts    ← P&L / ROI / NAV calculations (depends on math.ts)
     │
-    └── backup.ts     ← 导入/导出（依赖 db.ts + migrations.ts）
+    └── backup.ts     ← Import / export (depends on db.ts + migrations.ts)
 
 store/
-    ├── useTransactionStore.ts  ← 交易 CRUD（依赖 db.ts）
-    ├── usePositionStore.ts     ← 持仓 CRUD（依赖 db.ts）
-    ├── useFundStore.ts         ← 基金 CRUD（依赖 db.ts）
-    └── useSettingsStore.ts     ← 设置 + 价格获取（localStorage persist）
+    ├── useTransactionStore.ts  ← Transaction CRUD (depends on db.ts)
+    ├── usePositionStore.ts     ← Position CRUD (depends on db.ts)
+    ├── useFundStore.ts         ← Fund CRUD (depends on db.ts)
+    └── useSettingsStore.ts     ← Settings + price fetching (localStorage persist)
 
-pages/            ← 路由页面（依赖 store/ + metrics.ts）
-components/       ← UI 组件（依赖 store/ + pages/）
+pages/            ← Route-level pages (depend on store/ + metrics.ts)
+components/       ← UI components (depend on store/ + pages/)
 ```
 
 ---
 
-## 5. 关键架构决策与设计模式
+## 5. Key Architectural Decisions and Patterns
 
-### PRIMARY vs SHADOW 持仓（双计数问题）
+### PRIMARY vs. SHADOW Positions (the double-counting problem)
 
-**问题：** 用户可能想在多个策略维度分析同一笔交易（如"短线策略"和"长期仓位"都用了同一笔买入），如果简单合计会导致资产被重复计数。
+**Problem:** A user may want to analyze the same transaction under multiple strategy lenses (e.g. both a "short-term trade" and a "long-term position" used the same buy). Naively summing everything would double-count assets.
 
-**解决方案：**
-- `PRIMARY`：实盘策略，纳入全局仪表盘统计。
-- `SHADOW`：沙盒策略，可复用已在 PRIMARY 中的交易，但全局指标完全忽略它。
-- 全局指标（`getPortfolioMetrics`）只遍历 `type === 'PRIMARY'` 的持仓。
+**Solution:**
+- `PRIMARY`: real trading strategies. Included in global dashboard statistics.
+- `SHADOW`: sandbox strategies. Can reuse transactions already in PRIMARY for "what-if" scenarios, but are completely ignored by global metrics.
+- `getPortfolioMetrics` only iterates positions where `type === 'PRIMARY'`.
 
-### 部分分配（Partial Allocation）
+### Partial Allocation
 
-**问题：** 买入 1 BTC 后，可能只想将其中 0.3 BTC 算入某个策略。
+**Problem:** After buying 1 BTC, the user may want to attribute only 0.3 BTC to a specific strategy.
 
-**解决方案：** `PositionEntry.allocatedAmount` 存储分配的**金额**（不是数量），计算有效数量时 `= allocatedAmount / transaction.price`。同一笔交易可被多个持仓引用，各自使用不同的 `allocatedAmount`。
+**Solution:** `PositionEntry.allocatedAmount` stores the **monetary amount** allocated (not quantity). The effective quantity is `allocatedAmount / transaction.price`. The same transaction can be referenced by multiple positions, each with its own `allocatedAmount`.
 
-### 双向引用维护
+### Bidirectional Reference Maintenance
 
-**问题：** Transaction 和 Position 是多对多关系，删除一侧时需要清理另一侧的引用。
+**Problem:** Transaction and Position are in a many-to-many relationship; deleting one side must clean up references on the other.
 
-**解决方案：** 
-- `Transaction.associatedPositionIds`（反向索引）：允许从交易快速找到所有关联持仓。
-- `Position.entries`（正向条目）：包含 transactionId + allocatedAmount。
-- Store action（deleteTransaction / deletePosition）负责原子地维护双向引用。
+**Solution:**
+- `Transaction.associatedPositionIds` (reverse index): allows fast lookup of all positions linked to a transaction.
+- `Position.entries` (forward entries): contains `transactionId + allocatedAmount`.
+- Store actions (`deleteTransaction` / `deletePosition`) atomically maintain both sides.
 
-### 指标实时计算
+### On-the-fly Metric Calculation
 
-**设计选择：** 指标不存储在数据库，每次需要时实时计算（`getPositionMetrics()`）。
+**Design choice:** Metrics are not stored in the database; they are computed fresh on demand by `getPositionMetrics()`.
 
-**权衡：**
-- 优点：数据永远一致，无需同步，逻辑清晰。
-- 缺点：大量持仓时有性能开销（当前规模下可接受）。
-- 优化：`useLiveQuery()` 仅在相关数据变化时重新计算。
+**Trade-offs:**
+- Pro: data is always consistent; no sync needed; logic is clear.
+- Con: computational overhead for large numbers of positions (acceptable at current scale).
+- Optimization: `useLiveQuery()` only triggers recalculation when the underlying data changes.
 
-### 迁移系统的不可变性
+### Immutable Migrations
 
-每个 DB 版本的迁移逻辑一经发布就不能修改——用户的浏览器可能已经执行过该版本的迁移。新需求必须添加新的版本迁移，不能改旧的。详见 [数据库与迁移文档](technical/02-database.md)。
-
----
-
-## 6. 部署架构
-
-```
-GitHub main/master ──→ GitHub Actions ──→ Cloudflare Pages（生产）
-GitHub claude/**   ──→ GitHub Actions ──→ Cloudflare Pages（nightly）
-
-Cloudflare Pages 托管内容：
-  /dist/           ← Vite 构建产物（React SPA）
-  /api/stock-price ← Cloudflare Pages Function（Yahoo Finance 代理）
-```
-
-详见 [部署指南](deployment.md)。
+Each DB version's migration logic is permanently frozen once released — users' browsers may have already executed it. New requirements always require a new version; old migrations are never edited. See [Database & Migrations](technical/02-database.md).
 
 ---
 
-## 7. 延伸阅读
+## 6. Deployment Architecture
 
-- [数据模型详解](technical/01-data-model.md)
-- [数据库与迁移系统](technical/02-database.md)
-- [状态管理设计](technical/03-state-management.md)
-- [指标计算引擎](technical/04-metrics-engine.md)
-- [价格获取系统](technical/05-price-fetching.md)
-- [路由与页面设计](technical/06-routing-and-pages.md)
-- [组件架构](technical/07-components.md)
-- [备份与恢复](technical/08-backup-restore.md)
-- [测试体系](technical/09-testing.md)
+```
+GitHub main/master ──→ GitHub Actions ──→ Cloudflare Pages (production)
+GitHub claude/**   ──→ GitHub Actions ──→ Cloudflare Pages (nightly)
+
+Cloudflare Pages hosts:
+  /dist/           ← Vite build output (React SPA)
+  /api/stock-price ← Cloudflare Pages Function (Yahoo Finance proxy)
+```
+
+See [Deployment Guide](deployment.md) for details.
+
+---
+
+## 7. Further Reading
+
+- [Data Model](technical/01-data-model.md)
+- [Database & Migration System](technical/02-database.md)
+- [State Management](technical/03-state-management.md)
+- [Metrics Engine](technical/04-metrics-engine.md)
+- [Price Fetching System](technical/05-price-fetching.md)
+- [Routing & Pages](technical/06-routing-and-pages.md)
+- [Component Architecture](technical/07-components.md)
+- [Backup & Restore](technical/08-backup-restore.md)
+- [Testing](technical/09-testing.md)

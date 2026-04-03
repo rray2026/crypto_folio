@@ -1,69 +1,69 @@
-# 组件架构设计
+# Component Architecture
 
-## 1. 目录结构
+## 1. Directory Structure
 
 ```
 src/components/
-├── funds/          # 基金相关表单和卡片
-├── layout/         # 应用骨架（导航、头部）
-├── positions/      # 持仓相关表单
-├── shared/         # 跨页面复用的展示组件
-├── transactions/   # 交易相关表单和导入流程
-└── ui/             # Shadcn/UI 基础组件库（不手动编辑）
+├── funds/          # Fund-related forms and cards
+├── layout/         # Application shell (navigation, headers)
+├── positions/      # Position-related forms
+├── shared/         # Cross-page reusable display components
+├── transactions/   # Transaction forms and import flows
+└── ui/             # Shadcn/UI base component library (do not hand-edit)
 ```
 
 ---
 
-## 2. Shadcn/UI 基础组件（`src/components/ui/`）
+## 2. Shadcn/UI Base Components (`src/components/ui/`)
 
-这些组件来自 [Shadcn/UI](https://ui.shadcn.com/)，基于 Radix UI 原语 + Tailwind CSS 样式。
+These components come from [Shadcn/UI](https://ui.shadcn.com/), built on Radix UI primitives styled with Tailwind CSS.
 
-**规则：不要手动修改 `src/components/ui/` 中的任何文件。**
+**Rule: never manually modify any file inside `src/components/ui/`.**
 
-添加新 Shadcn 组件：
+To add a new Shadcn component:
 ```bash
 npx shadcn@latest add <component-name>
 ```
 
-**当前已安装的 Shadcn 组件（部分）：**
+**Currently installed Shadcn components (partial list):**
 
-| 组件 | 用途 |
-|------|------|
-| `Button` | 按钮，支持 variant（default/outline/ghost/destructive） |
-| `Input` | 文本输入框 |
-| `Label` | 表单标签 |
-| `Dialog` | 模态弹窗（含 Trigger/Content/Header/Footer） |
-| `Select` | 下拉选择框 |
-| `Tabs` | 标签页 |
-| `Card` | 卡片容器（含 Header/Content/Footer） |
-| `Badge` | 状态标签（绿色/红色/灰色） |
-| `Checkbox` | 复选框 |
-| `Popover` | 浮层（用于日期选择器等） |
-| `Calendar` | 日历组件 |
-| `Command` | 命令面板（搜索 + 列表） |
-| `DateTimePicker` | 日期时间选择器（自定义，基于 Calendar + Popover） |
-| `PullToRefresh` | 下拉刷新（移动端手势） |
-
----
-
-## 3. 布局组件（`src/components/layout/`）
-
-详见 [06-routing-and-pages.md](./06-routing-and-pages.md) 的布局架构章节。
-
-| 组件 | 职责 |
-|------|------|
-| `AppLayout` | 顶级容器，组合 Sidebar/MobileHeader/MobileNav/Outlet |
-| `Sidebar` | 桌面端左侧导航栏（宽度固定，深色背景） |
-| `MobileHeader` | 移动端顶部动态标题栏 |
-| `MobileNav` | 移动端底部 Tab 导航栏 |
+| Component | Use |
+|---|---|
+| `Button` | Button with variants: default / outline / ghost / destructive |
+| `Input` | Text input field |
+| `Label` | Form label |
+| `Dialog` | Modal dialog (Trigger / Content / Header / Footer) |
+| `Select` | Dropdown selector |
+| `Tabs` | Tab panels |
+| `Card` | Card container (Header / Content / Footer) |
+| `Badge` | Status label (green / red / gray) |
+| `Checkbox` | Checkbox |
+| `Popover` | Floating overlay (used by date pickers, etc.) |
+| `Calendar` | Calendar component |
+| `Command` | Command palette (search + list) |
+| `DateTimePicker` | Date-time picker (custom, built on Calendar + Popover) |
+| `PullToRefresh` | Pull-to-refresh gesture (mobile) |
 
 ---
 
-## 4. 共享展示组件（`src/components/shared/`）
+## 3. Layout Components (`src/components/layout/`)
+
+See the layout architecture section in [06-routing-and-pages.md](./06-routing-and-pages.md) for full details.
+
+| Component | Responsibility |
+|---|---|
+| `AppLayout` | Top-level container combining Sidebar / MobileHeader / MobileNav / Outlet |
+| `Sidebar` | Desktop left-side navigation (fixed width, dark background) |
+| `MobileHeader` | Mobile dynamic title bar at the top |
+| `MobileNav` | Mobile bottom tab navigation bar |
+
+---
+
+## 4. Shared Display Components (`src/components/shared/`)
 
 ### 4.1 PositionCard
 
-在持仓列表页（`/positions`）中展示单个持仓的摘要信息。
+Displays a single position summary on the positions list page (`/positions`).
 
 ```tsx
 interface PositionCardProps {
@@ -73,136 +73,136 @@ interface PositionCardProps {
 }
 ```
 
-**展示内容：**
-- 标的 symbol + 策略名称
-- PRIMARY/SHADOW 类型标识
-- OPEN/CLOSED 状态标识
-- 核心指标：ROI、总盈亏、当前价
-- 开仓日期 / 平仓日期
+**Displayed content:**
+- Asset symbol + strategy name
+- PRIMARY / SHADOW type indicator
+- OPEN / CLOSED status indicator
+- Key metrics: ROI, total P&L, current price
+- Open date / close date
 
-**颜色规则：**
-- 盈利（PnL > 0）→ 绿色
-- 亏损（PnL < 0）→ 红色
-- 持平 → 灰色
+**Color rules:**
+- P&L > 0 → green
+- P&L < 0 → red
+- P&L = 0 → muted gray
 
 ### 4.2 TransactionCard
 
-在交易记录列表中展示单条交易。有两种展示形态：
+Displays a single transaction in the transaction list. Two layout variants:
 
-- **桌面端**：表格行（`TransactionRow`）
-- **移动端**：卡片（`TransactionCard`）
+- **Desktop**: table row (`TransactionRow`)
+- **Mobile**: card (`TransactionCard`)
 
 ```tsx
 interface TransactionCardProps {
   transaction: Transaction;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
-  showPosition?: boolean;  // 是否显示关联持仓
+  showPosition?: boolean;  // Whether to show linked position info
 }
 ```
 
-**展示内容：**
-- 日期时间
-- BUY/SELL 类型标签（颜色区分）
+**Displayed content:**
+- Date and time
+- BUY / SELL type badge (color-coded)
 - Symbol
-- 数量、价格、总额
-- 手续费
-- 关联持仓数量（如已关联）
+- Quantity, price, total amount
+- Fee
+- Number of linked positions (if any)
 
 ### 4.3 TransactionListHeader
 
-交易列表的桌面端表头，定义列宽和标签，与 `TransactionRow` 配合使用。
+The desktop column header for the transaction list. Defines column widths and labels; used together with `TransactionRow`.
 
 ---
 
-## 5. 基金组件（`src/components/funds/`）
+## 5. Fund Components (`src/components/funds/`)
 
 ### 5.1 FundForm
 
-创建/编辑基金的表单组件（Dialog 内容）。
+Form for creating or editing a fund (rendered inside a Dialog).
 
-**字段：**
-- 基金名称（必填）
-- 描述（可选）
-- 初始本金（必填，数字输入）
-- 初始份额（必填，数字输入）
-- 计价货币（默认 USDT）
+**Fields:**
+- Fund name (required)
+- Description (optional)
+- Initial capital (required, numeric)
+- Initial shares (required, numeric)
+- Quote currency (default: USDT)
 
-**逻辑：**
-- 实时计算并预览初始 NAV（`初始本金 / 初始份额`）。
-- 提交时调用 `useFundStore.createFund()` 或 `updateFund()`。
+**Logic:**
+- Computes and previews the initial NAV in real time (`initialAmount / initialShares`).
+- On submit: calls `useFundStore.createFund()` or `updateFund()`.
 
 ### 5.2 FundCard
 
-基金列表页的单个基金卡片。
+Single fund card on the funds list page.
 
-**展示内容：**
-- 基金名称
-- 初始本金 vs 当前净值
-- 初始 NAV vs 当前 NAV
-- NAV 涨跌幅（颜色）
-- 关联持仓数量
-- ACTIVE/CLOSED 状态
+**Displayed content:**
+- Fund name
+- Initial capital vs. current net value
+- Initial NAV vs. current NAV
+- NAV change % (color-coded)
+- Number of linked positions
+- ACTIVE / CLOSED status
 
 ---
 
-## 6. 持仓组件（`src/components/positions/`）
+## 6. Position Components (`src/components/positions/`)
 
 ### 6.1 PositionForm
 
-创建新持仓的表单（可从交易列表选中多条交易后触发，也可独立创建空持仓）。
+Form for creating a new position. Can be triggered by selecting multiple transactions on the list, or opened independently to create an empty position.
 
-**字段：**
-- Symbol（必填，下拉选择或自定义输入）
-- 策略名称（可选）
-- 持仓类型（PRIMARY/SHADOW 切换开关）
-- 关联基金（可选下拉）
-- 备注（可选）
+**Fields:**
+- Symbol (required; dropdown with predefined pairs or custom input)
+- Strategy name (optional)
+- Position type (PRIMARY / SHADOW toggle)
+- Associated fund (optional dropdown)
+- Notes (optional)
 
-**预填充逻辑：**
-- 从交易列表选择多条交易创建持仓时，Symbol 自动填入（所有选中交易必须同 Symbol）。
-- 系统验证：不同 Symbol 的交易不能混入同一持仓。
+**Pre-fill logic:**
+- When triggered from the transaction list with multiple selections, the symbol is pre-filled (all selected transactions must share the same symbol).
+- Validation: transactions with different symbols cannot be mixed into the same position.
 
 ### 6.2 PositionEditForm
 
-编辑现有持仓的表单，字段与 PositionForm 类似，额外支持编辑日志（Journal）：
-- 开仓原因
-- 平仓原因
-- 情绪评分（1-5 星）
-- 复盘笔记
+Form for editing an existing position. Fields are similar to `PositionForm`, with the addition of the journal editor:
+- Entry reason
+- Exit reason
+- Mood score (1–5 stars)
+- Post-trade review notes
 
 ---
 
-## 7. 交易组件（`src/components/transactions/`）
+## 7. Transaction Components (`src/components/transactions/`)
 
 ### 7.1 TransactionForm
 
-手动录入单条交易的表单。
+Form for manually entering a single transaction.
 
-**字段：**
-- 交易对（SymbolSelector 组件）
-- 类型（BUY/SELL 切换）
-- 日期时间（DateTimePicker）
-- 价格
-- 数量
-- 总额（自动计算：`价格 × 数量`，也可手动输入反推数量）
-- 手续费
-- 备注
+**Fields:**
+- Trading pair (`SymbolSelector` component)
+- Type (BUY / SELL toggle)
+- Date and time (`DateTimePicker`)
+- Price
+- Quantity
+- Total amount (auto-calculated: `price × quantity`; can be entered manually to back-calculate quantity)
+- Fee
+- Notes
 
-**自动计算逻辑：**
-- 修改价格或数量 → 自动更新总额。
-- 修改总额 → 自动反推数量（`总额 / 价格`）。
-- 使用 `math.ts` 工具确保精度。
+**Auto-calculation logic:**
+- Change price or quantity → automatically updates total amount.
+- Change total amount → automatically back-calculates quantity (`amount / price`).
+- Uses `math.ts` helpers throughout to maintain precision.
 
 ### 7.2 TransactionEditForm
 
-编辑已有交易，字段与 TransactionForm 相同。
+Form for editing an existing transaction. Fields are identical to `TransactionForm`.
 
-**注意：** 编辑会影响所有已关联该交易的持仓的指标计算（指标是实时计算的，编辑交易数据即时生效）。
+**Note:** Editing affects the metrics of all positions that are already linked to this transaction (metrics are computed on the fly, so edits take effect immediately).
 
 ### 7.3 SymbolSelector
 
-交易对选择组件，结合 Command（搜索 + 列表）和自定义输入：
+Trading pair selector component combining Command (search + list) with custom input:
 
 ```tsx
 interface SymbolSelectorProps {
@@ -212,95 +212,95 @@ interface SymbolSelectorProps {
 }
 ```
 
-**行为：**
-- 展示 `predefinedPairs` 列表，支持搜索过滤。
-- 允许输入任意自定义交易对（不在预设列表中的也接受）。
-- 选择后 Popover 自动关闭。
+**Behavior:**
+- Displays the `predefinedPairs` list, filterable by search.
+- Accepts any custom trading pair not in the predefined list.
+- Automatically closes the Popover after a selection.
 
 ### 7.4 ImportTransactionsButton
 
-触发文件导入的按钮和处理逻辑：
+Button and processing logic for file-based transaction import.
 
-**支持的文件格式：**
-- Binance 交易导出（Excel `.xlsx`）
-- 通用 CSV 格式
+**Supported file formats:**
+- Binance trade export (Excel `.xlsx`)
+- Generic CSV
 
-**Binance 导入流程：**
-1. 用户点击按钮，选择 Excel 文件。
-2. `xlsx` 库解析文件，转换为 JSON 行。
-3. 按 Binance 的列格式解析字段（时间、交易对、方向、价格、数量、金额、手续费、OrderId）。
-4. 手续费聚合：同一 OrderId 的多条 Trade 记录的手续费求和。
-5. 调用 `bulkAddTransactions()` 批量导入，自动去重（orderId 去重）。
-6. 返回 `{ added, skipped }` 结果提示。
+**Binance import flow:**
+1. User clicks the button and selects an Excel file.
+2. The `xlsx` library parses the file into JSON rows.
+3. Fields are extracted using Binance's column format (time, pair, direction, price, quantity, amount, fee, OrderId).
+4. Fee aggregation: fees from multiple Trade rows under the same OrderId are summed.
+5. Calls `bulkAddTransactions()` for batch import with automatic deduplication (by `orderId`).
+6. Returns `{ added, skipped }` result notification.
 
-**手续费提取正则：**
+**Fee extraction regex:**
 ```typescript
-// 费用字段如："0.00123 BNB"
+// Fee field example: "0.00123 BNB"
 const feeMatch = feeStr.match(/^([\d.]+)\s*([A-Z]+)$/);
 const feeAmount = parseFloat(feeMatch?.[1] ?? '0');
 ```
 
 ### 7.5 AiImportFlow
 
-AI 辅助导入流程（多步 Dialog）：
+AI-assisted import flow (multi-step Dialog):
 
-1. 用户粘贴原始交易文本（来自任意格式）。
-2. 调用 Claude API 解析文本，提取结构化交易数据。
-3. 预览解析结果，用户确认或修改。
-4. 确认后调用 `bulkAddTransactions()` 导入。
+1. User pastes raw transaction text (from any format).
+2. Calls the Claude API to parse the text and extract structured transaction data.
+3. Previews the parsed results; user confirms or edits.
+4. On confirmation: calls `bulkAddTransactions()` to import.
 
-**设计说明：** 处理各交易所不同格式的历史数据，或用户自己整理的非标准格式。
+**Design rationale:** Handles historical data from exchanges in non-standard formats, or manually organized records.
 
 ---
 
-## 8. 样式约定
+## 8. Style Conventions
 
-### 颜色语义
+### Semantic color usage
 
 ```typescript
-// 盈亏颜色
+// P&L color
 const pnlClass = pnl > 0 ? 'text-green-500' : pnl < 0 ? 'text-red-500' : 'text-muted-foreground';
 
-// 类型标签
+// Transaction type badge
 const typeClass = type === 'BUY' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
 ```
 
-### class 合并工具
+### Class merging utility
 
 ```typescript
-// 使用 cn() 合并 Tailwind 类名（避免冲突）
+// Use cn() to merge Tailwind class names (resolves conflicts correctly)
 import { cn } from '@/lib/utils';
 
 <div className={cn('base-class', condition && 'conditional-class', props.className)} />
 ```
 
-`cn()` 内部使用 `clsx` + `tailwind-merge`，正确处理 Tailwind 的类名优先级。
+`cn()` uses `clsx` + `tailwind-merge` internally, correctly handling Tailwind class priority and deduplication.
 
-### 深色模式
+### Dark mode
 
-所有组件应同时提供亮色和深色样式：
+All components should provide both light and dark styles:
 ```tsx
 <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 ```
 
-或使用 CSS 变量（来自 `src/index.css`）：
+Or use CSS variables (from `src/index.css`):
 ```tsx
 <div className="bg-background text-foreground">
 ```
 
 ---
 
-## 9. 新增组件指南
+## 9. Adding New Components
 
-### 添加业务组件
+### Adding a feature component
 
-1. 确定放置位置（`funds/`、`positions/`、`transactions/` 或 `shared/`）。
-2. 使用 `@/` 路径别名导入。
-3. 用 `cn()` 合并类名。
-4. 如需 Shadcn 基础组件，先 `npx shadcn@latest add <name>`。
+1. Determine the correct directory (`funds/`, `positions/`, `transactions/`, or `shared/`).
+2. Use the `@/` path alias for imports.
+3. Use `cn()` for class merging.
+4. If a Shadcn base component is needed, run `npx shadcn@latest add <name>` first.
 
-### 注意事项
+### Important rules
 
-- **不要**在 `src/components/ui/` 中手动添加或修改文件。
-- 尽量使用 CSS 变量（`bg-background`、`text-foreground` 等），而非硬编码颜色，确保深色模式正确。
-- 金额显示始终用 `toFixed(2)` 或自定义格式化函数，不直接展示浮点数。
+- **Never** manually add or modify files inside `src/components/ui/`.
+- Prefer CSS variables (`bg-background`, `text-foreground`, etc.) over hardcoded colors to ensure correct dark mode behavior.
+- Always format monetary values with `toFixed(2)` or a dedicated formatting utility — never render raw floating-point numbers.

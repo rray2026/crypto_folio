@@ -1,53 +1,75 @@
-# 名词解释 (Glossary)
+# Glossary
 
-本文档旨在统一 CryptoFolio 中的核心指标、术语及其背后的计算逻辑。
+This document defines the core metrics, terms, and their underlying calculation logic used in CryptoFolio.
 
-## 1. 持仓策略 (Position Strategies)
+## 1. Position Strategies
 
-### ACTIVE (进行中)
-当前仍然持有资产（持仓数量 > 0）或尚未手动关闭的策略。
-*   **状态标志**：通常由绿色呼吸灯动态显示。
+### OPEN (Active)
+A position that currently holds assets (remaining quantity > 0) or has not yet been manually closed.
+- **Status indicator**: typically shown as a green animated dot.
 
-### ARCHIVED (已归档)
-该策略下的交易目标已完成，且手动标记为“关闭”。
-*   **状态标志**：通常显示为灰色静止状态。
+### CLOSED (Archived)
+A position whose trading goal has been completed and has been manually marked as closed.
+- **Status indicator**: typically shown as a static gray indicator.
 
-### PRIMARY (实盘)
-正式的持仓策略。其对应的资产价值、盈亏和 ROI 会计入**全局仪表盘**的持仓统计中。
+### PRIMARY (Real Trade)
+A real trading strategy. Its asset value, P&L, and ROI are included in the **global dashboard** portfolio statistics.
 
-### SHADOW (观察/影随)
-沙盒或模拟策略。用于记录“如果当时我买了...”的观察实验，或者用于纯技术分析。
-*   **特点**：其数据不会影响全局钱包余额或盈亏统计。
-
----
-
-## 2. 核心财务指标 (Financial Metrics)
-
-### Avg. Cost (当前持仓均价 / 摊薄成本)
-该指标采用 **“回本均价 (Breakeven Price)”** 逻辑。它不仅考虑买入成本，还考虑已卖出部分对剩余持仓成本的影响。
-*   **计算公式**：`(累计买入总额 - 累计卖出总额) / 当前剩余持仓数量`
-*   **意义**：告诉你当前剩余的资产需要以什么价格卖出才能达到**净盈亏平衡**。
-*   **注意**：如果该值显示为 `--`，通常意味着你已经通过部分减仓“回本”（持仓成本变为负数），或者当前持仓数量为 0。
-
-### Avg. Exit (平均卖出均价)
-该策略下所有已成交 **SELL** 订单的加权平均价。
-*   **计算公式**：`累计卖出总额 / 累计卖出总数量`
-
-### Unrealized PnL (未实现盈亏)
-当前持仓资产按实时市场价格计算的浮动收益。
-*   **计算公式**：`(当前市价 - 摊薄成本) * 当前持仓数量`
-
-### Realized PnL (已实现盈亏)
-通过卖出操作已经锁定到账户的利润或亏损。
-
-### ROI (投资回报率)
-该策略对于所投入本金的收益百分比。
-*   **计算公式**：`(未实现盈亏 + 已实现盈亏) / 累计买入总额 * 100%`
+### SHADOW (Sandbox / Shadow)
+A sandbox or simulation strategy. Used to record observations such as "what if I hadn't stopped the loss" or for pure technical analysis experiments.
+- **Key property**: its data does not affect the global portfolio balance or P&L statistics.
 
 ---
 
-## 3. 交易相关 (Transactions)
+## 2. Core Financial Metrics
 
-### 关联比例 (Linkage)
-持仓详情页中的每一笔交易都可以“部分或全部”关联到持仓。
-*   **示例**：你买入 1 BTC，可以将其中的 0.5 BTC 关联到“激进交易策略”，剩下的 0.5 BTC 关联到“长期囤币策略”。系统会根据你分配的数量精确计算每个策略的成本。
+### Avg. Cost (Breakeven Price / Diluted Cost Basis)
+This metric uses **breakeven price** logic. It accounts not only for the buy cost but also for the effect that partially sold holdings have on the remaining cost basis.
+- **Formula**: `(Total Buy Amount − Total Sell Amount) / Current Remaining Quantity`
+- **Meaning**: the price at which the remaining holdings must be sold to reach **net break-even**.
+- **Note**: if this value displays as `--`, it typically means you have already recouped your cost through partial sales (the remaining cost basis has gone negative), or the current holding quantity is 0.
+
+### Avg. Exit (Average Sell Price)
+The volume-weighted average price of all completed **SELL** orders under this strategy.
+- **Formula**: `Total Sell Amount / Total Sell Quantity`
+
+### Unrealized PnL
+The floating profit or loss on current holdings, calculated using the real-time market price.
+- **Formula**: `(Current Market Price − Avg. Cost) × Current Remaining Quantity`
+
+### Realized PnL
+The profit or loss that has been locked in through sell executions.
+
+### ROI (Return on Investment)
+The percentage return on the capital deployed in this strategy.
+- **Formula**: `(Unrealized PnL + Realized PnL) / Total Buy Amount × 100%`
+
+---
+
+## 3. Transactions
+
+### Allocation (Linkage)
+Each transaction on a position detail page can be partially or fully linked to that position.
+- **Example**: you buy 1 BTC and can allocate 0.5 BTC to the "Aggressive Trading" strategy and the remaining 0.5 BTC to the "Long-term Hold" strategy. The system calculates the cost basis for each strategy precisely based on the quantity you allocate.
+
+### Order ID (orderId)
+The original order identifier from the exchange. Used for deduplication when importing bulk trade histories — re-importing the same file will not create duplicate records.
+
+---
+
+## 4. Fund (NAV Model)
+
+### NAV (Net Asset Value per Share)
+The value of a single fund share.
+- **Formula**: `Total Fund Value / Total Shares`
+- **Initial NAV**: `initialAmount / initialShares`
+- **Current NAV**: `(initialAmount + Total P&L of all linked positions) / initialShares`
+
+### NAV Change %
+- **Formula**: `(Current NAV − Initial NAV) / Initial NAV × 100%`
+
+### Assets Value
+The total market value of open position holdings within the fund: sum of `(remaining quantity × current price)` across all OPEN positions.
+
+### Cash Value
+`Current Fund Value − Assets Value`. Represents the uninvested portion of the fund.

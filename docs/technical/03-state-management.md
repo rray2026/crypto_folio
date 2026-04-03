@@ -1,26 +1,26 @@
-# 状态管理设计
+# State Management Design
 
-## 1. 整体架构
+## 1. Overview
 
-CryptoFolio 使用 [Zustand](https://github.com/pmndrs/zustand) v5 管理全局状态，共四个 Store：
+CryptoFolio uses [Zustand](https://github.com/pmndrs/zustand) v5 for global state management, organized into four stores:
 
-| Store | 文件 | 职责 | 持久化 |
-|-------|------|------|--------|
-| `useTransactionStore` | `src/store/useTransactionStore.ts` | 交易记录 CRUD | IndexedDB（Dexie） |
-| `usePositionStore` | `src/store/usePositionStore.ts` | 持仓策略 CRUD | IndexedDB（Dexie） |
-| `useFundStore` | `src/store/useFundStore.ts` | 基金管理 | IndexedDB（Dexie） |
-| `useSettingsStore` | `src/store/useSettingsStore.ts` | 设置、价格、主题 | localStorage（Zustand persist） |
+| Store | File | Responsibility | Persistence |
+|---|---|---|---|
+| `useTransactionStore` | `src/store/useTransactionStore.ts` | Transaction CRUD | IndexedDB (Dexie) |
+| `usePositionStore` | `src/store/usePositionStore.ts` | Position CRUD | IndexedDB (Dexie) |
+| `useFundStore` | `src/store/useFundStore.ts` | Fund management | IndexedDB (Dexie) |
+| `useSettingsStore` | `src/store/useSettingsStore.ts` | Settings, prices, theme | localStorage (Zustand persist) |
 
-**设计原则：**
-- Store 是**唯一的数据写入路径**，任何数据变更必须通过 Store action，不能直接操作 Dexie。
-- Store action 负责维护双向引用的完整性（见数据模型文档）。
-- 响应式数据读取使用 `useLiveQuery()`，不在 Store 中缓存全量数据列表。
+**Design principles:**
+- Stores are the **only write path** for all data changes. No component should write to Dexie directly — all mutations go through store actions.
+- Store actions are responsible for maintaining bidirectional reference integrity (see the data model document).
+- Reactive data reads use `useLiveQuery()` — stores do not cache full data lists.
 
 ---
 
 ## 2. useTransactionStore
 
-### 2.1 Action 一览
+### 2.1 Actions
 
 ```typescript
 interface TransactionStore {
@@ -35,32 +35,32 @@ interface TransactionStore {
 }
 ```
 
-### 2.2 关键逻辑
+### 2.2 Key logic
 
-**`addTransaction`：**
-1. 生成 UUID 作为 `id`。
-2. 确保 `associatedPositionIds` 默认为空数组。
-3. 调用 `db.transactions.add(tx)`。
+**`addTransaction`:**
+1. Generate a UUID as `id`.
+2. Ensure `associatedPositionIds` defaults to an empty array.
+3. Call `db.transactions.add(tx)`.
 
-**`bulkAddTransactions`（导入去重）：**
-- 去重策略一：`id`（UUID）级别——如果 `id` 已存在则跳过。
-- 去重策略二：`orderId` 级别——如果 `orderId` 非空且与现有记录重复则跳过（防止 Binance 订单重复导入）。
-- 返回 `{ added, skipped }` 统计结果。
-- 实现方式：先从 IndexedDB 取出所有现有 `id` 和 `orderId` 构建 Set，逐条过滤后批量 `db.transactions.bulkAdd()`。
+**`bulkAddTransactions` (import deduplication):**
+- Dedup strategy 1: `id` (UUID) level — skip if `id` already exists.
+- Dedup strategy 2: `orderId` level — skip if `orderId` is non-null and matches an existing record (prevents re-importing the same Binance order).
+- Returns `{ added, skipped }` statistics.
+- Implementation: fetch all existing `id` and `orderId` values into a Set, filter each incoming record, then batch insert via `db.transactions.bulkAdd()`.
 
-**`deleteTransaction`：**
-1. 从 `db.transactions` 删除记录。
-2. 取出 `associatedPositionIds` 列表。
-3. 批量更新关联持仓：从每个 Position 的 `entries` 中过滤掉该 transactionId。
+**`deleteTransaction`:**
+1. Delete the record from `db.transactions`.
+2. Retrieve its `associatedPositionIds` list.
+3. Update all linked positions: filter the deleted `transactionId` out of each Position's `entries`.
 
-**`bulkDeleteTransactions`：**
-- 循环调用 `deleteTransaction`（保证每条的双向清理逻辑都执行）。
+**`bulkDeleteTransactions`:**
+- Calls `deleteTransaction` in a loop (ensuring the bidirectional cleanup logic runs for every record).
 
 ---
 
 ## 3. usePositionStore
 
-### 3.1 Action 一览
+### 3.1 Actions
 
 ```typescript
 interface PositionStore {
@@ -80,34 +80,34 @@ interface PositionStore {
 }
 ```
 
-### 3.2 关键逻辑
+### 3.2 Key logic
 
-**`createPosition`：**
-1. 生成 UUID。
-2. 确保 `entries` 默认为空数组，`status` 默认为 `'OPEN'`。
-3. `db.positions.add(position)`。
+**`createPosition`:**
+1. Generate a UUID.
+2. Ensure `entries` defaults to `[]` and `status` defaults to `'OPEN'`.
+3. Call `db.positions.add(position)`.
 
-**`addTransactionToPosition`：**
-1. 读取当前 Position。
-2. 查找 entries 中是否已有该 `transactionId`。
-   - 如已存在：更新 `allocatedAmount`。
-   - 如不存在：追加新 entry。
-3. 更新 Position：`db.positions.put(updated)`。
-4. 更新 Transaction：将 `positionId` 加入 `associatedPositionIds`（如尚未包含）。
+**`addTransactionToPosition`:**
+1. Read the current Position.
+2. Check if `transactionId` already exists in `entries`.
+   - If yes: update `allocatedAmount`.
+   - If no: append a new entry.
+3. Update the Position: `db.positions.put(updated)`.
+4. Update the Transaction: add `positionId` to `associatedPositionIds` if not already present.
 
-**`removeTransactionFromPosition`：**
-1. 从 Position.entries 中过滤掉该 transactionId。
-2. 更新 Position。
-3. 从 Transaction.associatedPositionIds 中移除该 positionId。
-4. 更新 Transaction。
+**`removeTransactionFromPosition`:**
+1. Filter the `transactionId` out of `Position.entries`.
+2. Update the Position.
+3. Remove `positionId` from `Transaction.associatedPositionIds`.
+4. Update the Transaction.
 
-**`deletePosition`：**
-1. 读取当前 Position，取出所有 entries 的 transactionId。
-2. `db.positions.delete(id)`。
-3. 批量更新关联交易，从其 `associatedPositionIds` 中移除该 positionId。
-4. **不删除** Transaction（交易是独立数据原子）。
+**`deletePosition`:**
+1. Read the current Position; extract all `transactionId` values from its entries.
+2. Call `db.positions.delete(id)`.
+3. Update each linked transaction: remove `positionId` from its `associatedPositionIds`.
+4. **Do not delete** the Transactions (they are independent data atoms).
 
-**`closePosition`：**
+**`closePosition`:**
 ```typescript
 await db.positions.update(id, {
   status: 'CLOSED',
@@ -115,7 +115,7 @@ await db.positions.update(id, {
 });
 ```
 
-**`openPosition`：**
+**`openPosition`:**
 ```typescript
 await db.positions.update(id, {
   status: 'OPEN',
@@ -127,7 +127,7 @@ await db.positions.update(id, {
 
 ## 4. useFundStore
 
-### 4.1 Action 一览
+### 4.1 Actions
 
 ```typescript
 interface FundStore {
@@ -139,23 +139,23 @@ interface FundStore {
 }
 ```
 
-### 4.2 关键逻辑
+### 4.2 Key logic
 
-**`createFund`：**
-1. 生成 UUID，设置 `createdAt: Date.now()`。
-2. `db.funds.add(fund)`。
+**`createFund`:**
+1. Generate a UUID and set `createdAt: Date.now()`.
+2. Call `db.funds.add(fund)`.
 
-**`deleteFund`：**
-1. `db.funds.delete(id)`。
-2. 查找所有 `fundId === id` 的持仓。
-3. 批量将这些持仓的 `fundId` 更新为 `undefined`。
+**`deleteFund`:**
+1. Call `db.funds.delete(id)`.
+2. Find all positions where `fundId === id`.
+3. Batch-update those positions to set `fundId = undefined`.
 
-**`assignPositionToFund`：**
+**`assignPositionToFund`:**
 ```typescript
 await db.positions.update(positionId, { fundId });
 ```
 
-**`unassignPosition`：**
+**`unassignPosition`:**
 ```typescript
 await db.positions.update(positionId, { fundId: undefined });
 ```
@@ -164,9 +164,9 @@ await db.positions.update(positionId, { fundId: undefined });
 
 ## 5. useSettingsStore
 
-### 5.1 结构与持久化
+### 5.1 Structure and persistence
 
-这是唯一使用 **Zustand `persist` 中间件**的 Store，数据存储在 `localStorage`（不用 IndexedDB）：
+This is the only store using **Zustand's `persist` middleware**, storing data in `localStorage` (not IndexedDB):
 
 ```typescript
 const useSettingsStore = create(
@@ -174,59 +174,59 @@ const useSettingsStore = create(
     (set, get) => ({ ...actions }),
     {
       name: 'crypto-folio-settings', // localStorage key
-      version: 4,                    // 与 DB_VERSION 保持同步
-      migrate: (state, version) => { /* localStorage 迁移 */ },
+      version: 4,                    // in sync with DB_VERSION
+      migrate: (state, version) => { /* localStorage migration */ },
     }
   )
 );
 ```
 
-### 5.2 State 结构
+### 5.2 State structure
 
 ```typescript
 interface SettingsState {
-  // 交易对配置
-  predefinedPairs: string[];         // 预设交易对列表（默认含 BTC/USDT 等）
-  pairConfigs: PairConfig[];         // 每个交易对的 exchange 和 dataProvider
-  pinnedPairs: string[];             // 仪表盘固定显示的交易对
+  // Trading pair configuration
+  predefinedPairs: string[];         // Suggested trading pair list (defaults include BTC/USDT, etc.)
+  pairConfigs: PairConfig[];         // Exchange and dataProvider mapping per pair
+  pinnedPairs: string[];             // Pairs pinned to the dashboard ticker
 
-  // 价格缓存
+  // Price cache
   prices: Record<string, {
     price: number;
-    timestamp: number;               // 上次更新时间（用于 TTL 判断）
-    currency: string;                // 计价货币
+    timestamp: number;               // Last fetch time (for TTL comparison)
+    currency: string;                // Quote currency
   }>;
 
-  // UI 设置
+  // UI settings
   dashboardTimeRange: '1M' | '3M' | '6M' | '1Y' | 'ALL';
   theme: 'dark' | 'light' | 'system';
 }
 
 interface PairConfig {
-  symbol: string;           // 如 "BTC/USDT"
-  exchange?: string;        // 如 "Binance"
-  dataProvider?: string;    // 如 "Yahoo Finance"
+  symbol: string;           // e.g. "BTC/USDT"
+  exchange?: string;        // e.g. "Binance"
+  dataProvider?: string;    // e.g. "Yahoo Finance"
 }
 ```
 
-### 5.3 Action 一览
+### 5.3 Actions
 
 ```typescript
 interface SettingsActions {
-  // 主题
+  // Theme
   setTheme(theme: 'dark' | 'light' | 'system'): void
 
-  // 时间范围
+  // Time range
   setDashboardTimeRange(range: DashboardTimeRange): void
 
-  // 交易对管理
+  // Pair management
   addPair(pair: string, exchange?: string, dataProvider?: string): void
   removePair(pair: string): void
   updatePairExchange(pair: string, exchange: string): void
   updatePairDataProvider(pair: string, dataProvider: string): void
-  togglePinPair(pair: string): void  // 固定/取消固定到仪表盘
+  togglePinPair(pair: string): void  // Pin/unpin from the dashboard
 
-  // 价格
+  // Prices
   fetchPrices(
     symbols?: string[],
     force?: boolean,
@@ -235,20 +235,20 @@ interface SettingsActions {
 }
 ```
 
-### 5.4 价格获取逻辑
+### 5.4 Price fetching logic
 
-`fetchPrices` 是 Settings Store 中最复杂的 action：
+`fetchPrices` is the most complex action in the Settings Store:
 
 ```typescript
 async fetchPrices(symbols?, force = false, exactSymbolsOnly = false) {
-  const TTL = 5 * 60 * 1000; // 5 分钟缓存
+  const TTL = 5 * 60 * 1000; // 5-minute cache
   const now = Date.now();
 
-  // 确定需要获取价格的交易对
+  // Determine which pairs need a price fetch
   const targetSymbols = symbols
     ?? (exactSymbolsOnly ? [] : get().predefinedPairs);
 
-  // 过滤掉缓存未过期的（非强制刷新时）
+  // Filter out pairs whose cache has not yet expired (unless force refresh)
   const toFetch = force
     ? targetSymbols
     : targetSymbols.filter(s => {
@@ -256,12 +256,12 @@ async fetchPrices(symbols?, force = false, exactSymbolsOnly = false) {
         return !cached || now - cached.timestamp > TTL;
       });
 
-  // 并发获取所有价格
+  // Fetch all prices concurrently
   const results = await Promise.allSettled(
     toFetch.map(symbol => fetchPriceFromProvider(symbol, get()))
   );
 
-  // 更新缓存
+  // Update the cache
   const newPrices = { ...get().prices };
   results.forEach((result, i) => {
     if (result.status === 'fulfilled') {
@@ -276,21 +276,21 @@ async fetchPrices(symbols?, force = false, exactSymbolsOnly = false) {
 }
 ```
 
-**触发时机：**
-- Dashboard 页面挂载时（获取所有固定交易对）。
-- PositionDetails 页面挂载时（获取该持仓标的的价格）。
-- 下拉刷新（PullToRefresh）时使用 `force: true` 绕过缓存。
+**Trigger points:**
+- Dashboard page mount (fetches all pinned pairs).
+- PositionDetails page mount (fetches the price for that position's symbol).
+- Pull-to-refresh uses `force: true` to bypass the cache.
 
-### 5.5 localStorage 迁移
+### 5.5 localStorage migration
 
-当 `persist` 的 `version` 字段不匹配时（如用户上次登录用的是老版本 App），`migrate` 函数被调用：
+When the `persist` `version` field does not match (e.g. the user last used an older app version), the `migrate` function is called:
 
 ```typescript
 migrate: (persistedState, version) => {
   let state = persistedState;
-  // 逐版本升级，类似数据库迁移
+  // Upgrade step by step, analogous to the database migration system
   if (version < 4) {
-    // 执行 MIGRATIONS[2].upgradeLocalStorage(state)
+    // Run MIGRATIONS[2].upgradeLocalStorage(state)
   }
   return state;
 }
@@ -298,37 +298,37 @@ migrate: (persistedState, version) => {
 
 ---
 
-## 6. 响应式数据读取
+## 6. Reactive Data Reads
 
-Store 里不存储全量数据列表，组件使用 `useLiveQuery()` 直接订阅 IndexedDB：
+Stores do not hold full data lists. Components subscribe to IndexedDB directly using `useLiveQuery()`:
 
 ```typescript
-// 在组件中使用
+// In a component
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 
 const positions = useLiveQuery(
   () => db.positions.where('status').equals('OPEN').toArray(),
-  []  // 依赖项
+  []  // dependencies
 );
 ```
 
-`useLiveQuery` 的工作原理：
-- Dexie 内部追踪查询访问的数据范围。
-- 当 IndexedDB 中有匹配的数据变化时，自动重新执行查询并触发组件重渲染。
-- 不需要手动订阅/取消订阅。
+How `useLiveQuery` works:
+- Dexie internally tracks which data ranges the query accessed.
+- When a matching data change occurs in IndexedDB, the query is automatically re-executed and the component re-renders.
+- No manual subscribe/unsubscribe is needed.
 
 ---
 
-## 7. Store 间协作模式
+## 7. Cross-Store Coordination Pattern
 
-Store 之间**不相互调用**，协作由 UI 层编排：
+Stores **do not call each other**. Cross-store coordination is orchestrated by the UI layer:
 
 ```typescript
-// 示例：删除持仓并清理关联交易（在组件中）
+// Example: delete a position and clean up its linked transactions (in a component)
 const { deletePosition } = usePositionStore();
-// deletePosition 内部已处理 Transaction 的双向引用清理
+// deletePosition internally handles the bidirectional reference cleanup on Transactions
 await deletePosition(positionId);
 ```
 
-若需要跨 Store 操作（如创建持仓同时更新多个交易），由 UI 组件依次调用各 Store 的 action，按正确顺序执行。
+When operations span multiple stores (e.g. creating a position while updating multiple transactions), the UI component calls each store's action in the correct sequence.

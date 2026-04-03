@@ -1,18 +1,18 @@
-# 数据库设计与迁移系统
+# Database Design and Migration System
 
-## 1. 数据库概览
+## 1. Overview
 
-- **引擎**：IndexedDB（浏览器原生）
-- **封装库**：[Dexie.js](https://dexie.org/) v4
-- **数据库名**：`CryptoFolioDB`
-- **当前版本**：4
-- **源文件**：`src/lib/db.ts`、`src/lib/migrations.ts`
+- **Engine**: IndexedDB (native browser API)
+- **Wrapper**: [Dexie.js](https://dexie.org/) v4
+- **Database name**: `CryptoFolioDB`
+- **Current version**: 4
+- **Source files**: `src/lib/db.ts`, `src/lib/migrations.ts`
 
-所有数据完全存储在用户浏览器本地，无任何服务器端持久化。
+All data is stored entirely in the user's browser locally. There is no server-side persistence of any kind.
 
 ---
 
-## 2. 数据库 Schema（当前 v4）
+## 2. Database Schema (current v4)
 
 ```typescript
 // src/lib/db.ts
@@ -30,8 +30,8 @@ db.version(2).stores({
 
 db.version(3).stores({
   transactions: 'id, date, symbol, type',
-  positions: 'id, symbol, status, fundId',  // 新增 fundId 索引
-  funds: 'id, status, createdAt',           // 新增 funds 表
+  positions: 'id, symbol, status, fundId',  // fundId index added
+  funds: 'id, status, createdAt',           // funds table added
 }).upgrade(tx => migrations[1].upgradeIdb(tx));
 
 db.version(4).stores({
@@ -41,27 +41,27 @@ db.version(4).stores({
 }).upgrade(tx => migrations[2].upgradeIdb(tx));
 ```
 
-**索引说明：**
+**Index reference:**
 
-| 表 | 索引字段 | 用途 |
-|----|---------|------|
-| transactions | `id` | 主键，UUID 查找 |
-| transactions | `date` | 按时间范围筛选 |
-| transactions | `symbol` | 按交易对筛选 |
-| transactions | `type` | 按买卖方向筛选 |
-| positions | `id` | 主键 |
-| positions | `symbol` | 按标的查询 |
-| positions | `status` | 过滤 OPEN/CLOSED |
-| positions | `fundId` | 查找基金下所有持仓 |
-| funds | `id` | 主键 |
-| funds | `status` | 过滤 ACTIVE/CLOSED |
-| funds | `createdAt` | 按创建时间排序 |
+| Table | Indexed fields | Purpose |
+|---|---|---|
+| transactions | `id` | Primary key, UUID lookup |
+| transactions | `date` | Filter by time range |
+| transactions | `symbol` | Filter by trading pair |
+| transactions | `type` | Filter by BUY/SELL direction |
+| positions | `id` | Primary key |
+| positions | `symbol` | Query by asset |
+| positions | `status` | Filter OPEN/CLOSED |
+| positions | `fundId` | Find all positions in a fund |
+| funds | `id` | Primary key |
+| funds | `status` | Filter ACTIVE/CLOSED |
+| funds | `createdAt` | Sort by creation time |
 
-> **注**：Dexie 的 `stores()` 参数仅定义**索引**，不是全部字段。对象的所有字段都会存储，只有在这里声明的字段才可用于 `where()` 查询。
+> **Note**: The `stores()` parameter in Dexie only defines **indexes**, not all fields. All object fields are stored; only fields declared here can be used in `where()` queries.
 
 ---
 
-## 3. 版本兼容性检查
+## 3. Version Compatibility Check
 
 ```typescript
 // src/lib/db.ts
@@ -70,36 +70,36 @@ export function getDbCompatibilityStatus(
 ): 'ok' | 'needs-upgrade' | 'incompatible'
 ```
 
-**返回值含义：**
-- `'ok'`：数据库版本与应用版本匹配，或数据库尚不存在（首次使用）。
-- `'needs-upgrade'`：数据库版本低于当前应用版本，Dexie 首次访问时会自动触发 upgrade 回调。
-- `'incompatible'`：数据库版本**高于**当前应用版本，说明用户用了更新的 App 版本曾写入过数据，当前版本的代码无法安全读取，需要提示用户更新 App。
+**Return values:**
+- `'ok'`: Database version matches the app version, or the database does not exist yet (first use).
+- `'needs-upgrade'`: The stored database version is lower than the current app version. Dexie will automatically trigger the upgrade callback on first access.
+- `'incompatible'`: The stored database version is **higher** than the current app version, meaning the user previously used a newer version of the app. The current code cannot safely read the data; the user must be prompted to update the app.
 
-此检查在应用启动时（`App.tsx`）执行，如遇 `'incompatible'` 会展示警告 UI，阻止正常操作。
+This check is performed at app startup (`App.tsx`). If the result is `'incompatible'`, a warning UI is shown that blocks normal operations.
 
 ---
 
-## 4. 迁移系统设计
+## 4. Migration System Design
 
-### 4.1 设计原则
+### 4.1 Design principles
 
-1. **不可变**：已发布的迁移版本永远不修改，只添加新版本。
-2. **双轨迁移**：每次迁移既要处理 **活跃数据库**（IndexedDB 升级），也要处理 **备份文件**（JSON 转换），两者完全独立。
-3. **顺序执行**：从旧版到新版逐步应用，不跳跃。
+1. **Immutable**: Published migration versions are never modified — only new versions are added.
+2. **Dual-track migrations**: Each migration handles both the **live database** (IndexedDB upgrade) and **backup files** (JSON transformation) independently.
+3. **Sequential execution**: Migrations are applied step by step from the old version to the new version — no skipping.
 
-### 4.2 Migration 对象结构
+### 4.2 Migration object structure
 
 ```typescript
 // src/lib/migrations.ts
 interface Migration {
-  description: string;           // 人类可读的变更描述
-  upgradePayload: (             // 备份文件的 JSON 转换函数
+  description: string;           // Human-readable description of the change
+  upgradePayload: (             // JSON transformation for backup files
     payload: BackupPayload
   ) => BackupPayload;
-  upgradeIdb: (                 // 活跃 IndexedDB 的升级函数
+  upgradeIdb: (                 // Live IndexedDB upgrade function
     tx: Dexie.Transaction
   ) => Promise<void>;
-  upgradeLocalStorage?: (       // 可选：localStorage 中 Zustand 持久化状态的转换
+  upgradeLocalStorage?: (       // Optional: transform Zustand persisted state in localStorage
     state: unknown
   ) => unknown;
 }
@@ -111,17 +111,17 @@ export const MIGRATIONS: Migration[] = [
 ];
 ```
 
-### 4.3 各版本迁移内容
+### 4.3 Migration details by version
 
-#### v1 → v2（MIGRATIONS[0]）
+#### v1 → v2 (MIGRATIONS[0])
 
-**变更：**
-- Position 新增 `type` 字段：所有现有持仓默认填充 `'PRIMARY'`。
-- Transaction 新增 `orderId` 字段：所有现有交易默认填充 `undefined`（已存在的无法反推）。
+**Changes:**
+- Position gains `type` field: all existing positions default to `'PRIMARY'`.
+- Transaction gains `orderId` field: all existing transactions default to `undefined` (cannot be back-filled retroactively).
 
-**IndexedDB 升级逻辑：**
+**IndexedDB upgrade logic:**
 ```typescript
-// 遍历所有 positions，为缺少 type 字段的记录添加默认值
+// Iterate all positions and add the default type where missing
 const positions = await tx.table('positions').toArray();
 await Promise.all(
   positions.map(p =>
@@ -132,9 +132,9 @@ await Promise.all(
 );
 ```
 
-**备份文件转换：**
+**Backup file transformation:**
 ```typescript
-// payload.positions 中每条记录加 type: 'PRIMARY'（如果没有的话）
+// Add type: 'PRIMARY' to each position record if missing
 payload.positions = payload.positions.map(p => ({
   ...p,
   type: p.type ?? 'PRIMARY',
@@ -143,47 +143,47 @@ payload.positions = payload.positions.map(p => ({
 
 ---
 
-#### v2 → v3（MIGRATIONS[1]）
+#### v2 → v3 (MIGRATIONS[1])
 
-**变更：**
-- 新增 `funds` 表（IndexedDB 中 Dexie 会自动创建，upgrade 函数不需要额外操作）。
-- Position 新增可选 `fundId` 字段：无需回填，默认 `undefined`。
+**Changes:**
+- New `funds` table (Dexie creates this automatically via the schema declaration; no data transform needed).
+- Position gains optional `fundId` field: no back-fill required; defaults to `undefined`.
 
-**IndexedDB 升级逻辑：** 无需数据变换（Dexie 会处理表创建）。
+**IndexedDB upgrade logic:** No data transform needed (Dexie handles table creation).
 
-**备份文件转换：**
+**Backup file transformation:**
 ```typescript
-// 确保 backup payload 包含空的 funds 数组
+// Ensure the backup payload includes an empty funds array
 payload.funds = payload.funds ?? [];
 ```
 
 ---
 
-#### v3 → v4（MIGRATIONS[2]）
+#### v3 → v4 (MIGRATIONS[2])
 
-**变更：**
-- Settings 中 `pairConfigs[].dataSource` 字段重命名为 `dataProvider`。
-- 将旧的 exchange 值（`'NYSE'`、`'NASDAQ'`、`'SSE'`、`'SZSE'`）映射为 `dataProvider: 'Yahoo Finance'`。
+**Changes:**
+- Settings `pairConfigs[].dataSource` field renamed to `dataProvider`.
+- Old exchange values (`'NYSE'`, `'NASDAQ'`, `'SSE'`, `'SZSE'`) mapped to `dataProvider: 'Yahoo Finance'`.
 
-**IndexedDB 升级逻辑：** 无 IndexedDB 变更（settings 存储在 localStorage）。
+**IndexedDB upgrade logic:** No IndexedDB changes (settings are stored in localStorage).
 
-**备份文件转换：**
+**Backup file transformation:**
 ```typescript
 payload.settings?.pairConfigs?.forEach(config => {
   if (config.dataSource) {
     config.dataProvider = config.dataSource;
     delete config.dataSource;
   }
-  // 股票交易所映射
+  // Map stock exchange values
   if (['NYSE', 'NASDAQ', 'SSE', 'SZSE'].includes(config.exchange)) {
     config.dataProvider = 'Yahoo Finance';
   }
 });
 ```
 
-**localStorage 升级逻辑：**
+**localStorage upgrade logic:**
 ```typescript
-// 对 Zustand persist 存储的状态同样执行字段重命名
+// Apply the same rename to the Zustand persist state
 state.pairConfigs = state.pairConfigs?.map(c => ({
   ...c,
   dataProvider: c.dataSource ?? c.dataProvider,
@@ -193,7 +193,7 @@ state.pairConfigs = state.pairConfigs?.map(c => ({
 
 ---
 
-### 4.4 备份迁移入口
+### 4.4 Backup migration entry point
 
 ```typescript
 // src/lib/migrations.ts
@@ -211,31 +211,31 @@ export function migratePayload(
 }
 ```
 
-导入备份文件时，`backup.ts` 调用此函数将老版本 JSON 逐步升级到当前版本，然后再写入数据库。
+When a backup file is imported, `backup.ts` calls this function to incrementally upgrade the old JSON to the current version before writing it to the database.
 
 ---
 
-## 5. 与 Zustand Store 的关系
+## 5. Relationship with Zustand Stores
 
-Dexie 是唯一的**持久化写入路径**：
-- Zustand stores（`useTransactionStore`、`usePositionStore`、`useFundStore`）调用 Dexie 的 `add()`、`put()`、`delete()` 来持久化数据。
-- UI 组件通过 `useLiveQuery()`（`dexie-react-hooks`）订阅数据库变化，实现响应式更新。
-- Zustand 状态与 IndexedDB 不做双向同步——Store 里不缓存全量数据，而是按需查询。
+Dexie is the **only persistent write path**:
+- Zustand stores (`useTransactionStore`, `usePositionStore`, `useFundStore`) call Dexie's `add()`, `put()`, and `delete()` to persist data.
+- UI components subscribe to database changes via `useLiveQuery()` (from `dexie-react-hooks`) for reactive updates.
+- Zustand state and IndexedDB are not bidirectionally synced — stores do not cache full data sets; they query on demand.
 
 ---
 
-## 6. 添加新版本的操作规程
+## 6. Procedure for Adding a New Version
 
-当需要改变数据结构时：
+When a data structure change is needed:
 
-1. **在 `src/lib/db.ts`** 中，复制最新的 `db.version(N).stores(...)` 块，版本号改为 `N+1`，在 `.stores()` 中修改 schema，添加 `.upgrade(tx => migrations[N-1].upgradeIdb(tx))`。
+1. **In `src/lib/db.ts`**: Copy the latest `db.version(N).stores(...)` block, increment the version to `N+1`, apply schema changes in `.stores()`, and add `.upgrade(tx => migrations[N-1].upgradeIdb(tx))`.
 
-2. **在 `src/lib/migrations.ts`** 中，向 `MIGRATIONS` 数组末尾追加新的 Migration 对象，实现 `upgradePayload`、`upgradeIdb`，按需实现 `upgradeLocalStorage`。
+2. **In `src/lib/migrations.ts`**: Append a new Migration object to the end of the `MIGRATIONS` array. Implement `upgradePayload`, `upgradeIdb`, and optionally `upgradeLocalStorage`.
 
-3. **更新 `DB_VERSION` 常量**（`src/lib/db.ts`）与新版本号一致。
+3. **Update `DB_VERSION` constant** in `src/lib/db.ts` to the new version number.
 
-4. **更新 `src/lib/backup.ts`** 中的 `BACKUP_VERSION` 常量。
+4. **Update `BACKUP_VERSION` constant** in `src/lib/backup.ts`.
 
-5. **为新迁移编写测试**（`src/lib/migrations.test.ts`）。
+5. **Write tests** for the new migration in `src/lib/migrations.test.ts`.
 
-> 永远不要修改已有的迁移条目——它们可能已经在用户浏览器中执行过。
+> Never modify existing migration entries — they may have already been executed in users' browsers.
