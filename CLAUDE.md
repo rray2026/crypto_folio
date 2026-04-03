@@ -1,5 +1,10 @@
 # Claude Code Rules
 
+## Language
+
+All development work and all communication with the user must be in **English**.
+This includes code comments, commit messages, documentation, and conversational responses.
+
 ## Pre-push Requirements
 
 **Always run `npm run build` before pushing.** This project has a Husky `pre-push` hook that runs `npm run lint && npm run build`, but Claude should also verify both pass before attempting a push.
