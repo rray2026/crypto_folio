@@ -69,7 +69,8 @@ export function TransactionCard({
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressTriggered = useRef(false);
 
-    const handlePointerDown = () => {
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (e.pointerType !== 'touch') return;
         longPressTriggered.current = false;
         longPressTimer.current = setTimeout(() => {
             longPressTriggered.current = true;
@@ -83,6 +84,12 @@ export function TransactionCard({
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
+        }
+    };
+
+    const handleDoubleClick = () => {
+        if (!isSelectionMode) {
+            onEnterSelectionMode?.(tx.id);
         }
     };
 
@@ -100,6 +107,7 @@ export function TransactionCard({
             onPointerDown={handlePointerDown}
             onPointerUp={cancelLongPress}
             onPointerLeave={cancelLongPress}
+            onDoubleClick={handleDoubleClick}
             onClick={handleClick}
             className={`group relative transition-all duration-200 cursor-pointer select-none ${className}`}
         >

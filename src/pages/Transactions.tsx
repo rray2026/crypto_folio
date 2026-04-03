@@ -344,7 +344,8 @@ export default function Transactions() {
                     transactions.map((tx) => (
                         <div
                             key={tx.id}
-                            onPointerDown={() => {
+                            onPointerDown={(e) => {
+                                if (e.pointerType !== 'touch') return;
                                 mobileLongPressTriggered.current = false;
                                 mobileLongPressTimer.current = setTimeout(() => {
                                     mobileLongPressTriggered.current = true;
@@ -353,6 +354,7 @@ export default function Transactions() {
                             }}
                             onPointerUp={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
                             onPointerLeave={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
+                            onDoubleClick={() => { if (!isSelectionMode) enterSelectionMode(tx.id); }}
                             onClick={() => {
                                 if (mobileLongPressTriggered.current) return;
                                 isSelectionMode ? toggleSelection(tx.id) : navigate(`/transactions/${tx.id}`);
