@@ -349,8 +349,11 @@ export default function Transactions() {
                                 mobileLongPressTriggered.current = false;
                                 mobileLongPressTimer.current = setTimeout(() => {
                                     mobileLongPressTriggered.current = true;
-                                    if (!isSelectionMode) enterSelectionMode(tx.id);
-                                }, 500);
+                                    if (!isSelectionMode) {
+                                        navigator.vibrate?.(40);
+                                        enterSelectionMode(tx.id);
+                                    }
+                                }, 300);
                             }}
                             onPointerUp={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
                             onPointerLeave={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}

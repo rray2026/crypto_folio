@@ -75,9 +75,10 @@ export function TransactionCard({
         longPressTimer.current = setTimeout(() => {
             longPressTriggered.current = true;
             if (!isSelectionMode) {
+                navigator.vibrate?.(40);
                 onEnterSelectionMode?.(tx.id);
             }
-        }, 500);
+        }, 300);
     };
 
     const cancelLongPress = () => {
