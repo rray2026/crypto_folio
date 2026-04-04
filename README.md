@@ -1,6 +1,6 @@
 # CryptoFolio
 
-A **privacy-first** cryptocurrency portfolio tracker — all your trade data lives in your browser's IndexedDB. No accounts. No servers. No data leaves your device.
+A **privacy-first** portfolio tracker for crypto, stocks, and other assets — all your trade data lives in your browser's IndexedDB. No accounts. No servers. No data leaves your device.
 
 ---
 
