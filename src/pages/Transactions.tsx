@@ -360,7 +360,7 @@ export default function Transactions() {
                             onDoubleClick={() => { if (!isSelectionMode) enterSelectionMode(tx.id); }}
                             onClick={() => {
                                 if (mobileLongPressTriggered.current) return;
-                                isSelectionMode ? toggleSelection(tx.id) : navigate(`/transactions/${tx.id}`);
+                                if (isSelectionMode) { toggleSelection(tx.id); } else { navigate(`/transactions/${tx.id}`); }
                             }}
                             className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer select-none group ${
                                 selectedIds.has(tx.id) 
