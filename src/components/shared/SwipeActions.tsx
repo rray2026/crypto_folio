@@ -37,6 +37,8 @@ export function SwipeActions({ actions, children, actionWidth = 64, disabled = f
         if (!el) return;
         el.style.transition = animate ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
         el.style.transform = `translateX(${x}px)`;
+        // Dynamic rounding: full rounded when closed, square right side when offset
+        el.style.borderRadius = x < 0 ? '0.75rem 0 0 0.75rem' : '';
     }, []);
 
     const snapTo = useCallback((open: boolean) => {
@@ -114,7 +116,7 @@ export function SwipeActions({ actions, children, actionWidth = 64, disabled = f
             onTouchEnd={handleTouchEnd}
         >
             {/* Foreground content — slides left, opaque bg prevents action bleed-through */}
-            <div className="relative z-10 bg-background" onClick={handleContentClick}>
+            <div className="relative z-10 bg-background rounded-xl overflow-hidden" onClick={handleContentClick}>
                 {children}
             </div>
 
