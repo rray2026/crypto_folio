@@ -62,6 +62,7 @@ export default function Transactions() {
     const mobileLongPressTriggered = useRef(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
+    const [createPositionError, setCreatePositionError] = useState<string | null>(null)
     const [newPositionName, setNewPositionName] = useState("")
     const [newPositionType, setNewPositionType] = useState<'PRIMARY' | 'SHADOW'>('PRIMARY')
     
@@ -166,12 +167,14 @@ export default function Transactions() {
         const symbols = new Set(selectedTxs.map(tx => tx.symbol))
 
         if (symbols.size > 1) {
-            alert("Cannot create position: All selected transactions must have the same trading pair.")
+            setCreatePositionError("All selected transactions must have the same trading pair.")
+            setIsCreatePositionDialogOpen(true)
             return
         }
 
         const symbol = Array.from(symbols)[0]
         setNewPositionName("")
+        setCreatePositionError(null)
         setIsCreatePositionDialogOpen(true)
         
         // Ensure price is fresh for the preview
@@ -334,7 +337,13 @@ export default function Transactions() {
 
             {/* Mobile Card Layout */}
             <div className="md:hidden space-y-3">
-                {!transactions?.length ? (
+                {allTransactions === undefined ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
+                        ))}
+                    </div>
+                ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground border rounded-lg bg-card/50">
                         <p>No transactions recorded yet.</p>
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
@@ -433,7 +442,13 @@ export default function Transactions() {
 
             {/* Desktop Row-Card Layout */}
             <div className="hidden md:block space-y-3">
-                {!transactions?.length ? (
+                {allTransactions === undefined ? (
+                    <div className="space-y-2">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />
+                        ))}
+                    </div>
+                ) : !transactions?.length ? (
                     <Card className="border-dashed shadow-none">
                         <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
                             <p>No transactions recorded yet.</p>
@@ -492,12 +507,25 @@ export default function Transactions() {
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px] rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Create New Position</DialogTitle>
-                        <DialogDescription>
-                            Review the performance of the {selectedIds.size} selected trades before creating.
-                        </DialogDescription>
+                        {!createPositionError && (
+                            <DialogDescription>
+                                Review the performance of the {selectedIds.size} selected trades before creating.
+                            </DialogDescription>
+                        )}
                     </DialogHeader>
-                    
-                    {/* Performance Preview */}
+
+                    {createPositionError ? (
+                        <div className="flex gap-2 p-3 bg-destructive/5 text-destructive border border-destructive/20 rounded-xl">
+                            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-semibold">Cannot Create Position</p>
+                                <p className="text-xs mt-0.5">{createPositionError}</p>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {/* Performance Preview + form — only shown when no error */}
+                    <div className={createPositionError ? 'hidden' : ''}>
                     <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
                         {(() => {
                             const selectedTxs = allTransactions?.filter(tx => selectedIds.has(tx.id)) || []
@@ -609,13 +637,22 @@ export default function Transactions() {
                         <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11 flex-1">
                             Cancel
                         </Button>
-                        <Button 
-                            onClick={executeCreatePosition} 
+                        <Button
+                            onClick={executeCreatePosition}
                             className="rounded-xl font-bold h-11 flex-[2]"
                         >
                             Create Position
                         </Button>
                     </div>
+                    </div>{/* end hidden wrapper */}
+
+                    {createPositionError && (
+                        <div className="flex justify-end pt-2">
+                            <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11">
+                                Close
+                            </Button>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 

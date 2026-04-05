@@ -21,7 +21,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, TrendingUp } from "lucide-react"
+import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, TrendingUp, XCircle } from "lucide-react"
 
 import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
@@ -41,6 +41,7 @@ export default function Settings() {
     const [isImportConfirmOpen, setIsImportConfirmOpen] = useState(false)
     const [pendingImportFile, setPendingImportFile] = useState<File | null>(null)
     const [isProcessingBackup, setIsProcessingBackup] = useState(false)
+    const [importError, setImportError] = useState<string | null>(null)
 
     const handleExport = async () => {
         setIsProcessingBackup(true)
@@ -72,7 +73,7 @@ export default function Settings() {
             window.location.reload() // Hard reload to hydrate the entire React tree immediately
         } catch (error) {
             console.error("Import failed:", error)
-            alert("Failed to import backup file. Ensure it is a valid CryptoFolio backup.")
+            setImportError("Failed to import backup file. Ensure it is a valid CryptoFolio backup.")
         } finally {
             setIsProcessingBackup(false)
             setPendingImportFile(null)
@@ -217,6 +218,23 @@ export default function Settings() {
                     <DialogFooter className="mt-4 sm:justify-between">
                         <Button variant="outline" onClick={() => setIsImportConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={handleConfirmImport}>Yes, Overwrite Data</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!importError} onOpenChange={() => setImportError(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <XCircle className="h-5 w-5" />
+                            Import Failed
+                        </DialogTitle>
+                        <DialogDescription className="pt-2">
+                            {importError}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-2">
+                        <Button onClick={() => setImportError(null)}>OK</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

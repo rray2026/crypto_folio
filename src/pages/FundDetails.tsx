@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
@@ -25,6 +26,7 @@ export default function FundDetails() {
     const { prices, pairConfigs } = useSettingsStore()
 
     const [isEditOpen, setIsEditOpen] = useState(false)
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
     const { setMobileHeader } = useMobileHeader()
 
     const fund = useLiveQuery(() => id ? db.funds.get(id) : undefined, [id])
@@ -53,12 +55,7 @@ export default function FundDetails() {
                         <Edit className="h-4 w-4" />
                     </button>
                     <button
-                        onClick={async () => {
-                            if (!fund) return
-                            if (!window.confirm(`Delete fund "${fund.name}"? All positions will be unassigned but not deleted.`)) return
-                            await deleteFund(fund.id)
-                            navigate('/funds')
-                        }}
+                        onClick={() => setIsDeleteConfirmOpen(true)}
                         className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
                         aria-label="Delete"
                     >
@@ -67,7 +64,7 @@ export default function FundDetails() {
                 </div>
             ),
         })
-    }, [fund, navigate, setMobileHeader, deleteFund])
+    }, [fund, navigate, setMobileHeader, setIsDeleteConfirmOpen])
 
     const getPosMetrics = useCallback((pos: Position) => {
         const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId))
@@ -96,8 +93,7 @@ export default function FundDetails() {
     const fundM = getFundMetrics(fund, allPosMetrics)
     const { assetsValue, cashValue } = fundM
 
-    const handleDelete = async () => {
-        if (!window.confirm(`Delete fund "${fund.name}"? All positions will be unassigned but not deleted.`)) return
+    const executeDelete = async () => {
         await deleteFund(fund.id)
         navigate('/funds')
     }
@@ -144,12 +140,27 @@ export default function FundDetails() {
                         variant="ghost"
                         size="sm"
                         className="gap-2 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={handleDelete}
+                        onClick={() => setIsDeleteConfirmOpen(true)}
                     >
                         <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                 </div>
             </div>
+            <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Delete Fund</DialogTitle>
+                        <DialogDescription className="pt-2">
+                            Delete &quot;{fund.name}&quot;? All positions will be unassigned but not deleted.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={executeDelete}>Delete</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Single Edit dialog — triggered by desktop buttons and mobile header */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="sm:max-w-md">

@@ -95,8 +95,9 @@ export default function Positions() {
     const totalsCurrencySymbol = getCurrencySymbol(singleCurrency);
 
     const now = useState(() => Date.now())[0];
+    const isLoadingMetrics = !positions || !transactions;
     const { totalRealizedPnL, totalUnrealizedPnL, globalROI, winRate, winningTrades, closedTrades, timeThreshold } =
-        (positions && transactions)
+        !isLoadingMetrics
             ? getPortfolioMetrics(positions, transactions, prices, dashboardTimeRange)
             : { totalRealizedPnL: 0, totalUnrealizedPnL: 0, globalROI: 0, winRate: 0, winningTrades: 0, closedTrades: 0, timeThreshold: 0 };
 
@@ -169,10 +170,13 @@ export default function Positions() {
                                 <Wallet className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
                             </div>
-                            <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            {isLoadingMetrics
+                            ? <div className="h-8 w-28 rounded bg-muted animate-pulse" />
+                            : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
                                 {totalsCurrencySymbol}{totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
                             </div>
-                            {mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
+                        }
+                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
@@ -180,10 +184,13 @@ export default function Positions() {
                                 <LineChart className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
                             </div>
-                            <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                {totalsCurrencySymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
-                            </div>
-                            {mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
+                            {isLoadingMetrics
+                                ? <div className="h-8 w-28 rounded bg-muted animate-pulse" />
+                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                    {totalsCurrencySymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
+                                </div>
+                            }
+                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
@@ -191,9 +198,12 @@ export default function Positions() {
                                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Global ROI</span>
                             </div>
-                            <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
-                                {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
-                            </div>
+                            {isLoadingMetrics
+                                ? <div className="h-8 w-24 rounded bg-muted animate-pulse" />
+                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
+                                    {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
+                                </div>
+                            }
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center text-center">
@@ -201,10 +211,15 @@ export default function Positions() {
                                 <Target className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Win Rate</span>
                             </div>
-                            <div className="text-xl md:text-2xl font-bold font-mono tracking-tight">
-                                {winRate.toFixed(1)}%
-                            </div>
-                            <div className="text-[10px] text-muted-foreground mt-1 font-medium">{winningTrades}W / {closedTrades}C</div>
+                            {isLoadingMetrics
+                                ? <div className="h-8 w-20 rounded bg-muted animate-pulse" />
+                                : <>
+                                    <div className="text-xl md:text-2xl font-bold font-mono tracking-tight">
+                                        {winRate.toFixed(1)}%
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground mt-1 font-medium">{winningTrades}W / {closedTrades}C</div>
+                                </>
+                            }
                         </div>
                     </div>
                 </CardContent>

@@ -59,7 +59,12 @@ export default function Dashboard() {
                         {pinnedPairs.map(pair => {
                             const priceData = prices[pair];
                             const sym = getCurrencySymbolForPair(pair, pairConfigs);
-                            const priceDisplay = priceData ? `${sym}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
+                            // Show '...' only while the DB is still loading (positions undefined).
+                            // Once positions is defined, the fetch effect has been dispatched;
+                            // if the price is still missing at that point it's unavailable → '—'.
+                            const priceDisplay = priceData
+                                ? `${sym}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
+                                : positions === undefined ? '...' : '—';
                             
                             return (
                                 <div 
