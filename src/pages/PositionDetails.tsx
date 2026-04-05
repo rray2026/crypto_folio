@@ -461,13 +461,12 @@ export default function PositionDetails() {
                                         return (
                                             <div key={tx.id}>
                                             <SwipeActions
-                                                className=""
                                                 actions={[
                                                     { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
                                                 ]}
                                             >
                                                 <div
-                                                    className="flex items-center justify-between p-3 border rounded-xl bg-card hover:bg-card/80 transition-colors group cursor-pointer"
+                                                    className="flex items-center justify-between p-3 border bg-card hover:bg-card/80 transition-colors group cursor-pointer"
                                                     onClick={() => navigate(`/transactions/${tx.id}`)}
                                                 >
                                                     <div className="flex gap-3 md:gap-4 items-center min-w-0">
@@ -608,13 +607,12 @@ export default function PositionDetails() {
                                     availableTxs.map(tx => (
                                         <SwipeActions
                                             key={tx.id}
-                                            className=""
                                             actions={[
                                                 { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-500", onAction: () => handleLink(tx.id, tx.quantity) },
                                             ]}
                                         >
                                             <div
-                                                className="p-3 border rounded-xl hover:border-primary/50 transition-colors text-sm bg-card cursor-pointer"
+                                                className="p-3 border hover:border-primary/50 transition-colors text-sm bg-card cursor-pointer"
                                                 onClick={() => navigate(`/transactions/${tx.id}`)}
                                             >
                                                 <div className="flex justify-between items-center mb-2">
