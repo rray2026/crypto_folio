@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
@@ -23,6 +24,7 @@ export default function TransactionDetails() {
     const navigate = useNavigate()
     const deleteTransaction = useTransactionStore(state => state.deleteTransaction)
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
     const { setMobileHeader } = useMobileHeader()
 
     const transaction = useLiveQuery(() => id ? db.transactions.get(id) : undefined, [id])
@@ -50,13 +52,7 @@ export default function TransactionDetails() {
                         <Edit className="h-4 w-4" />
                     </button>
                     <button
-                        onClick={async () => {
-                            if (!id) return
-                            if (confirm("Are you sure you want to delete this transaction? It will be removed from all associated positions.")) {
-                                await deleteTransaction(id)
-                                navigate('/transactions')
-                            }
-                        }}
+                        onClick={() => setIsDeleteConfirmOpen(true)}
                         className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
                         aria-label="Delete"
                     >
@@ -65,7 +61,7 @@ export default function TransactionDetails() {
                 </div>
             ),
         })
-    }, [transaction, navigate, setMobileHeader, setIsEditDialogOpen, deleteTransaction, id])
+    }, [transaction, navigate, setMobileHeader, setIsEditDialogOpen, setIsDeleteConfirmOpen, id])
 
     if (transaction === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (transaction === null) return <div className="p-8 text-center text-foreground">Transaction not found.</div>
@@ -78,12 +74,10 @@ export default function TransactionDetails() {
     const { pairConfigs } = useSettingsStore.getState()
     const currencySymbol = getCurrencySymbolForPair(transaction.symbol, pairConfigs)
 
-    const handleDelete = async () => {
+    const executeDelete = async () => {
         if (!id) return
-        if (confirm("Are you sure you want to delete this transaction? It will be removed from all associated positions.")) {
-            await deleteTransaction(id)
-            navigate('/transactions')
-        }
+        await deleteTransaction(id)
+        navigate('/transactions')
     }
 
     return (
@@ -111,12 +105,27 @@ export default function TransactionDetails() {
                         <Edit className="h-4 w-4" />
                         <span className="hidden sm:inline">Edit</span>
                     </Button>
-                    <Button variant="destructive" size="sm" className="gap-2 h-9" onClick={handleDelete}>
+                    <Button variant="destructive" size="sm" className="gap-2 h-9" onClick={() => setIsDeleteConfirmOpen(true)}>
                         <Trash2 className="h-4 w-4" />
                         <span className="hidden sm:inline">Delete</span>
                     </Button>
                 </div>
             </div>
+            <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Delete Transaction</DialogTitle>
+                        <DialogDescription className="pt-2">
+                            Are you sure you want to delete this transaction? It will be removed from all associated positions.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={executeDelete}>Delete</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Single Edit dialog — shared between desktop and mobile header trigger */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">

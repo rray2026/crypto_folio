@@ -88,24 +88,24 @@ export default function PositionDetails() {
         })
     }, [position, navigate, setMobileHeader, setIsAiDialogOpen, setIsEditDialogOpen])
 
-    // Fetch live price for the current symbol if OPEN (every 5 mins)
-    useState(() => {
+    // Initial price fetch when position loads or symbol changes
+    useEffect(() => {
+        if (position?.status === 'OPEN') {
+            fetchPrices([position.symbol]);
+        }
+    }, [position?.status, position?.symbol, fetchPrices]);
+
+    // Periodic refresh every 5 minutes
+    useEffect(() => {
         const interval = setInterval(() => {
             if (position?.status === 'OPEN') {
                 fetchPrices([position.symbol]);
             }
         }, 300000);
         return () => clearInterval(interval);
-    });
+    }, [position?.status, position?.symbol, fetchPrices]);
 
     const now = useState(() => Date.now())[0]
-
-    if (position?.status === 'OPEN') {
-        const cached = prices[position.symbol];
-        if (!cached || (now - cached.timestamp > 300000)) {
-            fetchPrices([position.symbol]);
-        }
-    }
 
     if (position === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (position === null) return <div className="p-8 text-center text-foreground">Position not found.</div>

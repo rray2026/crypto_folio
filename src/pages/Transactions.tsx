@@ -9,7 +9,7 @@ import { TransactionEditForm } from "@/components/transactions/TransactionEditFo
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -39,34 +39,48 @@ export default function Transactions() {
     const navigate = useNavigate()
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [addMode, setAddMode] = useState<'choice' | 'manual' | 'ai'>('choice')
+    const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false)
+    const [editingTxId, setEditingTxId] = useState<string | null>(null)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isSelectionMode, setIsSelectionMode] = useState(false)
     const { setMobileHeader } = useMobileHeader()
     const openAdd = useCallback(() => { setIsAddDialogOpen(true); setAddMode('choice') }, [])
+    const openSelectMode = useCallback(() => setIsSelectionMode(true), [setIsSelectionMode])
     useEffect(() => {
         setMobileHeader({
             title: "Transactions",
             rightActions: (
-                <button
-                    onClick={openAdd}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="Add Transaction"
-                >
-                    <Plus className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={openSelectMode}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                        aria-label="Select transactions"
+                    >
+                        <CheckSquare className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={openAdd}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Add Transaction"
+                    >
+                        <Plus className="h-5 w-5" />
+                    </button>
+                </div>
             ),
         })
-    }, [setMobileHeader, openAdd])
-    const [editingTxId, setEditingTxId] = useState<string | null>(null)
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-    const [isSelectionMode, setIsSelectionMode] = useState(false)
+    }, [setMobileHeader, openAdd, openSelectMode])
     const mobileLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const mobileLongPressTriggered = useRef(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
+    const [createPositionError, setCreatePositionError] = useState<string | null>(null)
+    const [isFetchingPreviewPrice, setIsFetchingPreviewPrice] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
     const [newPositionType, setNewPositionType] = useState<'PRIMARY' | 'SHADOW'>('PRIMARY')
     
     const [filterSymbol, setFilterSymbol] = useState<string>("ALL")
     const [filterTimeRange, setFilterTimeRange] = useState<string>("ALL")
+    const [filterTimeRangeNow, setFilterTimeRangeNow] = useState(() => Date.now())
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction)
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
@@ -82,7 +96,7 @@ export default function Transactions() {
 
     // Get unique symbols for filter
     const uniqueSymbols = Array.from(new Set(allTransactions?.map(tx => tx.symbol) || [])).sort();
-    const now = useState(() => Date.now())[0]
+    const now = filterTimeRangeNow
 
     // Filter logic
     const transactions = allTransactions?.filter(tx => {
@@ -158,23 +172,27 @@ export default function Transactions() {
         }
     }
 
-    const handleCreatePositionClick = () => {
+    const handleCreatePositionClick = async () => {
         if (!allTransactions || selectedIds.size === 0) return
 
         const selectedTxs = allTransactions.filter(tx => selectedIds.has(tx.id))
         const symbols = new Set(selectedTxs.map(tx => tx.symbol))
 
         if (symbols.size > 1) {
-            alert("Cannot create position: All selected transactions must have the same trading pair.")
+            setCreatePositionError("All selected transactions must have the same trading pair.")
+            setIsCreatePositionDialogOpen(true)
             return
         }
 
         const symbol = Array.from(symbols)[0]
         setNewPositionName("")
+        setCreatePositionError(null)
+
+        // Await fresh price before showing the preview dialog
+        setIsFetchingPreviewPrice(true)
+        await fetchPrices([symbol], true)
+        setIsFetchingPreviewPrice(false)
         setIsCreatePositionDialogOpen(true)
-        
-        // Ensure price is fresh for the preview
-        fetchPrices([symbol])
     }
 
     const executeCreatePosition = async () => {
@@ -231,7 +249,7 @@ export default function Transactions() {
                             </SelectContent>
                         </Select>
 
-                        <Select value={filterTimeRange} onValueChange={setFilterTimeRange}>
+                        <Select value={filterTimeRange} onValueChange={(val) => { setFilterTimeRange(val); setFilterTimeRangeNow(Date.now()) }}>
                             <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -250,9 +268,13 @@ export default function Transactions() {
                     </div>
 
                     <div className="hidden sm:flex items-center gap-2 w-full sm:w-auto">
-                        <Dialog 
-                            open={isAddDialogOpen} 
+                        <Dialog
+                            open={isAddDialogOpen}
                             onOpenChange={(open) => {
+                                if (!open && (addMode === 'manual' || addMode === 'ai')) {
+                                    setIsDiscardConfirmOpen(true)
+                                    return // keep dialog open, show confirm instead
+                                }
                                 setIsAddDialogOpen(open);
                                 if (open) setAddMode('choice');
                             }}
@@ -329,14 +351,37 @@ export default function Transactions() {
                 </div>
             </div>
 
-            {/* FAB replaces the top selection bar */}
+            {/* Discard unsaved form data confirmation */}
+            <Dialog open={isDiscardConfirmOpen} onOpenChange={setIsDiscardConfirmOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Discard Changes?</DialogTitle>
+                        <DialogDescription className="pt-2">
+                            You have unsaved data in the form. Are you sure you want to close without saving?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={() => setIsDiscardConfirmOpen(false)}>Keep Editing</Button>
+                        <Button variant="destructive" onClick={() => { setIsDiscardConfirmOpen(false); setIsAddDialogOpen(false) }}>Discard</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Mobile Card Layout */}
             <div className="md:hidden space-y-3">
-                {!transactions?.length ? (
+                {allTransactions === undefined ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
+                        ))}
+                    </div>
+                ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground border rounded-lg bg-card/50">
-                        <p>No transactions recorded yet.</p>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
+                        <p className="font-medium">No transactions recorded yet.</p>
+                        <p className="text-sm text-muted-foreground/70 mt-1 max-w-xs text-center">
+                            Every buy or sell you make is a transaction — the building block of your portfolio.
+                        </p>
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-3">
                             Record Your First Trade
                         </Button>
                     </div>
@@ -432,7 +477,13 @@ export default function Transactions() {
 
             {/* Desktop Row-Card Layout */}
             <div className="hidden md:block space-y-3">
-                {!transactions?.length ? (
+                {allTransactions === undefined ? (
+                    <div className="space-y-2">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />
+                        ))}
+                    </div>
+                ) : !transactions?.length ? (
                     <Card className="border-dashed shadow-none">
                         <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
                             <p>No transactions recorded yet.</p>
@@ -491,12 +542,25 @@ export default function Transactions() {
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px] rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Create New Position</DialogTitle>
-                        <DialogDescription>
-                            Review the performance of the {selectedIds.size} selected trades before creating.
-                        </DialogDescription>
+                        {!createPositionError && (
+                            <DialogDescription>
+                                Review the performance of the {selectedIds.size} selected trades before creating.
+                            </DialogDescription>
+                        )}
                     </DialogHeader>
-                    
-                    {/* Performance Preview */}
+
+                    {createPositionError ? (
+                        <div className="flex gap-2 p-3 bg-destructive/5 text-destructive border border-destructive/20 rounded-xl">
+                            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-semibold">Cannot Create Position</p>
+                                <p className="text-xs mt-0.5">{createPositionError}</p>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {/* Performance Preview + form — only shown when no error */}
+                    <div className={createPositionError ? 'hidden' : ''}>
                     <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
                         {(() => {
                             const selectedTxs = allTransactions?.filter(tx => selectedIds.has(tx.id)) || []
@@ -608,20 +672,29 @@ export default function Transactions() {
                         <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11 flex-1">
                             Cancel
                         </Button>
-                        <Button 
-                            onClick={executeCreatePosition} 
+                        <Button
+                            onClick={executeCreatePosition}
                             className="rounded-xl font-bold h-11 flex-[2]"
                         >
                             Create Position
                         </Button>
                     </div>
+                    </div>{/* end hidden wrapper */}
+
+                    {createPositionError && (
+                        <div className="flex justify-end pt-2">
+                            <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11">
+                                Close
+                            </Button>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 
 
 
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
+                <div className="fixed bottom-28 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
                     <div className="bg-popover text-popover-foreground border shadow-xl rounded-full px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-6 w-max max-w-[90vw]">
                         <div className="flex items-center gap-2">
                             <div className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
@@ -637,13 +710,17 @@ export default function Transactions() {
                                 <CheckSquare className="h-4 w-4 md:mr-2" />
                                 <span className="hidden md:inline">{selectedIds.size === transactions?.length ? 'Deselect All' : 'Select All'}</span>
                             </Button>
-                            <Button 
-                                variant="secondary" 
-                                size="sm" 
-                                onClick={handleCreatePositionClick} 
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleCreatePositionClick}
+                                disabled={isFetchingPreviewPrice}
                                 className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm bg-primary/10 hover:bg-primary/20 text-primary border-none"
                             >
-                                <FolderPlus className="h-4 w-4 md:mr-2" />
+                                {isFetchingPreviewPrice
+                                    ? <Loader2 className="h-4 w-4 animate-spin md:mr-2" />
+                                    : <FolderPlus className="h-4 w-4 md:mr-2" />
+                                }
                                 <span className="hidden md:inline">Create Position</span>
                             </Button>
                             <Button variant="destructive" size="sm" onClick={confirmBulkDelete} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm">
