@@ -37,15 +37,23 @@ export function TransactionRow({
         ? "grid-cols-[1.2fr_0.8fr_1fr] md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]"
         : "grid-cols-[1.2fr_0.8fr_1fr] md:grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px]";
 
+    const handleClick = () => {
+        if (onToggleSelection) {
+            onToggleSelection(tx.id);
+        } else {
+            onViewDetail(tx.id);
+        }
+    };
+
     const rowContent = (
         <div
-            onClick={() => onToggleSelection?.(tx.id)}
+            onClick={handleClick}
             className={`group relative grid ${gridCols} items-center px-4 md:px-6 py-3 rounded-xl border transition-all duration-200 ${
                 onToggleSelection ? 'cursor-pointer' : 'cursor-default'
             } ${
                 isSelected
                 ? 'bg-primary/5 border-primary shadow-sm'
-                : 'bg-card border-border/40 hover:border-border hover:bg-card'
+                : 'bg-card border-border/40 hover:border-border hover:bg-card/80'
             } ${className}`}
         >
             <div className="flex flex-col md:block">
@@ -102,16 +110,11 @@ export function TransactionRow({
 
     return (
         <>
-            {/* Mobile: wrap with swipe-to-reveal */}
+            {/* Mobile: wrap with swipe-to-reveal (Edit + Delete only, tap to view) */}
             <div className="md:hidden">
                 <SwipeActions
                     disabled={!!isSelected}
                     actions={[
-                        {
-                            icon: <Eye className="h-4 w-4" />,
-                            bg: "bg-blue-500",
-                            onAction: () => onViewDetail(tx.id),
-                        },
                         {
                             icon: <Edit className="h-4 w-4" />,
                             bg: "bg-amber-500",

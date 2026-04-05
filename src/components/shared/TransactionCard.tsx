@@ -1,4 +1,3 @@
-import { useRef } from "react"
 import { format } from "date-fns"
 import { Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,6 @@ interface TransactionCardProps {
     isSelected?: boolean;
     isSelectionMode?: boolean;
     onToggleSelection?: (id: string) => void;
-    onEnterSelectionMode?: (id: string) => void;
     onViewDetail: (id: string) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string, e: React.MouseEvent) => void;
@@ -28,8 +26,8 @@ interface TransactionCardProps {
  * Shared Header for Transaction Lists (Desktop only)
  */
 export function TransactionListHeader({ showAsset = true }: { showAsset?: boolean }) {
-    const gridCols = showAsset 
-        ? "grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]" 
+    const gridCols = showAsset
+        ? "grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_1.2fr_0.8fr_80px]"
         : "grid-cols-[1fr_1fr_1fr_1.2fr_1.2fr_0.8fr_80px]";
 
     return (
@@ -51,7 +49,6 @@ export function TransactionCard({
     isSelected,
     isSelectionMode,
     onToggleSelection,
-    onEnterSelectionMode,
     onViewDetail,
     onEdit,
     onDelete,
@@ -67,36 +64,7 @@ export function TransactionCard({
 
     const [base] = tx.symbol.split('/');
 
-    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const longPressTriggered = useRef(false);
-
-    const handlePointerDown = (e: React.PointerEvent) => {
-        if (e.pointerType !== 'touch') return;
-        longPressTriggered.current = false;
-        longPressTimer.current = setTimeout(() => {
-            longPressTriggered.current = true;
-            if (!isSelectionMode) {
-                navigator.vibrate?.(40);
-                onEnterSelectionMode?.(tx.id);
-            }
-        }, 300);
-    };
-
-    const cancelLongPress = () => {
-        if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current);
-            longPressTimer.current = null;
-        }
-    };
-
-    const handleDoubleClick = () => {
-        if (!isSelectionMode) {
-            onEnterSelectionMode?.(tx.id);
-        }
-    };
-
     const handleClick = () => {
-        if (longPressTriggered.current) return;
         if (isSelectionMode) {
             onToggleSelection?.(tx.id);
         } else {
@@ -106,10 +74,6 @@ export function TransactionCard({
 
     return (
         <div
-            onPointerDown={handlePointerDown}
-            onPointerUp={cancelLongPress}
-            onPointerLeave={cancelLongPress}
-            onDoubleClick={handleDoubleClick}
             onClick={handleClick}
             className={`group relative transition-all duration-200 cursor-pointer select-none ${className}`}
         >
@@ -117,7 +81,7 @@ export function TransactionCard({
             <div className={`hidden md:grid ${gridCols} items-center px-6 py-3 rounded-xl border ${
                 isSelected
                 ? 'bg-primary/5 border-primary shadow-sm'
-                : 'bg-card/40 border-border/40 hover:border-border hover:bg-card/60'
+                : 'bg-card border-border/40 hover:border-border hover:bg-card/80'
             }`}>
                 {showAsset && <div className="font-bold text-base tracking-tight">{tx.symbol}</div>}
                 <div className="text-[11px] font-mono text-muted-foreground/80">
@@ -136,7 +100,7 @@ export function TransactionCard({
                 <div className="text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
                 <div className="text-right font-mono font-bold text-sm text-primary/90">{currencySymbol}{tx.amount.toLocaleString()}</div>
                 <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
-                
+
                 <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                     <Dialog open={isEditing} onOpenChange={setIsEditing}>
                         <DialogTrigger asChild>
@@ -157,7 +121,7 @@ export function TransactionCard({
                 </div>
             </div>
 
-            {/* Mobile View: Swipe-to-reveal actions */}
+            {/* Mobile View: Swipe-to-reveal actions, tap to view detail */}
             <div className="md:hidden">
                 <SwipeActions
                     disabled={isSelectionMode}

@@ -462,12 +462,14 @@ export default function PositionDetails() {
                                             <div key={tx.id}>
                                             <SwipeActions
                                                 actions={[
-                                                    { icon: <Eye className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => navigate(`/transactions/${tx.id}`) },
                                                     { icon: <Edit className="h-4 w-4" />, bg: "bg-amber-500", onAction: () => setEditingTxId(tx.id) },
                                                     { icon: <Trash2 className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
                                                 ]}
                                             >
-                                                <div className="flex items-center justify-between p-3 rounded-xl border bg-background hover:bg-background/80 transition-colors group">
+                                                <div
+                                                    className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-card/80 transition-colors group cursor-pointer"
+                                                    onClick={() => navigate(`/transactions/${tx.id}`)}
+                                                >
                                                     <div className="flex gap-3 md:gap-4 items-center min-w-0">
                                                         <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
                                                             {tx.type}
@@ -616,12 +618,14 @@ export default function PositionDetails() {
                                         <SwipeActions
                                             key={tx.id}
                                             actions={[
-                                                { icon: <Eye className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => navigate(`/transactions/${tx.id}`) },
                                                 { icon: <Edit className="h-4 w-4" />, bg: "bg-amber-500", onAction: () => setEditingTxId(tx.id) },
                                                 { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-600", onAction: () => handleLink(tx.id, tx.quantity) },
                                             ]}
                                         >
-                                            <div className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background">
+                                            <div
+                                                className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-card cursor-pointer"
+                                                onClick={() => navigate(`/transactions/${tx.id}`)}
+                                            >
                                                 <div className="flex justify-between items-center mb-2">
                                                     <div className="flex items-center gap-2">
                                                         <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
