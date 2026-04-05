@@ -123,10 +123,10 @@ export function TransactionCard({
                     {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
                 </div>
                 <div>
-                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
-                        tx.type === "BUY" 
-                        ? "bg-green-500/10 text-green-600 dark:text-green-400" 
-                        : "bg-red-500/10 text-red-600 dark:text-red-400"
+                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
+                        tx.type === "BUY"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
+                        : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
                     }`}>
                         {tx.type}
                     </div>
@@ -165,10 +165,10 @@ export function TransactionCard({
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 {showAsset && <span className="font-bold text-lg">{tx.symbol}</span>}
-                                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                    tx.type === "BUY" 
-                                    ? "bg-green-500/10 text-green-600 dark:text-green-400" 
-                                    : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
+                                    tx.type === "BUY"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
+                                    : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
                                 }`}>
                                     {tx.type}
                                 </div>

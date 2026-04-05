@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { Layers, Circle } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type { Fund } from "@/lib/types"
 
 interface FundCardProps {
@@ -20,65 +19,66 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
     const navUp = metrics.navChangePct >= 0
 
     return (
-        <Link to={`/funds/${fund.id}`} className="block transition-transform hover:-translate-y-1">
-            <Card className="h-full flex flex-col border-border/40 hover:border-border transition-colors bg-card/60 hover:bg-card/100 shadow-sm">
-                <CardHeader className="pb-3 border-b border-border/40">
-                    <div className="flex justify-between items-start mb-1">
-                        <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={fund.name}>
+        <Link to={`/funds/${fund.id}`} className="block group">
+            <div className="h-full flex flex-col relative overflow-hidden rounded-xl border transition-all duration-200 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 border-border/50">
+                {/* Accent bar */}
+                <div className={`h-0.5 w-full ${navUp ? 'bg-emerald-500' : 'bg-red-500'}`} />
+
+                <div className="px-4 pt-3 pb-3 border-b border-border/40">
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                        <h3 className="text-sm font-semibold tracking-tight line-clamp-1 text-foreground" title={fund.name}>
                             {fund.name}
-                        </CardTitle>
-                        <div className="flex items-center gap-1 shrink-0">
-                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                isActive
-                                ? 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400'
-                                : 'bg-muted/50 text-muted-foreground border-border'
-                            }`}>
-                                <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
-                                {isActive ? 'ACTIVE' : 'CLOSED'}
-                            </div>
-                        </div>
+                        </h3>
+                        <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                            isActive
+                                ? 'bg-primary/10 text-primary border-primary/20'
+                                : 'bg-muted text-muted-foreground border-border'
+                        }`}>
+                            <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
+                            {isActive ? 'ACTIVE' : 'CLOSED'}
+                        </span>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 font-mono">
+                        <span className="flex items-center gap-1">
                             <Layers className="h-3 w-3" />
-                            <span>{positionCount} position{positionCount !== 1 ? 's' : ''}</span>
-                        </div>
-                        <span className="font-mono">{fund.currency}</span>
+                            {positionCount} position{positionCount !== 1 ? 's' : ''}
+                        </span>
+                        <span>{fund.currency}</span>
                     </div>
-                </CardHeader>
+                </div>
 
-                <CardContent className="flex-1 pt-4 pb-2 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-muted-foreground mb-1">Initial Amount</span>
-                            <span className="font-mono text-sm font-bold">
+                <div className="flex-1 px-4 pt-3 pb-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Initial Amount</p>
+                            <p className="font-mono text-sm font-semibold">
                                 {fund.initialAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
+                            </p>
                         </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-xs text-muted-foreground mb-1">Current Value</span>
-                            <span className="font-mono text-sm font-bold">
+                        <div className="text-right">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Current Value</p>
+                            <p className="font-mono text-sm font-semibold">
                                 {metrics.currentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
+                            </p>
                         </div>
                     </div>
 
-                    <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
-                        <div className="flex flex-col">
-                            <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">NAV / Share</span>
-                            <span className="font-mono font-bold text-lg">
+                    <div className="flex justify-between items-end pt-2.5 border-t border-border/30">
+                        <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">NAV / Share</p>
+                            <p className="font-mono font-bold text-lg leading-none">
                                 {metrics.currentNAV.toFixed(4)}
-                            </span>
+                            </p>
                         </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">NAV Change</span>
-                            <span className={`font-mono font-bold text-lg ${navUp ? 'text-green-500' : 'text-destructive'}`}>
+                        <div className="text-right">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">NAV Change</p>
+                            <p className={`font-mono font-bold text-lg leading-none ${navUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                 {navUp ? '+' : ''}{metrics.navChangePct.toFixed(2)}%
-                            </span>
+                            </p>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </Link>
     )
 }
