@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -462,8 +462,7 @@ export default function PositionDetails() {
                                             <div key={tx.id}>
                                             <SwipeActions
                                                 actions={[
-                                                    { icon: <Edit className="h-4 w-4" />, bg: "bg-amber-500", onAction: () => setEditingTxId(tx.id) },
-                                                    { icon: <Trash2 className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
+                                                    { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
                                                 ]}
                                             >
                                                 <div
@@ -526,15 +525,6 @@ export default function PositionDetails() {
                                                     </div>
                                                 </div>
                                             </SwipeActions>
-                                            {/* Edit dialog for mobile swipe action */}
-                                            <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px] md:hidden">
-                                                    <DialogHeader>
-                                                        <DialogTitle>View / Edit Details</DialogTitle>
-                                                    </DialogHeader>
-                                                    <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                                </DialogContent>
-                                            </Dialog>
                                             </div>
                                         );
                                     })}
@@ -618,8 +608,7 @@ export default function PositionDetails() {
                                         <SwipeActions
                                             key={tx.id}
                                             actions={[
-                                                { icon: <Edit className="h-4 w-4" />, bg: "bg-amber-500", onAction: () => setEditingTxId(tx.id) },
-                                                { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-600", onAction: () => handleLink(tx.id, tx.quantity) },
+                                                { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-500", onAction: () => handleLink(tx.id, tx.quantity) },
                                             ]}
                                         >
                                             <div
