@@ -96,19 +96,19 @@ export default function Dashboard() {
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
-                                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
+                                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">
+                                            {pair}
+                                            {priceData && (
+                                                <span className="text-[10px] font-normal text-muted-foreground/50 ml-1.5">
+                                                    · {timeAgo(priceData.timestamp)}
+                                                </span>
+                                            )}
+                                        </p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="text-right">
-                                            <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
-                                                {priceDisplay}
-                                            </span>
-                                            {priceData && (
-                                                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-                                                    {timeAgo(priceData.timestamp)}
-                                                </p>
-                                            )}
-                                        </div>
+                                        <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
+                                            {priceDisplay}
+                                        </span>
                                         <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
                                     </div>
                                 </button>
