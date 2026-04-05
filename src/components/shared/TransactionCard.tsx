@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { Card, CardContent } from "@/components/ui/card"
+import { SwipeActions } from "@/components/shared/SwipeActions"
 import type { Transaction } from "@/lib/types"
 
 interface TransactionCardProps {
@@ -156,67 +157,77 @@ export function TransactionCard({
                 </div>
             </div>
 
-            {/* Mobile View: Premium Card Layout */}
-            <Card className={`md:hidden overflow-hidden transition-all duration-200 border-border/40 ${
-                isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-card/60'
-            }`}>
-                <CardContent className="p-4 space-y-4">
-                    <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                                {showAsset && <span className="font-bold text-lg">{tx.symbol}</span>}
-                                <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
-                                    tx.type === "BUY"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
-                                    : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
-                                }`}>
-                                    {tx.type}
+            {/* Mobile View: Swipe-to-reveal actions */}
+            <div className="md:hidden">
+                <SwipeActions
+                    disabled={isSelectionMode}
+                    actions={[
+                        {
+                            icon: <Edit className="h-4 w-4" />,
+                            bg: "bg-blue-500",
+                            onAction: () => { onEdit(tx.id); setIsEditing(true); },
+                        },
+                        {
+                            icon: <Trash2 className="h-4 w-4" />,
+                            bg: "bg-red-500",
+                            onAction: () => onDelete(tx.id, { stopPropagation: () => {} } as React.MouseEvent),
+                        },
+                    ]}
+                >
+                    <Card className={`overflow-hidden transition-all duration-200 border-border/40 ${
+                        isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-card/60'
+                    }`}>
+                        <CardContent className="p-4 space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                        {showAsset && <span className="font-bold text-lg">{tx.symbol}</span>}
+                                        <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
+                                            tx.type === "BUY"
+                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
+                                            : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
+                                        }`}>
+                                            {tx.type}
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] font-mono text-muted-foreground mt-1">
+                                        {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                    </span>
                                 </div>
                             </div>
-                            <span className="text-[11px] font-mono text-muted-foreground mt-1">
-                                {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                            </span>
-                        </div>
-                        <div className="flex gap-1">
-                            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(tx.id); }}>
-                                        <Edit className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="w-[95vw] max-w-lg rounded-xl p-4">
-                                    <DialogHeader>
-                                        <DialogTitle>Edit Transaction</DialogTitle>
-                                    </DialogHeader>
-                                    <TransactionEditForm transaction={tx} onSuccess={() => setIsEditing(false)} />
-                                </DialogContent>
-                            </Dialog>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={(e) => onDelete(tx.id, e)}>
-                                <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/20">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Price</span>
-                            <span className="font-mono text-sm">{currencySymbol}{tx.price.toLocaleString()}</span>
-                        </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Quantity</span>
-                            <span className="font-mono text-sm">{tx.quantity.toLocaleString()} <span className="text-[10px]">{base}</span></span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Total</span>
-                            <span className="font-mono text-sm font-bold text-primary">{currencySymbol}{tx.amount.toLocaleString()}</span>
-                        </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Fee</span>
-                            <span className="font-mono text-xs text-muted-foreground">{currencySymbol}{tx.fee.toLocaleString()}</span>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/20">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Price</span>
+                                    <span className="font-mono text-sm">{currencySymbol}{tx.price.toLocaleString()}</span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Quantity</span>
+                                    <span className="font-mono text-sm">{tx.quantity.toLocaleString()} <span className="text-[10px]">{base}</span></span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Total</span>
+                                    <span className="font-mono text-sm font-bold text-primary">{currencySymbol}{tx.amount.toLocaleString()}</span>
+                                </div>
+                                <div className="flex flex-col text-right">
+                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Fee</span>
+                                    <span className="font-mono text-xs text-muted-foreground">{currencySymbol}{tx.fee.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </SwipeActions>
+
+                {/* Edit dialog — triggered by swipe action */}
+                <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                    <DialogContent className="w-[95vw] max-w-lg rounded-xl p-4">
+                        <DialogHeader>
+                            <DialogTitle>Edit Transaction</DialogTitle>
+                        </DialogHeader>
+                        <TransactionEditForm transaction={tx} onSuccess={() => setIsEditing(false)} />
+                    </DialogContent>
+                </Dialog>
+            </div>
         </div>
     );
 }
