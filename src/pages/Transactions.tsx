@@ -6,10 +6,9 @@ import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -327,18 +326,6 @@ export default function Transactions() {
                                             </div>
                                         </Button>
 
-                                        <ImportTransactionsButton
-                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
-                                            variant="outline"
-                                        >
-                                            <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                                                <FileUp className="h-5 w-5 text-blue-500" />
-                                            </div>
-                                            <div className="flex flex-col items-center">
-                                                <span className="font-semibold text-sm">Import from Binance</span>
-                                                <span className="text-xs text-muted-foreground">Upload exported Excel file</span>
-                                            </div>
-                                        </ImportTransactionsButton>
                                     </div>
                                 ) : addMode === 'ai' ? (
                                     <AiImportFlow onSuccess={() => setIsAddDialogOpen(false)} />

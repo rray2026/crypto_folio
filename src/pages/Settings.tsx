@@ -73,7 +73,7 @@ export default function Settings() {
             window.location.reload() // Hard reload to hydrate the entire React tree immediately
         } catch (error) {
             console.error("Import failed:", error)
-            setImportError("Failed to import backup file. Ensure it is a valid CryptoFolio backup.")
+            setImportError("Failed to import backup file. Ensure it is a valid Folio backup.")
         } finally {
             setIsProcessingBackup(false)
             setPendingImportFile(null)
@@ -258,7 +258,7 @@ export default function Settings() {
 
             <div className="pt-8 pb-4 text-center">
                 <p className="text-[10px] md:text-xs text-muted-foreground/40 font-mono tracking-widest uppercase">
-                    CryptoFolio v{version} · Built {__BUILD_DATE__}
+                    Folio v{version} · Built {__BUILD_DATE__}
                 </p>
             </div>
         </div>

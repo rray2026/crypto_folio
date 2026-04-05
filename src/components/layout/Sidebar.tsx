@@ -20,7 +20,7 @@ export function Sidebar() {
                     <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
                 <span className="text-[15px] font-bold tracking-tight text-foreground">
-                    Crypto<span className="text-primary">Folio</span>
+                    Folio
                 </span>
             </div>
 

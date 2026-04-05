@@ -188,7 +188,7 @@ export default function PositionDetails() {
         }).join('\n')
 
         const lines = [
-            `I need your advice on the following crypto trading position.`,
+            `I need your advice on the following trading position.`,
             ``,
             `## Position Overview`,
             `- Name: ${name}`,
