@@ -67,6 +67,7 @@ export default function Transactions() {
     
     const [filterSymbol, setFilterSymbol] = useState<string>("ALL")
     const [filterTimeRange, setFilterTimeRange] = useState<string>("ALL")
+    const [filterTimeRangeNow, setFilterTimeRangeNow] = useState(() => Date.now())
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction)
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
@@ -82,7 +83,7 @@ export default function Transactions() {
 
     // Get unique symbols for filter
     const uniqueSymbols = Array.from(new Set(allTransactions?.map(tx => tx.symbol) || [])).sort();
-    const now = useState(() => Date.now())[0]
+    const now = filterTimeRangeNow
 
     // Filter logic
     const transactions = allTransactions?.filter(tx => {
@@ -231,7 +232,7 @@ export default function Transactions() {
                             </SelectContent>
                         </Select>
 
-                        <Select value={filterTimeRange} onValueChange={setFilterTimeRange}>
+                        <Select value={filterTimeRange} onValueChange={(val) => { setFilterTimeRange(val); setFilterTimeRangeNow(Date.now()) }}>
                             <SelectTrigger className="h-9 w-full sm:w-[140px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />

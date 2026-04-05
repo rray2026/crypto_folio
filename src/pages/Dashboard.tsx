@@ -1,7 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
@@ -11,35 +11,34 @@ export default function Dashboard() {
     const { setMobileHeader } = useMobileHeader()
     useEffect(() => { setMobileHeader({ title: "Dashboard" }) }, [setMobileHeader])
     const positions = useLiveQuery(() => db.positions.toArray())
-    const { prices, fetchPrices, pairConfigs } = useSettingsStore()
+    const { prices, fetchPrices, pairConfigs, pinnedPairs } = useSettingsStore()
 
-    // Fetch prices for all OPEN symbols and PINNED pairs periodically (every 5 mins)
-    useState(() => {
+    // Initial price fetch when positions or pinned pairs change
+    useEffect(() => {
+        if (!positions) return;
+        const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
+        const symbolsToFetch = Array.from(new Set([...openSymbols, ...(pinnedPairs || [])]));
+        if (symbolsToFetch.length > 0) {
+            fetchPrices(symbolsToFetch);
+        }
+    }, [positions, pinnedPairs, fetchPrices]);
+
+    // Periodic refresh every 5 minutes
+    useEffect(() => {
         const interval = setInterval(() => {
             if (!positions) return;
             const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
-            const symbolsToFetch = Array.from(new Set([...openSymbols, ...(useSettingsStore.getState().pinnedPairs || [])]));
+            const symbolsToFetch = Array.from(new Set([...openSymbols, ...(pinnedPairs || [])]));
             if (symbolsToFetch.length > 0) {
                 fetchPrices(symbolsToFetch);
             }
         }, 300000);
         return () => clearInterval(interval);
-    });
-
-    if (positions) {
-        // Non-blocking fetch on render if not cached
-        const openSymbols = Array.from(new Set(positions.filter(p => p.status === 'OPEN').map(p => p.symbol)));
-        const pinnedPairs = useSettingsStore.getState().pinnedPairs || [];
-        const symbolsToFetch = Array.from(new Set([...openSymbols, ...pinnedPairs]));
-        if (symbolsToFetch.length > 0) {
-            fetchPrices(symbolsToFetch);
-        }
-    }
+    }, [positions, pinnedPairs, fetchPrices]);
 
     const handleRefresh = async () => {
         const openSymbols = Array.from(new Set((positions || []).filter(p => p.status === 'OPEN').map(p => p.symbol)));
-        const pinnedPairs = useSettingsStore.getState().pinnedPairs || [];
-        const symbolsToFetch = Array.from(new Set([...openSymbols, ...pinnedPairs]));
+        const symbolsToFetch = Array.from(new Set([...openSymbols, ...(pinnedPairs || [])]));
         if (symbolsToFetch.length > 0) {
             await fetchPrices(symbolsToFetch, true);
         }
@@ -55,9 +54,9 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {useSettingsStore.getState().pinnedPairs?.length > 0 && (
+                {(pinnedPairs?.length ?? 0) > 0 && (
                     <div className="flex flex-col gap-3">
-                        {useSettingsStore.getState().pinnedPairs.map(pair => {
+                        {pinnedPairs.map(pair => {
                             const priceData = prices[pair];
                             const sym = getCurrencySymbolForPair(pair, pairConfigs);
                             const priceDisplay = priceData ? `${sym}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '...';
