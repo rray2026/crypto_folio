@@ -158,7 +158,7 @@ Badge color assignments:
 - Active state: `bg-primary/10 text-primary` (teal tint, not solid fill)
 - Inactive state: `text-muted-foreground hover:bg-secondary hover:text-foreground`
 - Transition: `duration-150`
-- Logo: `TrendingUp` icon in teal container + "Crypto" (foreground) + "Folio" (primary)
+- Logo: `TrendingUp` icon in teal container + "Folio" (foreground)
 - Footer: privacy tagline — `text-[10px] text-muted-foreground/50 uppercase tracking-widest`
 
 ### Mobile Bottom Nav
@@ -191,6 +191,79 @@ Custom webkit scrollbar for a refined look:
 - Transition duration: `duration-200` for cards, `duration-150` for nav items
 - Active indicator pulse: `animate-pulse` on the status circle dot
 - Color transitions: `transition-colors` on links and interactive text
+
+---
+
+## Mobile Interaction Patterns
+
+### Swipe-to-Reveal Actions
+
+Mobile card lists use the `SwipeActions` component (`src/components/shared/SwipeActions.tsx`) instead of inline action buttons. This follows iOS-style swipe-to-reveal conventions.
+
+**Core behavior:**
+- Swipe left on a card to reveal action buttons behind it
+- Tap the card to navigate (e.g. to detail page)
+- Tap a swiped card to close it
+- Desktop is unaffected — uses hover-reveal buttons instead
+
+**Touch gesture details:**
+- Direction locking after 8px of movement (prevents diagonal conflicts with scroll)
+- Rubber-band effect when overswiping past the action area
+- Snap threshold at 35% of total action width
+- Smooth transition: `0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+
+**Dynamic border-radius:**
+- Idle state: card has full `rounded-xl` on all corners
+- Swiping/Open state: right-side border-radius is set to 0 via inline style (`borderRadius: '0.75rem 0 0 0.75rem'`), creating a seamless junction with the action buttons
+- Action buttons container has `rounded-r-xl overflow-hidden` so the right edge matches the card's rounding
+- The border-radius transition is animated alongside the transform
+
+**Rounding strategy — `className` prop:**
+- Default: `className="rounded-xl"` — the SwipeActions container itself provides rounding + `overflow-x-clip` (for standalone cards like Transactions list)
+- Override: `className=""` — when the card is nested inside an already-rounded parent container, remove SwipeActions' own rounding to prevent shadow/border clipping
+- When using `className=""`, the inner card div should add its own `rounded-xl`
+
+**Foreground layer:**
+- Wraps children in a `bg-background` div to prevent action button colors from bleeding through semi-transparent card backgrounds
+- Uses `overflow-hidden` to clip children to the rounded boundary
+
+**Action color conventions:**
+| Action | Color | Icon |
+|--------|-------|------|
+| Delete / Unlink / Unassign | `bg-red-500` | `X` or `Trash2` |
+| Edit | `bg-amber-500` | `Edit` (Pencil) |
+| Link / Assign | `bg-emerald-500` | `LinkIcon` |
+
+**Where SwipeActions is used:**
+
+| Page | Section | Swipe Actions |
+|------|---------|---------------|
+| Transactions list | Main card list | Edit (amber) + Delete (red) |
+| PositionDetails | Linked Trades | Unlink (red X) |
+| PositionDetails | Available Trades | Link (green) |
+| FundDetails | Linked Positions | Unassign (red X) |
+| FundDetails | Available Positions | Link (green) |
+
+**Design principles:**
+1. Each swipe card should have **minimal actions** (1–2 max) — keep it simple
+2. **Tap = navigate** — swiping is for actions, tapping is for viewing detail
+3. **Edit goes through detail page** — don't put edit in swipe for nested contexts (e.g. trades within positions); navigate to the item's own detail page instead
+4. **Desktop unchanged** — swipe is mobile-only; desktop uses hover-reveal buttons with `hidden md:flex` / `opacity-0 group-hover:opacity-100`
+
+### Dashboard Price Freshness
+
+Instead of absolute timestamps, the Dashboard uses colored dot indicators for price freshness:
+- Green dot (`bg-emerald-500`): updated < 60 seconds ago
+- Amber dot (`bg-amber-500`): updated < 300 seconds ago
+- Gray dot (`bg-muted-foreground/40`): stale or unknown
+- A 5-second interval tick keeps the indicators current
+
+### Empty States & Onboarding
+
+The Dashboard shows a guided onboarding state when the user has no data, with 3 action cards:
+1. Add Trading Pairs → Settings
+2. Record Trades → Transactions
+3. Create Strategy → Positions
 
 ---
 

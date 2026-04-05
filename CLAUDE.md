@@ -215,6 +215,20 @@ npm run test:watch  # watch mode
 - Page titles and header actions on mobile are set via the `useMobileHeader` hook
 - Use `MobileHeaderContext` for dynamic header content — do not pass props through the router
 
+### Mobile Card Interactions (SwipeActions)
+
+Mobile card lists use `SwipeActions` (`src/components/shared/SwipeActions.tsx`) — **never use inline action buttons on mobile**.
+
+**Rules:**
+- Tap = navigate to detail page; swipe left = reveal action buttons
+- Keep swipe actions minimal (1–2 max): unlink/delete (red), link/assign (green), edit (amber)
+- In nested contexts (e.g. trades within a position), don't put edit in swipe — editing goes through the item's own detail page
+- Desktop uses hover-reveal buttons (`hidden md:flex` + `opacity-0 group-hover:opacity-100`), completely independent from SwipeActions
+- SwipeActions handles dynamic border-radius: `rounded-xl` when idle, right side becomes square when swiped
+- Use `className=""` on SwipeActions when nested inside an already-rounded parent container
+- The foreground layer uses `bg-background` — never use semi-transparent backgrounds (e.g. `bg-card/60`) on cards wrapped in SwipeActions
+- See `docs/ui-design-principles.md` for full mobile interaction patterns
+
 ---
 
 ## Backup & Restore (`src/lib/backup.ts`)
