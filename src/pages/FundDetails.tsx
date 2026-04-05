@@ -173,13 +173,13 @@ export default function FundDetails() {
 
             {/* NAV metrics row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                <div className="bg-card rounded-xl border border-border/40 p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Initial Amount</p>
+                <div className="bg-card rounded-xl border border-border/50 p-4">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Initial Amount</p>
                     <p className="text-xl font-bold font-mono">{fmtNum(fund.initialAmount)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
                 </div>
-                <div className="bg-card rounded-xl border border-border/40 p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Current Value</p>
+                <div className="bg-card rounded-xl border border-border/50 p-4">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Current Value</p>
                     <p className="text-xl font-bold font-mono">{fmtNum(fundM.currentValue)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
                     <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
@@ -193,19 +193,19 @@ export default function FundDetails() {
                         </div>
                     </div>
                 </div>
-                <div className="bg-card rounded-xl border border-border/40 p-4">
-                    <p className="text-xs text-muted-foreground mb-1">NAV / Share</p>
+                <div className="bg-card rounded-xl border border-border/50 p-4">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">NAV / Share</p>
                     <p className="text-xl font-bold font-mono">{fundM.currentNAV.toFixed(4)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                         Initial: {fundM.initialNAV.toFixed(4)}
                     </p>
                 </div>
-                <div className="bg-card rounded-xl border border-border/40 p-4">
-                    <p className="text-xs text-muted-foreground mb-1">NAV Change</p>
-                    <p className={`text-xl font-bold font-mono ${navUp ? 'text-green-500' : 'text-destructive'}`}>
+                <div className="bg-card rounded-xl border border-border/50 p-4">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">NAV Change</p>
+                    <p className={`text-xl font-bold font-mono ${navUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                         {navUp ? '+' : ''}{fundM.navChangePct.toFixed(2)}%
                     </p>
-                    <p className={`text-[10px] mt-0.5 font-mono ${fundM.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                    <p className={`text-[10px] mt-0.5 font-mono ${fundM.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                         {fundM.totalPnL >= 0 ? '+' : ''}{fmtNum(fundM.totalPnL)} PnL
                     </p>
                 </div>
@@ -235,17 +235,17 @@ export default function FundDetails() {
                                         {/* Row 1: badges + name + actions */}
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-1.5 min-w-0">
-                                                <span className={`shrink-0 inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
                                                     pos.status === 'OPEN'
-                                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                    : 'bg-muted text-muted-foreground'
+                                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                                    : 'bg-muted text-muted-foreground border-border'
                                                 }`}>
                                                     {pos.status}
                                                 </span>
-                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
                                                     isLong
-                                                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
+                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
                                                 }`}>
                                                     {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                     {metrics.positionType}
@@ -267,10 +267,10 @@ export default function FundDetails() {
                                             <span className="text-muted-foreground/40">•</span>
                                             <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
                                             <span className="text-muted-foreground/40">•</span>
-                                            <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                            <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                                 PnL {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
                                             </span>
-                                            <span className={`font-mono ${metrics.roi >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                            <span className={`font-mono ${metrics.roi >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                                 ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
                                             </span>
                                             <span className="text-muted-foreground/40">•</span>
@@ -291,7 +291,7 @@ export default function FundDetails() {
                                                 {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                             </span>
                                             <span className="text-muted-foreground/40">→</span>
-                                            <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                            <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
                                         </div>
                                     </div>
                                 )
@@ -327,10 +327,10 @@ export default function FundDetails() {
                                                 }`}>
                                                     {pos.status}
                                                 </span>
-                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
                                                     isLong
-                                                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
+                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
                                                 }`}>
                                                     {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                     {metrics.positionType}
@@ -361,7 +361,7 @@ export default function FundDetails() {
                                             {metrics.totalPnL !== 0 && (
                                                 <>
                                                     <span className="text-muted-foreground/40">•</span>
-                                                    <span className={`font-mono font-semibold ${metrics.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                                                    <span className={`font-mono font-semibold ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                                         {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
                                                         <span className="font-normal ml-0.5">({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(1)}%)</span>
                                                     </span>
@@ -381,7 +381,7 @@ export default function FundDetails() {
                                                 {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                             </span>
                                             <span className="text-muted-foreground/40">→</span>
-                                            <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-blue-500 dark:text-blue-400">Open</span>}</span>
+                                            <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
                                         </div>
                                     </div>
                                 )

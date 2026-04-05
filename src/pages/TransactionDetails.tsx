@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { format } from "date-fns"
-import { ArrowLeft, Trash2, Edit, Calendar, Clock, Wallet, Activity, Hash, Link as LinkIcon } from "lucide-react"
+import { ArrowLeft, Trash2, Edit, Calendar, Clock, Wallet, Activity, Hash, Link as LinkIcon, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -90,10 +90,10 @@ export default function TransactionDetails() {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                         <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">{transaction.symbol}</h1>
-                        <div className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest ${
+                        <div className={`px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold uppercase tracking-widest border ${
                             transaction.type === "BUY"
-                            ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                            : "bg-red-500/10 text-red-600 dark:text-red-400"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
+                            : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
                         }`}>
                             {transaction.type}
                         </div>
@@ -229,9 +229,10 @@ export default function TransactionDetails() {
                                             <span className="font-bold text-sm truncate pr-2">
                                                 {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
                                             </span>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${pos.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-muted text-muted-foreground'}`}>
-                                                {pos.status === 'OPEN' ? 'ACTIVE' : 'ARCHIVED'}
-                                            </div>
+                                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${pos.status === 'OPEN' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                                                <Circle className={`h-1.5 w-1.5 fill-current ${pos.status === 'OPEN' ? 'animate-pulse' : ''}`} aria-hidden="true" />
+                                                {pos.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
+                                            </span>
                                         </div>
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10">
                                             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Allocated</span>

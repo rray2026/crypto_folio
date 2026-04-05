@@ -245,33 +245,33 @@ export default function PositionDetails() {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
                                         {position.type === 'SHADOW' && (
-                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
                                                 <Eye className="h-3 w-3" />
                                                 SHADOW ANALYSIS
-                                            </div>
+                                            </span>
                                         )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     {/* Direction Badge */}
-                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold ${
-                                        positionType === 'LONG' 
-                                        ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
-                                        : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                    <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
+                                        positionType === 'LONG'
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
+                                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
                                     }`}>
                                         {positionType === 'LONG' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {positionType}
-                                    </div>
-                                    
+                                    </span>
+
                                     {/* Status Badge */}
-                                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold border ${
+                                    <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         position.status === 'OPEN'
-                                        ? 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400'
-                                        : 'bg-muted/50 text-muted-foreground border-border'
+                                        ? 'bg-primary/10 text-primary border-primary/20'
+                                        : 'bg-muted text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
-                                        {position.status === 'OPEN' ? 'ACTIVE' : 'ARCHIVED'}
-                                    </div>
+                                        {position.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
+                                    </span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 mt-1.5 md:mt-2.5">
@@ -382,7 +382,7 @@ export default function PositionDetails() {
                             {/* Realized PnL */}
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold ${realizedPnL > 0 ? 'text-green-500' : realizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${realizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : realizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
                                     {currencySymbol}{realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
@@ -390,7 +390,7 @@ export default function PositionDetails() {
                             {/* Unrealized PnL */}
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold ${unrealizedPnL > 0 ? 'text-green-500' : unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${unrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : unrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
                                     {totalRemaining !== 0 ? `${currencySymbol}${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
@@ -422,7 +422,7 @@ export default function PositionDetails() {
                             {/* ROI */}
                             <div className="flex flex-col">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">ROI</span>
-                                <span className={`text-base sm:text-xl font-bold ${roi > 0 ? 'text-green-500' : roi < 0 ? 'text-destructive' : ''}`}>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${roi > 0 ? 'text-emerald-500 dark:text-emerald-400' : roi < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
                                     {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
                                 </span>
                             </div>
@@ -460,7 +460,7 @@ export default function PositionDetails() {
                                         return (
                                             <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors group">
                                                 <div className="flex gap-3 md:gap-4 items-center min-w-0">
-                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
                                                         {tx.type}
                                                     </div>
                                                     <div className="flex flex-col min-w-0">
@@ -596,7 +596,7 @@ export default function PositionDetails() {
                                         <div key={tx.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background/50">
                                             <div className="flex justify-between items-center mb-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${tx.type === "BUY" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                                    <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
                                                         {tx.type}
                                                     </div>
                                                     {tx.associatedPositionIds?.length > 0 && (
@@ -614,9 +614,9 @@ export default function PositionDetails() {
                                                                         return (
                                                                             <div key={pid} className="text-sm bg-muted/50 rounded-sm p-1.5 flex justify-between items-center group cursor-pointer hover:bg-muted" onClick={() => navigate(`/positions/${pid}`)}>
                                                                                 <span className="truncate mr-2" title={pInfo?.strategyName || 'Unnamed'}>{pInfo?.strategyName || 'Unnamed Strategy'}</span>
-                                                                                <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${pInfo?.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600' : 'bg-muted text-muted-foreground'}`}>
+                                                                                <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${pInfo?.status === 'OPEN' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
                                                                                     {pInfo?.status || '?'}
-                                                                                </div>
+                                                                                </span>
                                                                             </div>
                                                                         )
                                                                     })}
