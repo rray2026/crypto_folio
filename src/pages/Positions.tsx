@@ -162,62 +162,62 @@ export default function Positions() {
             </Dialog>
 
             {/* Portfolio Summary Card */}
-            <Card className="mb-8 overflow-hidden shadow-sm border bg-card">
+            <Card className="mb-8 overflow-hidden border border-border/50 bg-card shadow-sm">
                 <CardContent className="p-0">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border/50">
-                        <div className="p-4 flex flex-col items-center justify-center text-center">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Wallet className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border/40">
+                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <Wallet className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
                             </div>
                             {isLoadingMetrics
-                            ? <div className="h-8 w-28 rounded bg-muted animate-pulse" />
-                            : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-green-500' : totalRealizedPnL < 0 ? 'text-destructive' : ''}`}>
-                                {totalsCurrencySymbol}{totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
-                            </div>
-                        }
-                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
+                                ? <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
+                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalRealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                    {totalsCurrencySymbol}{totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
+                                </div>
+                            }
+                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 font-medium">USD only</div>}
                         </div>
 
-                        <div className="p-4 flex flex-col items-center justify-center text-center">
-                            <div className="flex items-center gap-2 mb-2">
-                                <LineChart className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
+                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <LineChart className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
                             </div>
                             {isLoadingMetrics
-                                ? <div className="h-8 w-28 rounded bg-muted animate-pulse" />
-                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-green-500' : totalUnrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                                ? <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
+                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
                                     {totalsCurrencySymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
                                 </div>
                             }
-                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 mt-1 font-medium">USD only</div>}
+                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 font-medium">USD only</div>}
                         </div>
 
-                        <div className="p-4 flex flex-col items-center justify-center text-center">
-                            <div className="flex items-center gap-2 mb-2">
-                                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Global ROI</span>
+                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <TrendingUp className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Global ROI</span>
                             </div>
                             {isLoadingMetrics
-                                ? <div className="h-8 w-24 rounded bg-muted animate-pulse" />
-                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${globalROI > 0 ? 'text-green-500' : globalROI < 0 ? 'text-destructive' : ''}`}>
+                                ? <div className="h-8 w-24 rounded-lg bg-muted animate-pulse" />
+                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${globalROI > 0 ? 'text-emerald-500 dark:text-emerald-400' : globalROI < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
                                     {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
                                 </div>
                             }
                         </div>
 
-                        <div className="p-4 flex flex-col items-center justify-center text-center">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Target className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Win Rate</span>
+                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <Target className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Win Rate</span>
                             </div>
                             {isLoadingMetrics
-                                ? <div className="h-8 w-20 rounded bg-muted animate-pulse" />
+                                ? <div className="h-8 w-20 rounded-lg bg-muted animate-pulse" />
                                 : <>
-                                    <div className="text-xl md:text-2xl font-bold font-mono tracking-tight">
+                                    <div className="text-xl md:text-2xl font-bold font-mono tracking-tight text-foreground">
                                         {winRate.toFixed(1)}%
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground mt-1 font-medium">{winningTrades}W / {closedTrades}C</div>
+                                    <div className="text-[10px] text-muted-foreground font-medium">{winningTrades}W / {closedTrades}C</div>
                                 </>
                             }
                         </div>
