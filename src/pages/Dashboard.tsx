@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { format } from "date-fns"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 
@@ -67,14 +68,21 @@ export default function Dashboard() {
                                 : positions === undefined ? '...' : '—';
                             
                             return (
-                                <div 
-                                    key={pair} 
+                                <div
+                                    key={pair}
                                     className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group cursor-pointer"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="h-2 w-2 rounded-full bg-green-500" />
-                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
+                                        <div>
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
+                                            {priceData && (
+                                                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                                                    synced {format(new Date(priceData.timestamp), "HH:mm:ss")}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
                                         {priceDisplay}

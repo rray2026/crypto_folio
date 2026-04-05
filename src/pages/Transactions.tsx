@@ -9,7 +9,7 @@ import { TransactionEditForm } from "@/components/transactions/TransactionEditFo
 import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
 import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -39,30 +39,42 @@ export default function Transactions() {
     const navigate = useNavigate()
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [addMode, setAddMode] = useState<'choice' | 'manual' | 'ai'>('choice')
+    const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false)
+    const [editingTxId, setEditingTxId] = useState<string | null>(null)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isSelectionMode, setIsSelectionMode] = useState(false)
     const { setMobileHeader } = useMobileHeader()
     const openAdd = useCallback(() => { setIsAddDialogOpen(true); setAddMode('choice') }, [])
+    const openSelectMode = useCallback(() => setIsSelectionMode(true), [setIsSelectionMode])
     useEffect(() => {
         setMobileHeader({
             title: "Transactions",
             rightActions: (
-                <button
-                    onClick={openAdd}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="Add Transaction"
-                >
-                    <Plus className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={openSelectMode}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                        aria-label="Select transactions"
+                    >
+                        <CheckSquare className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={openAdd}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Add Transaction"
+                    >
+                        <Plus className="h-5 w-5" />
+                    </button>
+                </div>
             ),
         })
-    }, [setMobileHeader, openAdd])
-    const [editingTxId, setEditingTxId] = useState<string | null>(null)
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-    const [isSelectionMode, setIsSelectionMode] = useState(false)
+    }, [setMobileHeader, openAdd, openSelectMode])
     const mobileLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const mobileLongPressTriggered = useRef(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [createPositionError, setCreatePositionError] = useState<string | null>(null)
+    const [isFetchingPreviewPrice, setIsFetchingPreviewPrice] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
     const [newPositionType, setNewPositionType] = useState<'PRIMARY' | 'SHADOW'>('PRIMARY')
     
@@ -160,7 +172,7 @@ export default function Transactions() {
         }
     }
 
-    const handleCreatePositionClick = () => {
+    const handleCreatePositionClick = async () => {
         if (!allTransactions || selectedIds.size === 0) return
 
         const selectedTxs = allTransactions.filter(tx => selectedIds.has(tx.id))
@@ -175,10 +187,12 @@ export default function Transactions() {
         const symbol = Array.from(symbols)[0]
         setNewPositionName("")
         setCreatePositionError(null)
+
+        // Await fresh price before showing the preview dialog
+        setIsFetchingPreviewPrice(true)
+        await fetchPrices([symbol], true)
+        setIsFetchingPreviewPrice(false)
         setIsCreatePositionDialogOpen(true)
-        
-        // Ensure price is fresh for the preview
-        fetchPrices([symbol])
     }
 
     const executeCreatePosition = async () => {
@@ -254,9 +268,13 @@ export default function Transactions() {
                     </div>
 
                     <div className="hidden sm:flex items-center gap-2 w-full sm:w-auto">
-                        <Dialog 
-                            open={isAddDialogOpen} 
+                        <Dialog
+                            open={isAddDialogOpen}
                             onOpenChange={(open) => {
+                                if (!open && (addMode === 'manual' || addMode === 'ai')) {
+                                    setIsDiscardConfirmOpen(true)
+                                    return // keep dialog open, show confirm instead
+                                }
                                 setIsAddDialogOpen(open);
                                 if (open) setAddMode('choice');
                             }}
@@ -333,7 +351,21 @@ export default function Transactions() {
                 </div>
             </div>
 
-            {/* FAB replaces the top selection bar */}
+            {/* Discard unsaved form data confirmation */}
+            <Dialog open={isDiscardConfirmOpen} onOpenChange={setIsDiscardConfirmOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Discard Changes?</DialogTitle>
+                        <DialogDescription className="pt-2">
+                            You have unsaved data in the form. Are you sure you want to close without saving?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={() => setIsDiscardConfirmOpen(false)}>Keep Editing</Button>
+                        <Button variant="destructive" onClick={() => { setIsDiscardConfirmOpen(false); setIsAddDialogOpen(false) }}>Discard</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Mobile Card Layout */}
             <div className="md:hidden space-y-3">
@@ -659,7 +691,7 @@ export default function Transactions() {
 
 
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
+                <div className="fixed bottom-[5.5rem] md:bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-300">
                     <div className="bg-popover text-popover-foreground border shadow-xl rounded-full px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-6 w-max max-w-[90vw]">
                         <div className="flex items-center gap-2">
                             <div className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
@@ -675,13 +707,17 @@ export default function Transactions() {
                                 <CheckSquare className="h-4 w-4 md:mr-2" />
                                 <span className="hidden md:inline">{selectedIds.size === transactions?.length ? 'Deselect All' : 'Select All'}</span>
                             </Button>
-                            <Button 
-                                variant="secondary" 
-                                size="sm" 
-                                onClick={handleCreatePositionClick} 
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleCreatePositionClick}
+                                disabled={isFetchingPreviewPrice}
                                 className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm bg-primary/10 hover:bg-primary/20 text-primary border-none"
                             >
-                                <FolderPlus className="h-4 w-4 md:mr-2" />
+                                {isFetchingPreviewPrice
+                                    ? <Loader2 className="h-4 w-4 animate-spin md:mr-2" />
+                                    : <FolderPlus className="h-4 w-4 md:mr-2" />
+                                }
                                 <span className="hidden md:inline">Create Position</span>
                             </Button>
                             <Button variant="destructive" size="sm" onClick={confirmBulkDelete} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm">
