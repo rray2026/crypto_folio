@@ -13,13 +13,15 @@ interface SwipeActionsProps {
     actionWidth?: number;
     /** Disable swipe (e.g. in selection mode) */
     disabled?: boolean;
+    /** Additional classes on the outer container (e.g. override rounding) */
+    className?: string;
 }
 
 /**
  * Wraps a card and reveals action buttons when swiped left on touch devices.
  * Desktop is unaffected — the inner content renders normally.
  */
-export function SwipeActions({ actions, children, actionWidth = 64, disabled = false }: SwipeActionsProps) {
+export function SwipeActions({ actions, children, actionWidth = 64, disabled = false, className = "rounded-xl" }: SwipeActionsProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const startX = useRef(0);
     const startY = useRef(0);
@@ -106,7 +108,7 @@ export function SwipeActions({ actions, children, actionWidth = 64, disabled = f
     return (
         <div
             ref={containerRef}
-            className="relative overflow-x-clip md:overflow-visible rounded-xl"
+            className={`relative overflow-x-clip md:overflow-visible ${className}`}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}

@@ -461,6 +461,7 @@ export default function PositionDetails() {
                                         return (
                                             <div key={tx.id}>
                                             <SwipeActions
+                                                className=""
                                                 actions={[
                                                     { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
                                                 ]}
@@ -607,6 +608,7 @@ export default function PositionDetails() {
                                     availableTxs.map(tx => (
                                         <SwipeActions
                                             key={tx.id}
+                                            className=""
                                             actions={[
                                                 { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-500", onAction: () => handleLink(tx.id, tx.quantity) },
                                             ]}
