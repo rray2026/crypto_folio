@@ -377,8 +377,11 @@ export default function Transactions() {
                     </div>
                 ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground border rounded-lg bg-card/50">
-                        <p>No transactions recorded yet.</p>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-2">
+                        <p className="font-medium">No transactions recorded yet.</p>
+                        <p className="text-sm text-muted-foreground/70 mt-1 max-w-xs text-center">
+                            Every buy or sell you make is a transaction — the building block of your portfolio.
+                        </p>
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-3">
                             Record Your First Trade
                         </Button>
                     </div>

@@ -68,13 +68,13 @@ export default function Dashboard() {
                                 : positions === undefined ? '...' : '—';
                             
                             return (
-                                <div
+                                <button
                                     key={pair}
-                                    className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group cursor-pointer"
+                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group cursor-pointer text-left"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                                        <div className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
                                         <div>
                                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
                                             {priceData && (
@@ -87,7 +87,7 @@ export default function Dashboard() {
                                     <div className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
                                         {priceDisplay}
                                     </div>
-                                </div>
+                                </button>
                             )
                         })}
                     </div>

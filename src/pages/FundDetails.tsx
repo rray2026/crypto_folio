@@ -108,7 +108,7 @@ export default function FundDetails() {
     const navUp = fundM.navChangePct >= 0
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto">
             {/* Back nav (desktop only) */}
             <Button
                 variant="ghost"
@@ -313,6 +313,8 @@ export default function FundDetails() {
                             sortedUnassignedPositions.map(({ pos, metrics }) => {
                                 const isLong = metrics.positionType === 'LONG'
                                 const unassignedCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
+                                const posCurrency = pairConfigs.find(c => c.pair === pos.symbol)?.currency ?? 'USD'
+                                const currencyMismatch = posCurrency !== fund.currency
                                 return (
                                     <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
                                         {/* Row 1: badges + name + actions */}
@@ -339,8 +341,15 @@ export default function FundDetails() {
                                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate(`/positions/${pos.id}`)}>
                                                     <Eye className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <Button size="sm" variant="secondary" className="h-7 text-xs gap-1" onClick={() => handleAssign(pos.id)}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className={`h-7 text-xs gap-1 ${currencyMismatch ? 'border border-amber-500/40' : ''}`}
+                                                    onClick={() => handleAssign(pos.id)}
+                                                    title={currencyMismatch ? `Currency mismatch: position uses ${posCurrency}, fund uses ${fund.currency}` : undefined}
+                                                >
                                                     <LinkIcon className="h-3 w-3" /> Link
+                                                    {currencyMismatch && <AlertCircle className="h-3 w-3 text-amber-500" />}
                                                 </Button>
                                             </div>
                                         </div>

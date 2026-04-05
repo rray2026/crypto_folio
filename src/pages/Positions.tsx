@@ -103,7 +103,7 @@ export default function Positions() {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
-            <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
+            <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
@@ -226,8 +226,11 @@ export default function Positions() {
             </Card>
             {!positions?.length ? (
                 <Card className="border-dashed shadow-none mt-6">
-                    <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
-                        <p>No positions created yet.</p>
+                    <CardContent className="flex flex-col items-center justify-center py-12 px-8 text-muted-foreground text-center">
+                        <p className="font-medium">No positions created yet.</p>
+                        <p className="text-sm text-muted-foreground/70 mt-1 max-w-xs">
+                            A position groups related trades under a strategy so you can track their combined P&amp;L and ROI.
+                        </p>
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-4">
                             Create Your First Strategy
                         </Button>

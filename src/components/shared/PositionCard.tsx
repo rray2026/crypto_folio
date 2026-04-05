@@ -60,7 +60,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                                 ? 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400'
                                 : 'bg-muted/50 text-muted-foreground border-border'
                             }`}>
-                                <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
+                                <Circle aria-hidden="true" className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
                                 {isActive ? 'ACTIVE' : 'ARCHIVED'}
                             </div>
                         </div>
