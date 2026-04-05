@@ -120,7 +120,7 @@ export function SwipeActions({ actions, children, actionWidth = 64, disabled = f
 
             {/* Action buttons — revealed behind on the right */}
             <div
-                className="absolute inset-y-0 right-0 flex md:hidden"
+                className="absolute inset-y-0 right-0 flex md:hidden rounded-r-xl overflow-hidden"
                 style={{ width: totalWidth }}
             >
                 {actions.map((action, i) => (
