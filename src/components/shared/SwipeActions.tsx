@@ -111,8 +111,8 @@ export function SwipeActions({ actions, children, actionWidth = 64, disabled = f
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Foreground content — slides left */}
-            <div className="relative z-10" onClick={handleContentClick}>
+            {/* Foreground content — slides left, opaque bg prevents action bleed-through */}
+            <div className="relative z-10 bg-background" onClick={handleContentClick}>
                 {children}
             </div>
 
