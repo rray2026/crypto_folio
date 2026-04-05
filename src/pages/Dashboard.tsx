@@ -7,14 +7,11 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings } from "lucide-react"
 
-function timeAgo(timestamp: number): string {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 5) return 'just now';
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ago`;
+function freshnessColor(timestamp: number): string {
+    const age = Math.floor((Date.now() - timestamp) / 1000);
+    if (age < 60) return 'bg-emerald-500';
+    if (age < 300) return 'bg-amber-400';
+    return 'bg-muted-foreground/30';
 }
 
 export default function Dashboard() {
@@ -96,19 +93,15 @@ export default function Dashboard() {
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
-                                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">
-                                            {pair}
-                                            {priceData && (
-                                                <span className="text-[10px] font-normal text-muted-foreground/50 ml-1.5">
-                                                    · {timeAgo(priceData.timestamp)}
-                                                </span>
-                                            )}
-                                        </p>
+                                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
                                             {priceDisplay}
                                         </span>
+                                        {priceData && (
+                                            <span className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-1000 ${freshnessColor(priceData.timestamp)}`} />
+                                        )}
                                         <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
                                     </div>
                                 </button>
