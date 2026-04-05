@@ -33,7 +33,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Card, CardContent } from "@/components/ui/card"
 
 export default function Transactions() {
     const navigate = useNavigate()
@@ -357,12 +356,16 @@ export default function Transactions() {
                         ))}
                     </div>
                 ) : !transactions?.length ? (
-                    <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground border rounded-lg bg-card/50">
-                        <p className="font-medium">No transactions recorded yet.</p>
-                        <p className="text-sm text-muted-foreground/70 mt-1 max-w-xs text-center">
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
+                        </div>
+                        <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
+                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-3">
+                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="h-4 w-4" />
                             Record Your First Trade
                         </Button>
                     </div>
@@ -457,14 +460,19 @@ export default function Transactions() {
                         ))}
                     </div>
                 ) : !transactions?.length ? (
-                    <Card className="border-dashed shadow-none">
-                        <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground">
-                            <p>No transactions recorded yet.</p>
-                            <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-4">
-                                Record Your First Trade
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
+                        </div>
+                        <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
+                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                            Every buy or sell you make is a transaction — the building block of your portfolio.
+                        </p>
+                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            Record Your First Trade
+                        </Button>
+                    </div>
                 ) : (
                     <div className="space-y-4 md:space-y-2">
                         <TransactionListHeader showAsset={true} />

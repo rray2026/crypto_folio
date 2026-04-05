@@ -24,7 +24,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown } from "lucide-react"
+import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
     Binance: {
@@ -441,11 +441,17 @@ export default function TradingPairs() {
 
                 {pairConfigs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                        <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-                            <Plus className="h-6 w-6 text-muted-foreground" />
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">No pairs yet</p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">Click "Add Pair" to get started</p>
+                        <h3 className="text-base font-semibold mb-1">No trading pairs yet</h3>
+                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                            Add a trading pair to start tracking real-time prices across exchanges.
+                        </p>
+                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setAddModalOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            Add Your First Pair
+                        </Button>
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">
