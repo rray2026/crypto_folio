@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom"
 import { format } from "date-fns"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
+import { ArrowUpRight } from "lucide-react"
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -51,41 +52,47 @@ export default function Dashboard() {
                 <div className="hidden md:flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
-                        <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Overview of your crypto portfolio performance.</p>
+                        <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
+                            Overview of your crypto portfolio performance.
+                        </p>
                     </div>
                 </div>
 
                 {(pinnedPairs?.length ?? 0) > 0 && (
-                    <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {pinnedPairs.map(pair => {
                             const priceData = prices[pair];
                             const sym = getCurrencySymbolForPair(pair, pairConfigs);
-                            // Show '...' only while the DB is still loading (positions undefined).
-                            // Once positions is defined, the fetch effect has been dispatched;
-                            // if the price is still missing at that point it's unavailable → '—'.
                             const priceDisplay = priceData
                                 ? `${sym}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
                                 : positions === undefined ? '...' : '—';
-                            
+
                             return (
                                 <button
                                     key={pair}
-                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border shadow-sm hover:border-primary/50 transition-all group cursor-pointer text-left"
+                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 group cursor-pointer text-left"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
+                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-bold text-primary">
+                                                {pair.split('/')[0].slice(0, 3)}
+                                            </span>
+                                        </div>
                                         <div>
-                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{pair}</span>
+                                            <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
                                             {priceData && (
-                                                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-                                                    synced {format(new Date(priceData.timestamp), "HH:mm:ss")}
+                                                <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                                                    {format(new Date(priceData.timestamp), "HH:mm:ss")}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
-                                        {priceDisplay}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
+                                            {priceDisplay}
+                                        </span>
+                                        <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
                                     </div>
                                 </button>
                             )

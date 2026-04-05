@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { TrendingUp, TrendingDown, Eye, Calendar, Clock, Circle, Layers } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type { Position, PositionMetrics } from "@/lib/types"
 
 interface PositionCardProps {
@@ -15,158 +14,166 @@ interface PositionCardProps {
 
 export function PositionCard({ position, metrics, isActive, duration, fundName, currencySymbol = '$' }: PositionCardProps) {
     const base = position.symbol.split('/')[0];
-    
+    const isProfit = (v: number) => v > 0;
+    const isLoss = (v: number) => v < 0;
+    const pnlColor = (v: number) =>
+        isProfit(v) ? 'text-emerald-500 dark:text-emerald-400' : isLoss(v) ? 'text-red-500 dark:text-red-400' : 'text-foreground';
+
     return (
-        <Link to={`/positions/${position.id}`} className="block transition-transform hover:-translate-y-1">
-            <Card 
-                className={`h-full flex flex-col relative group overflow-hidden border-border/40 hover:border-border transition-colors bg-card/60 hover:bg-card/100 shadow-sm ${
-                    position.type === 'SHADOW' 
-                    ? 'border-dashed border-2' 
-                    : ''
-                }`}
+        <Link to={`/positions/${position.id}`} className="block group">
+            <div
+                className={`h-full flex flex-col relative overflow-hidden rounded-xl border transition-all duration-200
+                    bg-card hover:bg-card
+                    hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5
+                    hover:-translate-y-0.5
+                    ${position.type === 'SHADOW' ? 'border-dashed border-border/60' : 'border-border/50'}
+                `}
             >
-                <CardHeader className="pb-3 border-b border-border/40">
-                    <div className="flex justify-between items-start mb-2">
-                        <CardTitle className="text-lg font-bold tracking-tight line-clamp-1 mr-2" title={position.strategyName || `${base} Position`}>
+                {/* Accent bar top */}
+                <div className={`h-0.5 w-full ${
+                    isActive
+                        ? (metrics.unrealizedPnL > 0 ? 'bg-emerald-500' : metrics.unrealizedPnL < 0 ? 'bg-red-500' : 'bg-primary')
+                        : (metrics.realizedPnL > 0 ? 'bg-emerald-500/60' : metrics.realizedPnL < 0 ? 'bg-red-500/60' : 'bg-border')
+                }`} />
+
+                {/* Header */}
+                <div className="px-4 pt-3 pb-3 border-b border-border/40">
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                        <h3 className="text-sm font-semibold tracking-tight line-clamp-1 text-foreground" title={position.strategyName || `${base} Position`}>
                             {position.strategyName || `${base} Position`}
-                        </CardTitle>
-                        <div className="flex justify-end gap-1.5 shrink-0 flex-wrap">
-                            {/* Fund Badge */}
+                        </h3>
+                        <div className="flex justify-end gap-1 shrink-0 flex-wrap">
                             {fundName && (
-                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-900/40">
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/40">
                                     <Layers className="h-2.5 w-2.5" />
                                     {fundName}
-                                </div>
+                                </span>
                             )}
-                            {/* Shadow Badge */}
                             {position.type === 'SHADOW' && (
-                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-muted/50 text-muted-foreground border border-border">
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
                                     <Eye className="h-2.5 w-2.5" />
                                     SHADOW
-                                </div>
+                                </span>
                             )}
-                            {/* Direction Badge */}
-                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                metrics.positionType === 'LONG' 
-                                ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
-                                : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                                metrics.positionType === 'LONG'
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
+                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
                             }`}>
                                 {metrics.positionType === 'LONG' ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                 {metrics.positionType}
-                            </div>
-                            {/* Status Badge */}
-                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                            </span>
+                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${
                                 isActive
-                                ? 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400'
-                                : 'bg-muted/50 text-muted-foreground border-border'
+                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                    : 'bg-muted text-muted-foreground border-border'
                             }`}>
-                                <Circle aria-hidden="true" className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
-                                {isActive ? 'ACTIVE' : 'ARCHIVED'}
-                            </div>
+                                <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} aria-hidden="true" />
+                                {isActive ? 'ACTIVE' : 'CLOSED'}
+                            </span>
                         </div>
                     </div>
                     <div className="flex items-center justify-between">
-                        <p className="text-sm text-foreground/80 font-mono font-medium">{position.symbol}</p>
-                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
-                            <div className="flex items-center gap-1" title="Start Date">
+                        <span className="text-xs text-muted-foreground font-mono font-medium tracking-wide">{position.symbol}</span>
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground/70 font-mono">
+                            <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : 'Unknown'}
-                            </div>
-                            <div className="flex items-center gap-1" title="Duration">
+                                {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
+                            </span>
+                            <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
                                 {duration}d
-                            </div>
+                            </span>
                         </div>
                     </div>
-                </CardHeader>
-                <CardContent className="flex-1 pt-4 pb-2 space-y-4">
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 px-4 pt-3 pb-4 space-y-3">
                     {isActive ? (
                         <>
-                            {/* Holdings and Price / Cost */}
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-muted-foreground mb-1">Holdings</span>
-                                    <span className="font-mono text-sm font-bold">
-                                        {metrics.totalRemaining} <span className="text-muted-foreground text-[10px]">{base}</span>
-                                    </span>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Holdings</p>
+                                    <p className="font-mono text-sm font-semibold">
+                                        {metrics.totalRemaining} <span className="text-muted-foreground text-[10px] font-normal">{base}</span>
+                                    </p>
                                 </div>
-                                <div className="flex flex-col text-right">
-                                    <span className="text-xs text-muted-foreground mb-1">{metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}</span>
-                                    <span className="font-mono text-sm font-bold">
+                                <div className="text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        {metrics.currentPrice > 0 ? 'Current Price' : 'Avg Cost'}
+                                    </p>
+                                    <p className="font-mono text-sm font-semibold">
                                         {currencySymbol}{metrics.currentPrice > 0
                                             ? metrics.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })
                                             : (metrics.totalRemaining !== 0 ? (metrics.totalInvestment / Math.abs(metrics.totalRemaining)).toFixed(2) : '0.00')}
-                                    </span>
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Investment and Realized PnL */}
-                            <div className="flex justify-between items-center pt-3 border-t border-border/30">
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-muted-foreground mb-1">Total Inv.</span>
-                                    <span className="font-mono text-sm">{currencySymbol}{metrics.totalInvestment.toFixed(2)}</span>
+                            <div className="flex justify-between items-start pt-2.5 border-t border-border/30">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Inv.</p>
+                                    <p className="font-mono text-sm">{currencySymbol}{metrics.totalInvestment.toFixed(2)}</p>
                                 </div>
-                                <div className="flex flex-col text-right">
-                                    <span className="text-xs text-muted-foreground mb-1">Realized PnL</span>
-                                    <span className={`font-mono text-sm font-medium ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : 'text-foreground'}`}>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</p>
+                                    <p className={`font-mono text-sm font-medium ${pnlColor(metrics.realizedPnL)}`}>
                                         {currencySymbol}{metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
-                                    </span>
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Unrealized PnL and ROI */}
-                            <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className="text-[11px] text-primary/80 mb-1 uppercase tracking-wider font-semibold">Unrealized PnL</span>
-                                    <span className={`font-mono font-bold text-lg ${metrics.unrealizedPnL > 0 ? 'text-green-500' : metrics.unrealizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            <div className="flex justify-between items-end pt-2.5 border-t border-border/30">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Unrealized PnL</p>
+                                    <p className={`font-mono font-bold text-lg leading-none ${pnlColor(metrics.unrealizedPnL)}`}>
                                         {currencySymbol}{metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
-                                    </span>
+                                    </p>
                                 </div>
-                                <div className="flex flex-col text-right">
-                                    <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">ROI</span>
-                                    <span className={`font-mono font-bold text-lg ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">ROI</p>
+                                    <p className={`font-mono font-bold text-lg leading-none ${pnlColor(metrics.roi)}`}>
                                         {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
-                                    </span>
+                                    </p>
                                 </div>
                             </div>
                         </>
                     ) : (
                         <>
-                            {/* Avg Buy and Avg Sell */}
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-muted-foreground mb-1">Avg Buy</span>
-                                    <span className="font-mono text-sm font-bold">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</p>
+                                    <p className="font-mono text-sm font-semibold">
                                         {currencySymbol}{metrics.avgBuyPrice > 0 ? metrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
-                                    </span>
+                                    </p>
                                 </div>
-                                <div className="flex flex-col text-right">
-                                    <span className="text-xs text-muted-foreground mb-1">Avg Sell</span>
-                                    <span className="font-mono text-sm font-bold">
+                                <div className="text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</p>
+                                    <p className="font-mono text-sm font-semibold">
                                         {currencySymbol}{metrics.avgSellPrice > 0 ? metrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
-                                    </span>
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Realized PnL and ROI */}
-                            <div className="mt-2 pt-4 border-t border-border/30 flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Realized PnL</span>
-                                    <span className={`font-mono font-bold text-lg ${metrics.realizedPnL > 0 ? 'text-green-500' : metrics.realizedPnL < 0 ? 'text-destructive' : ''}`}>
+                            <div className="flex justify-between items-end pt-2.5 border-t border-border/30">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Realized PnL</p>
+                                    <p className={`font-mono font-bold text-lg leading-none ${pnlColor(metrics.realizedPnL)}`}>
                                         {currencySymbol}{metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
-                                    </span>
+                                    </p>
                                 </div>
-                                <div className="flex flex-col text-right">
-                                    <span className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">ROI</span>
-                                    <span className={`font-mono font-bold text-lg ${metrics.roi > 0 ? 'text-green-500' : metrics.roi < 0 ? 'text-destructive' : ''}`}>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">ROI</p>
+                                    <p className={`font-mono font-bold text-lg leading-none ${pnlColor(metrics.roi)}`}>
                                         {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
-                                    </span>
+                                    </p>
                                 </div>
                             </div>
                         </>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </Link>
     );
 }
