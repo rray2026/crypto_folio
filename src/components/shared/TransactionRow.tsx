@@ -45,7 +45,7 @@ export function TransactionRow({
             } ${
                 isSelected
                 ? 'bg-primary/5 border-primary shadow-sm'
-                : 'bg-card/40 border-border/40 hover:border-border hover:bg-card/60'
+                : 'bg-card border-border/40 hover:border-border hover:bg-card'
             } ${className}`}
         >
             <div className="flex flex-col md:block">

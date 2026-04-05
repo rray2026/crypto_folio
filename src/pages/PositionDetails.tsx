@@ -21,6 +21,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
+import { SwipeActions } from "@/components/shared/SwipeActions"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { useState, useEffect } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -458,61 +459,80 @@ export default function PositionDetails() {
                                     {linkedTxs.map(tx => {
                                         const entry = position.entries.find(e => e.transactionId === tx.id);
                                         return (
-                                            <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors group">
-                                                <div className="flex gap-3 md:gap-4 items-center min-w-0">
-                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
-                                                        {tx.type}
+                                            <div key={tx.id}>
+                                            <SwipeActions
+                                                actions={[
+                                                    { icon: <Eye className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => navigate(`/transactions/${tx.id}`) },
+                                                    { icon: <Edit className="h-4 w-4" />, bg: "bg-amber-500", onAction: () => setEditingTxId(tx.id) },
+                                                    { icon: <Trash2 className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
+                                                ]}
+                                            >
+                                                <div className="flex items-center justify-between p-3 rounded-xl border bg-background hover:bg-background/80 transition-colors group">
+                                                    <div className="flex gap-3 md:gap-4 items-center min-w-0">
+                                                        <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                                            {tx.type}
+                                                        </div>
+                                                        <div className="flex flex-col min-w-0">
+                                                            <p className="font-mono text-xs md:text-sm font-medium truncate">
+                                                                {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
+                                                            </p>
+                                                            <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                                                                {editingAllocTxId === tx.id ? (
+                                                                    <input
+                                                                        autoFocus
+                                                                        type="number"
+                                                                        value={allocInputValue}
+                                                                        onChange={e => setAllocInputValue(e.target.value)}
+                                                                        onBlur={() => commitEditAlloc(tx.id)}
+                                                                        onKeyDown={e => { if (e.key === 'Enter') commitEditAlloc(tx.id); if (e.key === 'Escape') setEditingAllocTxId(null); }}
+                                                                        className="w-20 bg-background border border-primary/50 rounded px-1 py-0 text-[10px] md:text-xs font-semibold text-primary focus:outline-none"
+                                                                        onClick={e => e.stopPropagation()}
+                                                                    />
+                                                                ) : (
+                                                                    <span
+                                                                        className="bg-primary/5 text-primary px-1 rounded-sm font-semibold cursor-pointer hover:bg-primary/15 transition-colors"
+                                                                        onClick={e => { e.stopPropagation(); startEditAlloc(tx.id, entry?.allocatedAmount ?? 0); }}
+                                                                        title="Click to edit allocated amount"
+                                                                    >Allocated: {entry?.allocatedAmount}</span>
+                                                                )}
+                                                                <span className="hidden sm:inline opacity-50">•</span>
+                                                                <span className="opacity-70">{format(new Date(tx.date), "yyyy/MM/dd")}</span>
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col min-w-0">
-                                                        <p className="font-mono text-xs md:text-sm font-medium truncate">
-                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
-                                                        </p>
-                                                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                                                            {editingAllocTxId === tx.id ? (
-                                                                <input
-                                                                    autoFocus
-                                                                    type="number"
-                                                                    value={allocInputValue}
-                                                                    onChange={e => setAllocInputValue(e.target.value)}
-                                                                    onBlur={() => commitEditAlloc(tx.id)}
-                                                                    onKeyDown={e => { if (e.key === 'Enter') commitEditAlloc(tx.id); if (e.key === 'Escape') setEditingAllocTxId(null); }}
-                                                                    className="w-20 bg-background border border-primary/50 rounded px-1 py-0 text-[10px] md:text-xs font-semibold text-primary focus:outline-none"
-                                                                    onClick={e => e.stopPropagation()}
-                                                                />
-                                                            ) : (
-                                                                <span
-                                                                    className="bg-primary/5 text-primary px-1 rounded-sm font-semibold cursor-pointer hover:bg-primary/15 transition-colors"
-                                                                    onClick={e => { e.stopPropagation(); startEditAlloc(tx.id, entry?.allocatedAmount ?? 0); }}
-                                                                    title="Click to edit allocated amount"
-                                                                >Allocated: {entry?.allocatedAmount}</span>
-                                                            )}
-                                                            <span className="hidden sm:inline opacity-50">•</span>
-                                                            <span className="opacity-70">{format(new Date(tx.date), "yyyy/MM/dd")}</span>
-                                                        </p>
+                                                    {/* Desktop only: hover-reveal buttons */}
+                                                    <div className="hidden md:flex items-center gap-1 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                        <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                                            <DialogTrigger asChild>
+                                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
+                                                                <DialogHeader>
+                                                                    <DialogTitle>View / Edit Details</DialogTitle>
+                                                                </DialogHeader>
+                                                                <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleRemove(tx.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-0.5 md:gap-1 shrink-0 ml-2">
-                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50">
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
-                                                            <DialogHeader>
-                                                                <DialogTitle>View / Edit Details</DialogTitle>
-                                                            </DialogHeader>
-                                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                                        </DialogContent>
-                                                    </Dialog>
-
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemove(tx.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                            </SwipeActions>
+                                            {/* Edit dialog for mobile swipe action */}
+                                            <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px] md:hidden">
+                                                    <DialogHeader>
+                                                        <DialogTitle>View / Edit Details</DialogTitle>
+                                                    </DialogHeader>
+                                                    <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                                </DialogContent>
+                                            </Dialog>
                                             </div>
                                         );
                                     })}
@@ -593,65 +613,75 @@ export default function PositionDetails() {
                                     </p>
                                 ) : (
                                     availableTxs.map(tx => (
-                                        <div key={tx.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background/50">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
-                                                        {tx.type}
-                                                    </div>
-                                                    {tx.associatedPositionIds?.length > 0 && (
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                    <div className="px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-border bg-muted/30 text-muted-foreground hover:bg-muted cursor-pointer transition-colors">
-                                                                        Linked ({tx.associatedPositionIds.length})
+                                        <SwipeActions
+                                            key={tx.id}
+                                            actions={[
+                                                { icon: <Eye className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => navigate(`/transactions/${tx.id}`) },
+                                                { icon: <Edit className="h-4 w-4" />, bg: "bg-amber-500", onAction: () => setEditingTxId(tx.id) },
+                                                { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-600", onAction: () => handleLink(tx.id, tx.quantity) },
+                                            ]}
+                                        >
+                                            <div className="p-3 border rounded-lg hover:border-primary/50 transition-colors text-sm bg-background">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                                            {tx.type}
+                                                        </div>
+                                                        {tx.associatedPositionIds?.length > 0 && (
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                        <div className="px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-border bg-muted/30 text-muted-foreground hover:bg-muted cursor-pointer transition-colors">
+                                                                            Linked ({tx.associatedPositionIds.length})
+                                                                        </div>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-64 p-3" align="start">
+                                                                    <p className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Used by Strategies</p>
+                                                                    <div className="flex flex-col gap-1">
+                                                                        {tx.associatedPositionIds.map((pid: string) => {
+                                                                            const pInfo = allPositions?.find(p => p.id === pid)
+                                                                            return (
+                                                                                <div key={pid} className="text-sm bg-muted/50 rounded-sm p-1.5 flex justify-between items-center group cursor-pointer hover:bg-muted" onClick={() => navigate(`/positions/${pid}`)}>
+                                                                                    <span className="truncate mr-2" title={pInfo?.strategyName || 'Unnamed'}>{pInfo?.strategyName || 'Unnamed Strategy'}</span>
+                                                                                    <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${pInfo?.status === 'OPEN' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                                                                                        {pInfo?.status || '?'}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )
+                                                                        })}
                                                                     </div>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-64 p-3" align="start">
-                                                                <p className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Used by Strategies</p>
-                                                                <div className="flex flex-col gap-1">
-                                                                    {tx.associatedPositionIds.map((pid: string) => {
-                                                                        const pInfo = allPositions?.find(p => p.id === pid)
-                                                                        return (
-                                                                            <div key={pid} className="text-sm bg-muted/50 rounded-sm p-1.5 flex justify-between items-center group cursor-pointer hover:bg-muted" onClick={() => navigate(`/positions/${pid}`)}>
-                                                                                <span className="truncate mr-2" title={pInfo?.strategyName || 'Unnamed'}>{pInfo?.strategyName || 'Unnamed Strategy'}</span>
-                                                                                <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${pInfo?.status === 'OPEN' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
-                                                                                    {pInfo?.status || '?'}
-                                                                                </span>
-                                                                            </div>
-                                                                        )
-                                                                    })}
-                                                                </div>
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    )}
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                        )}
+                                                    </div>
+                                                    {/* Desktop only: hover buttons */}
+                                                    <div className="hidden md:flex items-center gap-1">
+                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                                            <Eye className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
+                                                            <DialogTrigger asChild>
+                                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                                                    <Edit className="h-3 w-3" />
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
+                                                                <DialogHeader>
+                                                                    <DialogTitle>View / Edit Details</DialogTitle>
+                                                                </DialogHeader>
+                                                                <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                        <Button size="sm" variant="secondary" onClick={() => handleLink(tx.id, tx.quantity)} className="h-7 text-xs gap-1">
+                                                            <LinkIcon className="h-3 w-3" /> Link 100%
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                                        <Eye className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                                                <Edit className="h-3 w-3" />
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
-                                                            <DialogHeader>
-                                                                <DialogTitle>View / Edit Details</DialogTitle>
-                                                            </DialogHeader>
-                                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                                        </DialogContent>
-                                                    </Dialog>
-                                                    <Button size="sm" variant="secondary" onClick={() => handleLink(tx.id, tx.quantity)} className="h-7 text-xs gap-1">
-                                                        <LinkIcon className="h-3 w-3" /> Link 100%
-                                                    </Button>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <p className="font-mono text-muted-foreground">{currencySymbol}{tx.price} × {tx.quantity}</p>
+                                                    <span className="text-xs text-muted-foreground/70 font-mono">{format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <p className="font-mono text-muted-foreground">{currencySymbol}{tx.price} × {tx.quantity}</p>
-                                                <span className="text-xs text-muted-foreground/70 font-mono">{format(new Date(tx.date), "yyyy/MM/dd HH:mm:ss")}</span>
-                                            </div>
-                                        </div>
+                                        </SwipeActions>
                                     ))
                                 )}
                             </div>
