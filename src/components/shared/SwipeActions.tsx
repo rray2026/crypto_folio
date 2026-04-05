@@ -106,7 +106,7 @@ export function SwipeActions({ actions, children, actionWidth = 64, disabled = f
     return (
         <div
             ref={containerRef}
-            className="relative overflow-hidden md:overflow-visible rounded-xl"
+            className="relative overflow-x-clip md:overflow-visible rounded-xl"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
