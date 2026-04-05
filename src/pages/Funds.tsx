@@ -105,21 +105,17 @@ export default function Funds() {
 
             {/* Fund grid */}
             {!funds ? null : funds.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <div className="h-16 w-16 rounded-2xl bg-muted/40 flex items-center justify-center mb-4">
-                        <Layers className="h-8 w-8 text-muted-foreground/40" />
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                        <Layers className="h-7 w-7 text-primary/60" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-1">No funds yet</h3>
-                    <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+                    <h3 className="text-base font-semibold mb-1">No funds yet</h3>
+                    <p className="text-sm text-muted-foreground mb-5 max-w-xs">
                         Create a fund to group positions under a shared initial capital and track NAV over time.
                     </p>
-                    <Button
-                        variant="outline"
-                        className="gap-2 rounded-xl"
-                        onClick={() => setIsAddDialogOpen(true)}
-                    >
+                    <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
-                        Create your first Fund
+                        Create Your First Fund
                     </Button>
                 </div>
             ) : (

@@ -85,12 +85,42 @@ interface PositionCardProps {
 - P&L < 0 → red
 - P&L = 0 → muted gray
 
-### 4.2 TransactionCard
+### 4.2 SwipeActions
+
+Reusable swipe-to-reveal action component for mobile card lists (`src/components/shared/SwipeActions.tsx`).
+
+```tsx
+interface SwipeActionsProps {
+  actions: SwipeAction[];       // Action buttons revealed on swipe
+  children: ReactNode;          // The card content
+  actionWidth?: number;         // Width per button (default 64px)
+  disabled?: boolean;           // Disable swipe (e.g. selection mode)
+  className?: string;           // Container classes (default "rounded-xl")
+}
+
+interface SwipeAction {
+  icon: ReactNode;
+  bg: string;                   // Tailwind bg class (e.g. "bg-red-500")
+  onAction: () => void;
+}
+```
+
+**Key implementation details:**
+- Touch gesture with direction locking (horizontal vs vertical scroll)
+- Dynamic border-radius: full `rounded-xl` when idle, `rounded-l-xl` when swiped (right side becomes square to seamlessly meet action buttons)
+- Foreground layer has `bg-background` to prevent color bleed-through from action buttons
+- Action buttons container has `rounded-r-xl overflow-hidden`
+- Desktop: completely transparent, renders children normally
+- Use `className=""` when nested inside an already-rounded parent to avoid shadow clipping
+
+See [UI Design Principles — Mobile Interaction Patterns](../ui-design-principles.md) for full conventions.
+
+### 4.3 TransactionCard
 
 Displays a single transaction in the transaction list. Two layout variants:
 
-- **Desktop**: table row (`TransactionRow`)
-- **Mobile**: card (`TransactionCard`)
+- **Desktop**: table row (`TransactionRow`) — hover-reveal action buttons
+- **Mobile**: card (`TransactionCard`) — wrapped in `SwipeActions` for swipe-to-reveal Edit and Delete
 
 ```tsx
 interface TransactionCardProps {
@@ -101,6 +131,11 @@ interface TransactionCardProps {
 }
 ```
 
+**Mobile interaction:**
+- Tap: navigate to transaction detail (or toggle selection if in selection mode)
+- Swipe left: reveal Edit (amber) and Delete (red) action buttons
+- Selection mode: entered via header CheckSquare button (not long-press)
+
 **Displayed content:**
 - Date and time
 - BUY / SELL type badge (color-coded)
@@ -109,7 +144,7 @@ interface TransactionCardProps {
 - Fee
 - Number of linked positions (if any)
 
-### 4.3 TransactionListHeader
+### 4.4 TransactionListHeader
 
 The desktop column header for the transaction list. Defines column widths and labels; used together with `TransactionRow`.
 
@@ -217,30 +252,7 @@ interface SymbolSelectorProps {
 - Accepts any custom trading pair not in the predefined list.
 - Automatically closes the Popover after a selection.
 
-### 7.4 ImportTransactionsButton
-
-Button and processing logic for file-based transaction import.
-
-**Supported file formats:**
-- Binance trade export (Excel `.xlsx`)
-- Generic CSV
-
-**Binance import flow:**
-1. User clicks the button and selects an Excel file.
-2. The `xlsx` library parses the file into JSON rows.
-3. Fields are extracted using Binance's column format (time, pair, direction, price, quantity, amount, fee, OrderId).
-4. Fee aggregation: fees from multiple Trade rows under the same OrderId are summed.
-5. Calls `bulkAddTransactions()` for batch import with automatic deduplication (by `orderId`).
-6. Returns `{ added, skipped }` result notification.
-
-**Fee extraction regex:**
-```typescript
-// Fee field example: "0.00123 BNB"
-const feeMatch = feeStr.match(/^([\d.]+)\s*([A-Z]+)$/);
-const feeAmount = parseFloat(feeMatch?.[1] ?? '0');
-```
-
-### 7.5 AiImportFlow
+### 7.4 AiImportFlow
 
 AI-assisted import flow (multi-step Dialog):
 

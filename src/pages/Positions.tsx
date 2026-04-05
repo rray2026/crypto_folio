@@ -225,17 +225,19 @@ export default function Positions() {
                 </CardContent>
             </Card>
             {!positions?.length ? (
-                <Card className="border-dashed shadow-none mt-6">
-                    <CardContent className="flex flex-col items-center justify-center py-12 px-8 text-muted-foreground text-center">
-                        <p className="font-medium">No positions created yet.</p>
-                        <p className="text-sm text-muted-foreground/70 mt-1 max-w-xs">
-                            A position groups related trades under a strategy so you can track their combined P&amp;L and ROI.
-                        </p>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)} className="mt-4">
-                            Create Your First Strategy
-                        </Button>
-                    </CardContent>
-                </Card>
+                <div className="flex flex-col items-center justify-center py-16 text-center mt-6">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                        <Target className="h-7 w-7 text-primary/60" />
+                    </div>
+                    <h3 className="text-base font-semibold mb-1">No strategies yet</h3>
+                    <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                        A position groups related trades under a strategy so you can track their combined P&L and ROI.
+                    </p>
+                    <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                        Create Your First Strategy
+                    </Button>
+                </div>
             ) : (
                 <Tabs defaultValue="active" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
