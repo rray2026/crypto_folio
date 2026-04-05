@@ -1,12 +1,18 @@
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { useEffect } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { format } from "date-fns"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings } from "lucide-react"
+
+function freshnessColor(timestamp: number): string {
+    const age = Math.floor((Date.now() - timestamp) / 1000);
+    if (age < 60) return 'bg-emerald-500';
+    if (age < 300) return 'bg-amber-400';
+    return 'bg-muted-foreground/30';
+}
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -14,6 +20,14 @@ export default function Dashboard() {
     useEffect(() => { setMobileHeader({ title: "Dashboard" }) }, [setMobileHeader])
     const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices, pairConfigs, pinnedPairs } = useSettingsStore()
+
+    // Tick every 5s so relative timestamps stay fresh
+    const [, setTick] = useState(0);
+    const tick = useCallback(() => setTick(t => t + 1), []);
+    useEffect(() => {
+        const id = setInterval(tick, 5000);
+        return () => clearInterval(id);
+    }, [tick]);
 
     // Initial price fetch when positions or pinned pairs change
     useEffect(() => {
@@ -53,12 +67,12 @@ export default function Dashboard() {
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
                         <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
-                            Overview of your crypto portfolio performance.
+                            Overview of your portfolio performance.
                         </p>
                     </div>
                 </div>
 
-                {(pinnedPairs?.length ?? 0) > 0 && (
+                {(pinnedPairs?.length ?? 0) > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {pinnedPairs.map(pair => {
                             const priceData = prices[pair];
@@ -79,24 +93,71 @@ export default function Dashboard() {
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
-                                            {priceData && (
-                                                <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                                                    {format(new Date(priceData.timestamp), "HH:mm:ss")}
-                                                </p>
-                                            )}
-                                        </div>
+                                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
                                             {priceDisplay}
                                         </span>
+                                        {priceData && (
+                                            <span className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-1000 ${freshnessColor(priceData.timestamp)}`} />
+                                        )}
                                         <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
                                     </div>
                                 </button>
                             )
                         })}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center">
+                        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                            <TrendingUp className="h-8 w-8 text-primary/60" />
+                        </div>
+                        <h2 className="text-xl font-semibold mb-2">Welcome to Folio</h2>
+                        <p className="text-sm text-muted-foreground mb-8 max-w-sm">
+                            A privacy-first portfolio tracker. All your data stays in this browser — nothing is sent to any server.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg">
+                            <button
+                                onClick={() => navigate('/settings/trading-pairs')}
+                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                            >
+                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                    <Settings className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">Add Pairs</p>
+                                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Pin trading pairs to track prices</p>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/transactions')}
+                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                            >
+                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                    <ReceiptText className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">Record Trades</p>
+                                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Log your buy and sell orders</p>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/positions')}
+                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                            >
+                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                    <LineChart className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">Create Strategy</p>
+                                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Group trades to track P&L</p>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

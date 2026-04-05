@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { TransactionCard, TransactionListHeader } from "@/components/shared/TransactionCard"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -6,10 +6,10 @@ import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { ImportTransactionsButton } from "@/components/transactions/ImportTransactionsButton"
+import { SwipeActions } from "@/components/shared/SwipeActions"
 import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FileUp, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -69,8 +69,6 @@ export default function Transactions() {
             ),
         })
     }, [setMobileHeader, openAdd, openSelectMode])
-    const mobileLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const mobileLongPressTriggered = useRef(false)
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [createPositionError, setCreatePositionError] = useState<string | null>(null)
@@ -155,11 +153,6 @@ export default function Transactions() {
             if (newSet.size === 0) setIsSelectionMode(false);
             return newSet;
         });
-    }
-
-    const enterSelectionMode = (id: string) => {
-        setIsSelectionMode(true);
-        setSelectedIds(new Set([id]));
     }
 
     const toggleAll = () => {
@@ -327,18 +320,6 @@ export default function Transactions() {
                                             </div>
                                         </Button>
 
-                                        <ImportTransactionsButton
-                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
-                                            variant="outline"
-                                        >
-                                            <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                                                <FileUp className="h-5 w-5 text-blue-500" />
-                                            </div>
-                                            <div className="flex flex-col items-center">
-                                                <span className="font-semibold text-sm">Import from Binance</span>
-                                                <span className="text-xs text-muted-foreground">Upload exported Excel file</span>
-                                            </div>
-                                        </ImportTransactionsButton>
                                     </div>
                                 ) : addMode === 'ai' ? (
                                     <AiImportFlow onSuccess={() => setIsAddDialogOpen(false)} />
@@ -386,93 +367,85 @@ export default function Transactions() {
                         </Button>
                     </div>
                 ) : (
-                    transactions.map((tx) => (
-                        <div
-                            key={tx.id}
-                            onPointerDown={(e) => {
-                                if (e.pointerType !== 'touch') return;
-                                mobileLongPressTriggered.current = false;
-                                mobileLongPressTimer.current = setTimeout(() => {
-                                    mobileLongPressTriggered.current = true;
-                                    if (!isSelectionMode) {
-                                        navigator.vibrate?.(40);
-                                        enterSelectionMode(tx.id);
-                                    }
-                                }, 300);
-                            }}
-                            onPointerUp={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
-                            onPointerLeave={() => { if (mobileLongPressTimer.current) { clearTimeout(mobileLongPressTimer.current); mobileLongPressTimer.current = null; } }}
-                            onDoubleClick={() => { if (!isSelectionMode) enterSelectionMode(tx.id); }}
-                            onClick={() => {
-                                if (mobileLongPressTriggered.current) return;
-                                if (isSelectionMode) { toggleSelection(tx.id); } else { navigate(`/transactions/${tx.id}`); }
-                            }}
-                            className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer select-none group ${
-                                selectedIds.has(tx.id) 
-                                ? 'bg-primary/10 border-primary shadow-sm' 
-                                : 'bg-background/40 border-border hover:border-primary/40 hover:bg-background/60 shadow-sm'
-                            }`}
-                        >
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-lg tracking-tight">{tx.symbol}</span>
-                                    <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                        tx.type === "BUY" 
-                                        ? "bg-green-500/10 text-green-600 dark:text-green-400" 
-                                        : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                    }`}>
-                                        {tx.type}
+                    transactions.map((tx) => {
+                        const sym = getCurrencySymbolForPair(tx.symbol, pairConfigs);
+                        return (
+                            <SwipeActions
+                                key={tx.id}
+                                disabled={isSelectionMode}
+                                actions={[
+                                    { icon: <Edit className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => setEditingTxId(tx.id) },
+                                    { icon: <Trash2 className="h-4 w-4" />, bg: "bg-red-500", onAction: () => confirmSingleDelete(tx.id, { stopPropagation: () => {} } as React.MouseEvent) },
+                                ]}
+                            >
+                                <div
+                                    onClick={() => { if (isSelectionMode) { toggleSelection(tx.id); } else { navigate(`/transactions/${tx.id}`); } }}
+                                    className={`p-3.5 border transition-all duration-200 cursor-pointer select-none ${
+                                        selectedIds.has(tx.id)
+                                        ? 'bg-primary/10 border-primary shadow-sm'
+                                        : 'bg-card border-border hover:border-primary/40 shadow-sm'
+                                    }`}
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-lg tracking-tight">{tx.symbol}</span>
+                                            <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                tx.type === "BUY"
+                                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                                                : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                            }`}>
+                                                {tx.type}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-y-2.5 text-xs">
+                                        <div className="flex justify-between items-center pr-4">
+                                            <span className="text-muted-foreground font-medium">Price</span>
+                                            <span className="font-mono font-bold">{sym}{tx.price.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-muted-foreground font-medium">Qty</span>
+                                            <span className="font-mono font-bold">{tx.quantity.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pr-4">
+                                            <span className="text-muted-foreground font-medium">Value</span>
+                                            <span className="font-mono font-black text-primary/90">{sym}{tx.amount.toLocaleString()}</span>
+                                        </div>
+                                        {tx.fee > 0 && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground font-medium">Fee</span>
+                                                <span className="font-mono text-muted-foreground font-bold">{sym}{tx.fee.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-3 pt-2.5 border-t border-border/20 flex justify-end">
+                                        <span className="text-[10px] text-muted-foreground/60 font-mono tracking-tighter">
+                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 -mr-2 -mt-1.5">
-                                    <Dialog open={editingTxId === tx.id} onOpenChange={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingTxId(tx.id); }}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
-                                            <DialogHeader>
-                                                <DialogTitle>Edit Transaction</DialogTitle>
-                                            </DialogHeader>
-                                            <TransactionEditForm transaction={tx} onSuccess={() => setEditingTxId(null)} />
-                                        </DialogContent>
-                                    </Dialog>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors" onClick={(e) => confirmSingleDelete(tx.id, e)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-y-2.5 text-xs">
-                                <div className="flex justify-between items-center pr-4">
-                                    <span className="text-muted-foreground font-medium">Price</span>
-                                    <span className="font-mono font-bold">${tx.price.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground font-medium">Qty</span>
-                                    <span className="font-mono font-bold">{tx.quantity.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between items-center pr-4">
-                                    <span className="text-muted-foreground font-medium">Value</span>
-                                    <span className="font-mono font-black text-primary/90">${tx.amount.toLocaleString()}</span>
-                                </div>
-                                {tx.fee > 0 && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground font-medium">Fee</span>
-                                        <span className="font-mono text-muted-foreground font-bold">${tx.fee.toLocaleString()}</span>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="mt-3 pt-2.5 border-t border-border/20 flex justify-end">
-                                <span className="text-[10px] text-muted-foreground/60 font-mono tracking-tighter">
-                                    {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                </span>
-                            </div>
-                        </div>
-                    ))
+                            </SwipeActions>
+                        );
+                    })
                 )}
+
+                {/* Edit dialog for mobile swipe action */}
+                {editingTxId && (() => {
+                    const editTx = transactions?.find(t => t.id === editingTxId);
+                    if (!editTx) return null;
+                    return (
+                        <Dialog open={true} onOpenChange={(isOpen) => { if (!isOpen) setEditingTxId(null); }}>
+                            <DialogContent className="w-[95vw] max-w-lg rounded-xl p-4">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Transaction</DialogTitle>
+                                </DialogHeader>
+                                <TransactionEditForm transaction={editTx} onSuccess={() => setEditingTxId(null)} />
+                            </DialogContent>
+                        </Dialog>
+                    );
+                })()}
             </div>
 
             {/* Desktop Row-Card Layout */}
@@ -504,7 +477,6 @@ export default function Transactions() {
                                 isSelected={selectedIds.has(tx.id)}
                                 isSelectionMode={isSelectionMode}
                                 onToggleSelection={toggleSelection}
-                                onEnterSelectionMode={enterSelectionMode}
                                 onViewDetail={(id) => navigate(`/transactions/${id}`)}
                                 onEdit={(id) => setEditingTxId(id)}
                                 onDelete={confirmSingleDelete}

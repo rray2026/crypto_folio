@@ -18,6 +18,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { FundForm } from "@/components/funds/FundForm"
+import { SwipeActions } from "@/components/shared/SwipeActions"
 
 export default function FundDetails() {
     const { id } = useParams<{ id: string }>()
@@ -231,7 +232,16 @@ export default function FundDetails() {
                                 const isLong = metrics.positionType === 'LONG'
                                 const posCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                 return (
-                                    <div key={pos.id} className="p-3 rounded-xl border bg-background/40 hover:bg-background/80 transition-colors">
+                                    <SwipeActions
+                                        key={pos.id}
+                                        actions={[
+                                            { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => unassignPosition(pos.id) },
+                                        ]}
+                                    >
+                                        <div
+                                            className="p-3 border bg-card hover:bg-card/80 transition-colors cursor-pointer"
+                                            onClick={() => navigate(`/positions/${pos.id}`)}
+                                        >
                                         {/* Row 1: badges + name + actions */}
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-1.5 min-w-0">
@@ -252,11 +262,12 @@ export default function FundDetails() {
                                                 </span>
                                                 <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                             </div>
-                                            <div className="flex items-center gap-0.5 shrink-0">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={() => navigate(`/positions/${pos.id}`)}>
+                                            {/* Desktop only */}
+                                            <div className="hidden md:flex items-center gap-0.5 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={(e) => { e.stopPropagation(); navigate(`/positions/${pos.id}`); }}>
                                                     <Eye className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={() => unassignPosition(pos.id)} title="Remove from fund">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={(e) => { e.stopPropagation(); unassignPosition(pos.id); }} title="Remove from fund">
                                                     <X className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>
@@ -294,6 +305,7 @@ export default function FundDetails() {
                                             <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
                                         </div>
                                     </div>
+                                    </SwipeActions>
                                 )
                             })}
                         </div>
@@ -316,7 +328,16 @@ export default function FundDetails() {
                                 const posCurrency = pairConfigs.find(c => c.pair === pos.symbol)?.currency ?? 'USD'
                                 const currencyMismatch = posCurrency !== fund.currency
                                 return (
-                                    <div key={pos.id} className="p-3 border rounded-lg hover:border-primary/50 transition-colors bg-background/50">
+                                    <SwipeActions
+                                        key={pos.id}
+                                        actions={[
+                                            { icon: <LinkIcon className="h-4 w-4" />, bg: "bg-emerald-500", onAction: () => handleAssign(pos.id) },
+                                        ]}
+                                    >
+                                        <div
+                                            className="p-3 border bg-card transition-colors cursor-pointer"
+                                            onClick={() => navigate(`/positions/${pos.id}`)}
+                                        >
                                         {/* Row 1: badges + name + actions */}
                                         <div className="flex items-center justify-between gap-1">
                                             <div className="flex items-center gap-1 min-w-0">
@@ -337,15 +358,16 @@ export default function FundDetails() {
                                                 </span>
                                                 <p className="font-medium text-xs truncate">{pos.strategyName || pos.symbol}</p>
                                             </div>
-                                            <div className="flex items-center gap-0.5 shrink-0">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate(`/positions/${pos.id}`)}>
+                                            {/* Desktop only */}
+                                            <div className="hidden md:flex items-center gap-0.5 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); navigate(`/positions/${pos.id}`); }}>
                                                     <Eye className="h-3.5 w-3.5" />
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="secondary"
                                                     className={`h-7 text-xs gap-1 ${currencyMismatch ? 'border border-amber-500/40' : ''}`}
-                                                    onClick={() => handleAssign(pos.id)}
+                                                    onClick={(e) => { e.stopPropagation(); handleAssign(pos.id); }}
                                                     title={currencyMismatch ? `Currency mismatch: position uses ${posCurrency}, fund uses ${fund.currency}` : undefined}
                                                 >
                                                     <LinkIcon className="h-3 w-3" /> Link
@@ -384,6 +406,7 @@ export default function FundDetails() {
                                             <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
                                         </div>
                                     </div>
+                                    </SwipeActions>
                                 )
                             })
                         )}

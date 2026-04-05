@@ -49,7 +49,7 @@ function makePayload(overrides: Partial<BackupPayload> = {}): BackupPayload {
     return {
         version: DB_VERSION,
         timestamp: Date.now(),
-        appName: 'CryptoFolio',
+        appName: 'Folio',
         transactions: [],
         positions: [],
         funds: [],
@@ -101,13 +101,13 @@ describe('backup logic', () => {
             await exportData();
 
             expect(document.createElement).toHaveBeenCalledWith('a');
-            expect(mockLink.download).toContain('cryptofolio-backup');
+            expect(mockLink.download).toContain('folio-backup');
             expect(mockLink.click).toHaveBeenCalled();
 
             const blobContent = (globalThis.Blob as unknown as { lastInstance: MockBlob }).lastInstance.content[0];
             const payload = JSON.parse(blobContent);
 
-            expect(payload.appName).toBe('CryptoFolio');
+            expect(payload.appName).toBe('Folio');
             expect(payload.transactions).toHaveLength(1);
             expect(payload.positions).toHaveLength(1);
             expect(payload.settings.theme).toBe('dark');
@@ -150,8 +150,13 @@ describe('backup logic', () => {
             await expect(importData(file)).rejects.toThrow('Invalid backup file');
         });
 
+        it('accepts legacy CryptoFolio backup files', async () => {
+            const payload = makePayload({ appName: 'CryptoFolio' as string });
+            await expect(importData(setMockFile(payload))).resolves.toBeUndefined();
+        });
+
         it('throws if the version field is missing', async () => {
-            const file = setMockFile({ appName: 'CryptoFolio', transactions: [], positions: [] });
+            const file = setMockFile({ appName: 'Folio', transactions: [], positions: [] });
             await expect(importData(file)).rejects.toThrow('missing or non-numeric version field');
         });
 
@@ -162,7 +167,7 @@ describe('backup logic', () => {
 
         it('throws if the backup is from a newer app version', async () => {
             const file = setMockFile(makePayload({ version: DB_VERSION + 999 }));
-            await expect(importData(file)).rejects.toThrow('newer version of CryptoFolio');
+            await expect(importData(file)).rejects.toThrow('newer version of Folio');
         });
     });
 
@@ -181,7 +186,7 @@ describe('backup logic', () => {
         });
 
         it('rejects when transactions or positions arrays are missing', async () => {
-            const file = setMockFile({ appName: 'CryptoFolio', version: DB_VERSION, settings: {} });
+            const file = setMockFile({ appName: 'Folio', version: DB_VERSION, settings: {} });
             await expect(importData(file)).rejects.toThrow('Malformed backup properties');
         });
 
@@ -189,7 +194,7 @@ describe('backup logic', () => {
             const payloadWithoutFunds = {
                 version: DB_VERSION,
                 timestamp: Date.now(),
-                appName: 'CryptoFolio',
+                appName: 'Folio',
                 transactions: [],
                 positions: [],
                 // no funds field

@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MIGRATIONS } from '../lib/migrations';
 
+// Migrate old localStorage key from CryptoFolio era
+const OLD_SETTINGS_KEY = 'crypto-folio-settings';
+const NEW_SETTINGS_KEY = 'folio-settings';
+if (typeof window !== 'undefined' && !localStorage.getItem(NEW_SETTINGS_KEY) && localStorage.getItem(OLD_SETTINGS_KEY)) {
+    localStorage.setItem(NEW_SETTINGS_KEY, localStorage.getItem(OLD_SETTINGS_KEY)!);
+    localStorage.removeItem(OLD_SETTINGS_KEY);
+}
+
 export type DashboardTimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 export type Theme = 'dark' | 'light' | 'system';
 
@@ -246,7 +254,7 @@ export const useSettingsStore = create<SettingsState>()(
             }
         }),
         {
-            name: 'crypto-folio-settings',
+            name: 'folio-settings',
             version: 4,
             migrate: (persistedState: unknown, version: number) => {
                 const state = persistedState as Record<string, unknown>;

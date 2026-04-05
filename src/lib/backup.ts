@@ -32,7 +32,7 @@ export async function exportData(): Promise<void> {
         const payload: BackupPayload = {
             version: DB_VERSION,
             timestamp: Date.now(),
-            appName: 'CryptoFolio',
+            appName: 'Folio',
             transactions,
             positions,
             funds,
@@ -51,7 +51,7 @@ export async function exportData(): Promise<void> {
         const dateStr = new Date().toISOString().split('T')[0];
         const a = document.createElement('a');
         a.href = url;
-        a.download = `cryptofolio-backup-${dateStr}.json`;
+        a.download = `folio-backup-${dateStr}.json`;
         document.body.appendChild(a);
         a.click();
 
@@ -78,8 +78,8 @@ export async function importData(file: File): Promise<void> {
                 const raw = JSON.parse(content) as BackupPayload;
 
                 // Validate app identity
-                if (raw.appName !== 'CryptoFolio') {
-                    throw new Error("Invalid backup file. This file does not appear to belong to CryptoFolio.");
+                if (raw.appName !== 'Folio' && raw.appName !== 'CryptoFolio') {
+                    throw new Error("Invalid backup file. This file does not appear to belong to Folio.");
                 }
 
                 // Validate version field exists
@@ -90,7 +90,7 @@ export async function importData(file: File): Promise<void> {
                 // Reject backups created by a newer version of the app
                 if (raw.version > DB_VERSION) {
                     throw new Error(
-                        `This backup was created with a newer version of CryptoFolio (backup v${raw.version}, app v${DB_VERSION}). ` +
+                        `This backup was created with a newer version of Folio (backup v${raw.version}, app v${DB_VERSION}). ` +
                         `Please update the app before importing.`
                     );
                 }

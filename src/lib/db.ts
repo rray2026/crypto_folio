@@ -60,7 +60,7 @@ db.version(4)
 // upgrade can proceed without being blocked. The user will need to refresh.
 db.on('versionchange', () => {
     db.close();
-    console.warn('[CryptoFolio] Database upgraded by another tab. Please refresh the page.');
+    console.warn('[Folio] Database upgraded by another tab. Please refresh the page.');
 });
 
 export { db };
