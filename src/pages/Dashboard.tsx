@@ -1,12 +1,21 @@
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { useEffect } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { format } from "date-fns"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings } from "lucide-react"
+
+function timeAgo(timestamp: number): string {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 5) return 'just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ago`;
+}
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -14,6 +23,14 @@ export default function Dashboard() {
     useEffect(() => { setMobileHeader({ title: "Dashboard" }) }, [setMobileHeader])
     const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices, pairConfigs, pinnedPairs } = useSettingsStore()
+
+    // Tick every 5s so relative timestamps stay fresh
+    const [, setTick] = useState(0);
+    const tick = useCallback(() => setTick(t => t + 1), []);
+    useEffect(() => {
+        const id = setInterval(tick, 5000);
+        return () => clearInterval(id);
+    }, [tick]);
 
     // Initial price fetch when positions or pinned pairs change
     useEffect(() => {
@@ -79,19 +96,19 @@ export default function Dashboard() {
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
+                                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">{pair}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-right">
+                                            <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
+                                                {priceDisplay}
+                                            </span>
                                             {priceData && (
-                                                <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                                                    {format(new Date(priceData.timestamp), "HH:mm:ss")}
+                                                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                                                    {timeAgo(priceData.timestamp)}
                                                 </p>
                                             )}
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xl font-bold font-mono tracking-tight text-foreground lining-nums">
-                                            {priceDisplay}
-                                        </span>
                                         <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
                                     </div>
                                 </button>
