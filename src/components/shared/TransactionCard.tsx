@@ -138,7 +138,7 @@ export function TransactionCard({
                         },
                     ]}
                 >
-                    <Card className={`overflow-hidden transition-all duration-200 border-border/40 ${
+                    <Card className={`overflow-hidden transition-all duration-200 border-border/40 rounded-none ${
                         isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'
                     }`}>
                         <CardContent className="p-4 space-y-4">

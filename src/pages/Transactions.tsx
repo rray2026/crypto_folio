@@ -380,7 +380,7 @@ export default function Transactions() {
                             >
                                 <div
                                     onClick={() => { if (isSelectionMode) { toggleSelection(tx.id); } else { navigate(`/transactions/${tx.id}`); } }}
-                                    className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                                    className={`p-3.5 border transition-all duration-200 cursor-pointer select-none ${
                                         selectedIds.has(tx.id)
                                         ? 'bg-primary/10 border-primary shadow-sm'
                                         : 'bg-card border-border hover:border-primary/40 shadow-sm'
