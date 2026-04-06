@@ -242,6 +242,66 @@ describe('MIGRATIONS[3] v3 → v4', () => {
     });
 });
 
+// ---------------------------------------------------------------------------
+// v4 → v5: add market field to pairConfigs
+// ---------------------------------------------------------------------------
+
+describe('MIGRATIONS[4] v4 → v5', () => {
+    it('adds market field inferred from exchange', () => {
+        const payload = makePayload(4, {
+            settings: {
+                pairConfigs: [
+                    { pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
+                    { pair: 'AAPL',     exchange: 'NYSE',    dataProvider: 'Yahoo Finance', currency: 'USD' },
+                    { pair: '600036',   exchange: 'SSE',     dataProvider: 'Yahoo Finance', currency: 'CNY' },
+                ],
+            },
+        });
+        const result = MIGRATIONS[4].upgradePayload(payload) as any;
+        expect(result.version).toBe(5);
+        expect(result.settings.pairConfigs[0].market).toBe('Crypto');
+        expect(result.settings.pairConfigs[1].market).toBe('US Stocks');
+        expect(result.settings.pairConfigs[2].market).toBe('CN Stocks');
+    });
+
+    it('handles missing pairConfigs gracefully', () => {
+        const payload = makePayload(4, { settings: { predefinedPairs: [] } });
+        const result = MIGRATIONS[4].upgradePayload(payload) as any;
+        expect(result.version).toBe(5);
+        expect(result.settings.pairConfigs).toBeUndefined();
+    });
+
+    it('upgradeLocalStorage: backfills market from exchange', () => {
+        const state = {
+            pairConfigs: [
+                { pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
+                { pair: 'AAPL',     exchange: 'NASDAQ',  dataProvider: 'Yahoo Finance', currency: 'USD' },
+                { pair: '000001',   exchange: 'SZSE',    dataProvider: 'Yahoo Finance', currency: 'CNY' },
+            ],
+        };
+        const result = MIGRATIONS[4].upgradeLocalStorage!(state) as any;
+        expect(result.pairConfigs[0].market).toBe('Crypto');
+        expect(result.pairConfigs[1].market).toBe('US Stocks');
+        expect(result.pairConfigs[2].market).toBe('CN Stocks');
+    });
+
+    it('upgradeLocalStorage: preserves existing market field', () => {
+        const state = {
+            pairConfigs: [
+                { pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD', market: 'Crypto' },
+            ],
+        };
+        const result = MIGRATIONS[4].upgradeLocalStorage!(state) as any;
+        expect(result.pairConfigs[0].market).toBe('Crypto');
+    });
+
+    it('upgradeLocalStorage: returns state unchanged when pairConfigs is absent', () => {
+        const state = { predefinedPairs: ['BTC/USDT'] };
+        const result = MIGRATIONS[4].upgradeLocalStorage!(state) as any;
+        expect(result).toEqual(state);
+    });
+});
+
 describe('upgradeIdb contract', () => {
     it('each registered upgradeIdb is callable and returns a Promise or undefined', async () => {
         for (const migration of Object.values(MIGRATIONS)) {

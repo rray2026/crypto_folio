@@ -4,7 +4,7 @@ import { format } from "date-fns"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import {
     useSettingsStore,
-    SUPPORTED_EXCHANGES, EXCHANGE_GROUPS,
+    SUPPORTED_MARKETS, MARKET_EXCHANGES, MARKET_DEFAULT_EXCHANGE,
     DATA_PROVIDERS, DATA_PROVIDER_GROUPS,
     fetchPriceFromProvider, defaultDataProvider, getCurrencySymbol, inferCurrency,
 } from "@/store/useSettingsStore"
@@ -153,19 +153,30 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     const { addPair } = useSettingsStore()
 
     const [newPair, setNewPair] = useState("")
+    const [newMarket, setNewMarket] = useState<string>("Crypto")
     const [newExchange, setNewExchange] = useState<string>("Binance")
     const [newDataProvider, setNewDataProvider] = useState<string>("Binance")
     const [addError, setAddError] = useState<string | null>(null)
     const [isValidating, setIsValidating] = useState(false)
 
+    const availableExchanges = MARKET_EXCHANGES[newMarket] ?? []
     const inferredCurrency = inferCurrency(newPair.trim().toUpperCase(), newExchange)
 
     const handleClose = () => {
         setNewPair("")
+        setNewMarket("Crypto")
         setNewExchange("Binance")
         setNewDataProvider("Binance")
         setAddError(null)
         onClose()
+    }
+
+    const handleMarketChange = (market: string) => {
+        setNewMarket(market)
+        const defExch = MARKET_DEFAULT_EXCHANGE[market] ?? (MARKET_EXCHANGES[market]?.[0] ?? 'Binance')
+        setNewExchange(defExch)
+        setNewDataProvider(defaultDataProvider(defExch))
+        setAddError(null)
     }
 
     const handleAdd = async (e: React.FormEvent) => {
@@ -191,7 +202,8 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     const placeholder =
         newExchange === 'SSE'  ? 'e.g. 601818' :
         newExchange === 'SZSE' ? 'e.g. 000001' :
-        'e.g. BTC/USDT or AAPL'
+        newMarket === 'US Stocks' ? 'e.g. AAPL' :
+        'e.g. BTC/USDT'
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -199,11 +211,33 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                 <DialogHeader>
                     <DialogTitle>Add Trading Pair</DialogTitle>
                     <DialogDescription>
-                        Enter a symbol, select the exchange and data source. The pair will be validated before saving.
+                        Select a market and exchange, enter a symbol. The pair will be validated before saving.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleAdd} className="space-y-4 pt-1">
+                    {/* Market selector */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium">Market</label>
+                        <div className="flex gap-2">
+                            {SUPPORTED_MARKETS.map(m => (
+                                <button
+                                    key={m}
+                                    type="button"
+                                    onClick={() => handleMarketChange(m)}
+                                    disabled={isValidating}
+                                    className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                        newMarket === m
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted/60'
+                                    }`}
+                                >
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Pair input */}
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium">Symbol</label>
@@ -235,7 +269,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                                     <SelectValue placeholder="Exchange" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {SUPPORTED_EXCHANGES.map(ex => (
+                                    {availableExchanges.map(ex => (
                                         <SelectItem key={ex} value={ex}>{ex}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -292,9 +326,16 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     )
 }
 
+const MARKET_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+    'Crypto':    { bg: 'bg-yellow-500/10', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-500/20' },
+    'US Stocks': { bg: 'bg-green-500/10',  text: 'text-green-600 dark:text-green-400',   border: 'border-green-500/20' },
+    'CN Stocks': { bg: 'bg-red-500/10',    text: 'text-red-600 dark:text-red-400',       border: 'border-red-500/20' },
+}
+
 export default function TradingPairs() {
     const { setMobileHeader } = useMobileHeader()
     const [addModalOpen, setAddModalOpen] = useState(false)
+    const [activeMarket, setActiveMarket] = useState<string | null>(null)
 
     useEffect(() => {
         setMobileHeader({
@@ -318,6 +359,15 @@ export default function TradingPairs() {
         pairConfigs, pinnedPairs, prices,
         removePair, updatePairExchange, updatePairDataProvider, togglePinPair, fetchPrices,
     } = useSettingsStore()
+
+    const filteredConfigs = activeMarket
+        ? pairConfigs.filter(c => c.market === activeMarket)
+        : pairConfigs
+
+    const marketCounts = SUPPORTED_MARKETS.reduce<Record<string, number>>((acc, m) => {
+        acc[m] = pairConfigs.filter(c => c.market === m).length
+        return acc
+    }, {})
 
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
@@ -419,11 +469,50 @@ export default function TradingPairs() {
                 </Button>
             </div>
 
+            {/* Market filter */}
+            <div className="bg-card rounded-xl border shadow-sm p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-muted-foreground">Markets</h2>
+                    {activeMarket && (
+                        <button
+                            onClick={() => setActiveMarket(null)}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Show All
+                        </button>
+                    )}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                    {SUPPORTED_MARKETS.map(m => {
+                        const style = MARKET_STYLES[m] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50' }
+                        const isActive = activeMarket === m
+                        const count = marketCounts[m] ?? 0
+                        return (
+                            <button
+                                key={m}
+                                onClick={() => setActiveMarket(isActive ? null : m)}
+                                className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border text-center transition-all ${
+                                    isActive
+                                        ? `${style.bg} ${style.text} ${style.border} ring-1 ring-current/20`
+                                        : 'bg-muted/20 text-muted-foreground border-border/30 hover:bg-muted/40'
+                                }`}
+                            >
+                                <span className="text-sm font-semibold">{m}</span>
+                                <span className={`text-xs ${isActive ? 'opacity-80' : 'opacity-50'}`}>
+                                    {count} {count === 1 ? 'pair' : 'pairs'}
+                                </span>
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>
+
             {/* Pairs list */}
             <div className="bg-card rounded-xl border shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                     <span className="text-sm font-semibold text-muted-foreground">
-                        {pairConfigs.length} {pairConfigs.length === 1 ? 'Pair' : 'Pairs'}
+                        {filteredConfigs.length} {filteredConfigs.length === 1 ? 'Pair' : 'Pairs'}
+                        {activeMarket && <span className="ml-1">in {activeMarket}</span>}
                     </span>
                     <div className="flex items-center gap-2">
                         <Button
@@ -439,7 +528,7 @@ export default function TradingPairs() {
                                             </div>
                 </div>
 
-                {pairConfigs.length === 0 ? (
+                {filteredConfigs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                         <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                             <Activity className="h-7 w-7 text-primary/60" />
@@ -455,7 +544,7 @@ export default function TradingPairs() {
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">
-                        {pairConfigs.map(({ pair, exchange, dataProvider, currency }) => {
+                        {filteredConfigs.map(({ pair, market, exchange, dataProvider, currency }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
                                 ? `${getCurrencySymbol(currency)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
@@ -485,9 +574,20 @@ export default function TradingPairs() {
                                                 </span>
                                             </div>
 
-                                            {/* Meta row: exchange, data source, currency */}
+                                            {/* Meta row: market, exchange, data source, currency */}
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                                                                {isValidatingExch ? (
+                                                {(() => {
+                                                    const mStyle = MARKET_STYLES[market] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50' }
+                                                    return (
+                                                        <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${mStyle.bg} ${mStyle.text} ${mStyle.border}`}>
+                                                            {market}
+                                                        </span>
+                                                    )
+                                                })()}
+
+                                                <span className="text-[10px] text-border">&middot;</span>
+
+                                                {isValidatingExch ? (
                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
                                                         <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                         {exchange}
@@ -590,14 +690,14 @@ export default function TradingPairs() {
             {/* Add pair modal */}
             <AddPairModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
 
-            {/* Trading exchange dialog */}
+            {/* Trading exchange dialog — scoped to the pair's market */}
             {dialogConfig && (
                 <SelectionDialog
                     open={dialogPair !== null}
                     pair={dialogConfig.pair}
                     current={dialogConfig.exchange}
                     title="Change Exchange"
-                    groups={EXCHANGE_GROUPS}
+                    groups={{ [dialogConfig.market]: MARKET_EXCHANGES[dialogConfig.market] ?? [] }}
                     onSelect={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
                     onClose={() => setDialogPair(null)}
                 />
