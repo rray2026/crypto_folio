@@ -530,9 +530,9 @@ export default function PositionDetails() {
                 </Card>
 
                 <Tabs defaultValue="linked">
-                    <TabsList className="w-full">
-                        <TabsTrigger value="linked" className="flex-1">Linked ({linkedTxs.length})</TabsTrigger>
-                        <TabsTrigger value="available" className="flex-1">Available ({availableTxs.length})</TabsTrigger>
+                    <TabsList>
+                        <TabsTrigger value="linked">Linked ({linkedTxs.length})</TabsTrigger>
+                        <TabsTrigger value="available">Available ({availableTxs.length})</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="linked">

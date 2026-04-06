@@ -232,9 +232,9 @@ export default function FundDetails() {
 
             {/* Positions section — tabbed layout */}
             <Tabs defaultValue="linked">
-                <TabsList className="w-full">
-                    <TabsTrigger value="linked" className="flex-1">Linked ({fundPositions.length})</TabsTrigger>
-                    <TabsTrigger value="available" className="flex-1">Available ({unassignedPositions.length})</TabsTrigger>
+                <TabsList>
+                    <TabsTrigger value="linked">Linked ({fundPositions.length})</TabsTrigger>
+                    <TabsTrigger value="available">Available ({unassignedPositions.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="linked">

@@ -93,12 +93,12 @@ export default function AssetDetails() {
             </div>
 
             <Tabs defaultValue="strategies" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
-                    <TabsTrigger value="strategies" className="gap-2">
-                        <Activity className="h-4 w-4" /> Strategies ({positions?.length || 0})
+                <TabsList>
+                    <TabsTrigger value="strategies">
+                        <Activity className="h-3.5 w-3.5" /> Strategies ({positions?.length || 0})
                     </TabsTrigger>
-                    <TabsTrigger value="transactions" className="gap-2">
-                        <Clock className="h-4 w-4" /> Transactions ({transactions?.length || 0})
+                    <TabsTrigger value="transactions">
+                        <Clock className="h-3.5 w-3.5" /> Transactions ({transactions?.length || 0})
                     </TabsTrigger>
                 </TabsList>
 
