@@ -17,6 +17,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FundForm } from "@/components/funds/FundForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
@@ -49,16 +54,36 @@ export default function FundDetails() {
                 </button>
             ),
             rightActions: (
-                <button
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="More actions"
-                >
-                    <EllipsisVertical className="h-5 w-5" />
-                </button>
+                <Popover open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <PopoverTrigger asChild>
+                        <button
+                            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                            aria-label="More actions"
+                        >
+                            <EllipsisVertical className="h-5 w-5" />
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-1" align="end">
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsEditOpen(true); }}
+                        >
+                            <Edit className="h-4 w-4 text-muted-foreground" />
+                            Edit
+                        </button>
+                        <div className="border-t border-border/50 my-1" />
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsDeleteConfirmOpen(true); }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </button>
+                    </PopoverContent>
+                </Popover>
             ),
         })
-    }, [fund, navigate, setMobileHeader])
+    }, [fund, navigate, setMobileHeader, isMobileMenuOpen])
 
     const getPosMetrics = useCallback((pos: Position) => {
         const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId))
@@ -162,32 +187,6 @@ export default function FundDetails() {
                         <DialogTitle>Edit Fund</DialogTitle>
                     </DialogHeader>
                     <FundForm initialValues={fund} onSuccess={() => setIsEditOpen(false)} />
-                </DialogContent>
-            </Dialog>
-
-            {/* Mobile action menu */}
-            <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <DialogContent className="sm:max-w-[320px] p-0 gap-0 rounded-xl md:hidden">
-                    <DialogHeader className="sr-only">
-                        <DialogTitle>Actions</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col py-2">
-                        <button
-                            className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
-                            onClick={() => { setIsMobileMenuOpen(false); setIsEditOpen(true); }}
-                        >
-                            <Edit className="h-4 w-4 text-muted-foreground" />
-                            Edit
-                        </button>
-                        <div className="border-t border-border/50 my-1" />
-                        <button
-                            className="flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
-                            onClick={() => { setIsMobileMenuOpen(false); setIsDeleteConfirmOpen(true); }}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                        </button>
-                    </div>
                 </DialogContent>
             </Dialog>
 

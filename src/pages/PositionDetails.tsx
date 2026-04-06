@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
@@ -55,6 +55,21 @@ export default function PositionDetails() {
     const allPositions = useLiveQuery(() => db.positions.toArray())
     const allFunds = useLiveQuery(() => db.funds.toArray())
 
+    const toggleStatus = useCallback(async () => {
+        if (!id || !position) return;
+        if (position.status === 'OPEN') {
+            await closePosition(id);
+        } else {
+            await openPosition(id);
+        }
+    }, [id, position, closePosition, openPosition])
+
+    const handleDeletePosition = useCallback(async () => {
+        if (!id || !window.confirm("Are you sure you want to delete this position strategy? All transaction links will be removed.")) return;
+        await deletePosition(id);
+        navigate('/positions');
+    }, [id, deletePosition, navigate])
+
     useEffect(() => {
         const title = position
             ? (position.strategyName || position.symbol.split('/')[0])
@@ -71,16 +86,52 @@ export default function PositionDetails() {
                 </button>
             ),
             rightActions: (
-                <button
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="More actions"
-                >
-                    <EllipsisVertical className="h-5 w-5" />
-                </button>
+                <Popover open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <PopoverTrigger asChild>
+                        <button
+                            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                            aria-label="More actions"
+                        >
+                            <EllipsisVertical className="h-5 w-5" />
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-1" align="end">
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsEditDialogOpen(true); }}
+                        >
+                            <Edit className="h-4 w-4 text-muted-foreground" />
+                            Edit
+                        </button>
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsAiDialogOpen(true); }}
+                        >
+                            <Bot className="h-4 w-4 text-muted-foreground" />
+                            Ask AI
+                        </button>
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); toggleStatus(); }}
+                        >
+                            {position?.status === 'OPEN'
+                                ? <><Square className="h-4 w-4 text-muted-foreground" /> Close Position</>
+                                : <><Play className="h-4 w-4 text-muted-foreground" /> Re-open Position</>
+                            }
+                        </button>
+                        <div className="border-t border-border/50 my-1" />
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); handleDeletePosition(); }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </button>
+                    </PopoverContent>
+                </Popover>
             ),
         })
-    }, [position, navigate, setMobileHeader])
+    }, [position, navigate, setMobileHeader, isMobileMenuOpen, toggleStatus, handleDeletePosition])
 
     // Initial price fetch when position loads or symbol changes
     useEffect(() => {
@@ -132,21 +183,6 @@ export default function PositionDetails() {
         if (!id || isNaN(val) || val <= 0) { setEditingAllocTxId(null); return; }
         await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: val });
         setEditingAllocTxId(null);
-    }
-
-    const toggleStatus = async () => {
-        if (!id || !position) return;
-        if (position.status === 'OPEN') {
-            await closePosition(id);
-        } else {
-            await openPosition(id);
-        }
-    }
-
-    const handleDeletePosition = async () => {
-        if (!id || !window.confirm("Are you sure you want to delete this position strategy? All transaction links will be removed.")) return;
-        await deletePosition(id);
-        navigate('/positions');
     }
 
     const handleRefresh = async () => {
@@ -418,47 +454,6 @@ export default function PositionDetails() {
                         </DialogContent>
                     </Dialog>
 
-                    {/* Mobile action menu */}
-                    <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                        <DialogContent className="sm:max-w-[320px] p-0 gap-0 rounded-xl md:hidden">
-                            <DialogHeader className="sr-only">
-                                <DialogTitle>Actions</DialogTitle>
-                            </DialogHeader>
-                            <div className="flex flex-col py-2">
-                                <button
-                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
-                                    onClick={() => { setIsMobileMenuOpen(false); setIsEditDialogOpen(true); }}
-                                >
-                                    <Edit className="h-4 w-4 text-muted-foreground" />
-                                    Edit
-                                </button>
-                                <button
-                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
-                                    onClick={() => { setIsMobileMenuOpen(false); setIsAiDialogOpen(true); }}
-                                >
-                                    <Bot className="h-4 w-4 text-muted-foreground" />
-                                    Ask AI
-                                </button>
-                                <button
-                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
-                                    onClick={() => { setIsMobileMenuOpen(false); toggleStatus(); }}
-                                >
-                                    {position.status === 'OPEN'
-                                        ? <><Square className="h-4 w-4 text-muted-foreground" /> Close Position</>
-                                        : <><Play className="h-4 w-4 text-muted-foreground" /> Re-open Position</>
-                                    }
-                                </button>
-                                <div className="border-t border-border/50 my-1" />
-                                <button
-                                    className="flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
-                                    onClick={() => { setIsMobileMenuOpen(false); handleDeletePosition(); }}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                    Delete
-                                </button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
                 </div>
 
 
