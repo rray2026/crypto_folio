@@ -8,7 +8,7 @@ import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsS
 import { getPositionMetrics, getFundMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 import type { Position } from "@/lib/types"
 import { format } from "date-fns"
-import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar, EllipsisVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -17,6 +17,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FundForm } from "@/components/funds/FundForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 
@@ -28,6 +34,7 @@ export default function FundDetails() {
 
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const { setMobileHeader } = useMobileHeader()
 
     const fund = useLiveQuery(() => id ? db.funds.get(id) : undefined, [id])
@@ -47,25 +54,36 @@ export default function FundDetails() {
                 </button>
             ),
             rightActions: (
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setIsEditOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                        aria-label="Edit"
-                    >
-                        <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setIsDeleteConfirmOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-                        aria-label="Delete"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
+                <Popover open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <PopoverTrigger asChild>
+                        <button
+                            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                            aria-label="More actions"
+                        >
+                            <EllipsisVertical className="h-5 w-5" />
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-1" align="end">
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsEditOpen(true); }}
+                        >
+                            <Edit className="h-4 w-4 text-muted-foreground" />
+                            Edit
+                        </button>
+                        <div className="border-t border-border/50 my-1" />
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsDeleteConfirmOpen(true); }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </button>
+                    </PopoverContent>
+                </Popover>
             ),
         })
-    }, [fund, navigate, setMobileHeader, setIsDeleteConfirmOpen])
+    }, [fund, navigate, setMobileHeader, isMobileMenuOpen])
 
     const getPosMetrics = useCallback((pos: Position) => {
         const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId))
@@ -212,17 +230,17 @@ export default function FundDetails() {
                 </div>
             </div>
 
-            {/* Positions section — two-column layout mirrors PositionDetails */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left: assigned positions */}
-                <div className="lg:col-span-2">
-                    <h2 className="text-base font-semibold mb-3">
-                        Linked Positions
-                        <span className="ml-2 text-sm text-muted-foreground font-normal">({fundPositions.length})</span>
-                    </h2>
+            {/* Positions section — tabbed layout */}
+            <Tabs defaultValue="linked">
+                <TabsList>
+                    <TabsTrigger value="linked">Linked ({fundPositions.length})</TabsTrigger>
+                    <TabsTrigger value="available">Available ({unassignedPositions.length})</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="linked">
                     {fundPositions.length === 0 ? (
                         <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
-                            <p className="text-sm text-muted-foreground">No positions linked yet. Link them from the right panel.</p>
+                            <p className="text-sm text-muted-foreground">No positions linked yet. Switch to the Available tab to link them.</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -310,19 +328,19 @@ export default function FundDetails() {
                             })}
                         </div>
                     )}
-                </div>
+                </TabsContent>
 
-                {/* Right: available positions panel */}
-                <div className="bg-card rounded-xl p-6 border shadow-sm">
-                    <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Available Positions</h3>
-                    <div className="space-y-3">
-                        {unassignedPositions.length === 0 ? (
-                            <p className="text-muted-foreground text-sm flex items-center gap-2">
+                <TabsContent value="available">
+                    {unassignedPositions.length === 0 ? (
+                        <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
+                            <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
                                 <AlertCircle className="h-4 w-4" />
                                 No unassigned positions.
                             </p>
-                        ) : (
-                            sortedUnassignedPositions.map(({ pos, metrics }) => {
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {sortedUnassignedPositions.map(({ pos, metrics }) => {
                                 const isLong = metrics.positionType === 'LONG'
                                 const unassignedCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                 const posCurrency = pairConfigs.find(c => c.pair === pos.symbol)?.currency ?? 'USD'
@@ -408,11 +426,11 @@ export default function FundDetails() {
                                     </div>
                                     </SwipeActions>
                                 )
-                            })
-                        )}
-                    </div>
-                </div>
-            </div>
+                            })}
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }

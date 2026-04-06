@@ -240,10 +240,10 @@ export default function Positions() {
                 </div>
             ) : (
                 <Tabs defaultValue="active" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
-                        <TabsTrigger value="active" className="font-bold tracking-wider">ACTIVE ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
-                        <TabsTrigger value="archived" className="font-bold tracking-wider">ARCHIVED ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
-                        <TabsTrigger value="all" className="font-bold tracking-wider">ALL</TabsTrigger>
+                    <TabsList className="mb-6">
+                        <TabsTrigger value="active">Active ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
+                        <TabsTrigger value="archived">Archived ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
+                        <TabsTrigger value="all">All</TabsTrigger>
                     </TabsList>
 
                     {['active', 'archived', 'all'].map(tab => {
