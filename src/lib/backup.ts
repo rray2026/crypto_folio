@@ -1,7 +1,7 @@
 import { db, DB_VERSION } from './db';
 import { migratePayload } from './migrations';
 import type { Transaction, Position, Fund } from './types';
-import { useSettingsStore, inferCurrency, defaultDataProvider } from '@/store/useSettingsStore';
+import { useSettingsStore, inferCurrency, defaultDataProvider, inferMarket } from '@/store/useSettingsStore';
 import type { PairConfig, DashboardTimeRange, Theme } from '@/store/useSettingsStore';
 
 export interface BackupPayload {
@@ -14,6 +14,7 @@ export interface BackupPayload {
     settings: {
         predefinedPairs: string[];
         pairConfigs?: PairConfig[];
+        enabledMarkets?: string[];
         dashboardTimeRange: DashboardTimeRange;
         theme: Theme;
     };
@@ -39,6 +40,7 @@ export async function exportData(): Promise<void> {
             settings: {
                 predefinedPairs: settingsState.predefinedPairs,
                 pairConfigs: settingsState.pairConfigs,
+                enabledMarkets: settingsState.enabledMarkets,
                 dashboardTimeRange: settingsState.dashboardTimeRange,
                 theme: settingsState.theme,
             }
@@ -130,10 +132,11 @@ export async function importData(file: File): Promise<void> {
                         useSettingsStore.setState({ predefinedPairs: payload.settings.predefinedPairs });
                     }
                     if (payload.settings.pairConfigs !== undefined) {
-                        // Backfill currency and dataProvider for backups that predate those fields
+                        // Backfill currency, dataProvider, and market for backups that predate those fields
                         useSettingsStore.setState({
                             pairConfigs: payload.settings.pairConfigs.map((c) => ({
                                 ...c,
+                                market: c.market ?? inferMarket(c.exchange),
                                 currency: c.currency ?? inferCurrency(c.pair, c.exchange),
                                 dataProvider: c.dataProvider ?? defaultDataProvider((c as unknown as Record<string, unknown>).dataSource as string ?? c.exchange),
                             })),
@@ -142,9 +145,12 @@ export async function importData(file: File): Promise<void> {
                         // Derive pairConfigs from predefinedPairs for older backups
                         useSettingsStore.setState({
                             pairConfigs: payload.settings.predefinedPairs.map(p => ({
-                                pair: p, exchange: 'Binance', dataProvider: 'Binance', currency: inferCurrency(p, 'Binance'),
+                                pair: p, market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: inferCurrency(p, 'Binance'),
                             })),
                         });
+                    }
+                    if (payload.settings.enabledMarkets !== undefined) {
+                        useSettingsStore.setState({ enabledMarkets: payload.settings.enabledMarkets });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {
                         store.setDashboardTimeRange(payload.settings.dashboardTimeRange);

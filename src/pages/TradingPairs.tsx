@@ -4,8 +4,8 @@ import { format } from "date-fns"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import {
     useSettingsStore,
-    SUPPORTED_EXCHANGES, EXCHANGE_GROUPS,
-    DATA_PROVIDERS, DATA_PROVIDER_GROUPS,
+    SUPPORTED_MARKETS, MARKET_EXCHANGES, MARKET_DEFAULT_EXCHANGE, MARKET_DATA_PROVIDERS,
+    DATA_PROVIDER_GROUPS,
     fetchPriceFromProvider, defaultDataProvider, getCurrencySymbol, inferCurrency,
 } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
+import { SwipeActions } from "@/components/shared/SwipeActions"
 import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
@@ -150,22 +151,36 @@ interface AddPairModalProps {
 }
 
 function AddPairModal({ open, onClose }: AddPairModalProps) {
-    const { addPair } = useSettingsStore()
+    const { addPair, enabledMarkets } = useSettingsStore()
 
     const [newPair, setNewPair] = useState("")
-    const [newExchange, setNewExchange] = useState<string>("Binance")
-    const [newDataProvider, setNewDataProvider] = useState<string>("Binance")
+    const [newMarket, setNewMarket] = useState<string>(() => enabledMarkets[0] ?? 'Crypto')
+    const [newExchange, setNewExchange] = useState<string>(() => MARKET_DEFAULT_EXCHANGE[enabledMarkets[0] ?? 'Crypto'] ?? 'Binance')
+    const [newDataProvider, setNewDataProvider] = useState<string>(() => defaultDataProvider(MARKET_DEFAULT_EXCHANGE[enabledMarkets[0] ?? 'Crypto'] ?? 'Binance'))
     const [addError, setAddError] = useState<string | null>(null)
     const [isValidating, setIsValidating] = useState(false)
 
+    const availableExchanges = MARKET_EXCHANGES[newMarket] ?? []
+    const availableDataProviders = MARKET_DATA_PROVIDERS[newMarket] ?? []
     const inferredCurrency = inferCurrency(newPair.trim().toUpperCase(), newExchange)
 
     const handleClose = () => {
+        const defMarket = enabledMarkets[0] ?? 'Crypto'
+        const defExch = MARKET_DEFAULT_EXCHANGE[defMarket] ?? 'Binance'
         setNewPair("")
-        setNewExchange("Binance")
-        setNewDataProvider("Binance")
+        setNewMarket(defMarket)
+        setNewExchange(defExch)
+        setNewDataProvider(defaultDataProvider(defExch))
         setAddError(null)
         onClose()
+    }
+
+    const handleMarketChange = (market: string) => {
+        setNewMarket(market)
+        const defExch = MARKET_DEFAULT_EXCHANGE[market] ?? (MARKET_EXCHANGES[market]?.[0] ?? 'Binance')
+        setNewExchange(defExch)
+        setNewDataProvider(defaultDataProvider(defExch))
+        setAddError(null)
     }
 
     const handleAdd = async (e: React.FormEvent) => {
@@ -191,7 +206,8 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     const placeholder =
         newExchange === 'SSE'  ? 'e.g. 601818' :
         newExchange === 'SZSE' ? 'e.g. 000001' :
-        'e.g. BTC/USDT or AAPL'
+        newMarket === 'US Stocks' ? 'e.g. AAPL' :
+        'e.g. BTC/USDT'
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -199,24 +215,34 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                 <DialogHeader>
                     <DialogTitle>Add Trading Pair</DialogTitle>
                     <DialogDescription>
-                        Enter a symbol, select the exchange and data source. The pair will be validated before saving.
+                        Select a market and exchange, enter a symbol. The pair will be validated before saving.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleAdd} className="space-y-4 pt-1">
-                    {/* Pair input */}
+                    {/* Market selector — only show enabled markets */}
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium">Symbol</label>
-                        <Input
-                            placeholder={placeholder}
-                            value={newPair}
-                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
-                            className="font-mono uppercase"
-                            disabled={isValidating}
-                        />
+                        <label className="text-sm font-medium">Market</label>
+                        <div className="flex gap-2">
+                            {SUPPORTED_MARKETS.filter(m => enabledMarkets.includes(m)).map(m => (
+                                <button
+                                    key={m}
+                                    type="button"
+                                    onClick={() => handleMarketChange(m)}
+                                    disabled={isValidating}
+                                    className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                        newMarket === m
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted/60'
+                                    }`}
+                                >
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Exchange + Data provider row */}
+                    {/* Exchange + Data source row */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium">
@@ -235,7 +261,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                                     <SelectValue placeholder="Exchange" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {SUPPORTED_EXCHANGES.map(ex => (
+                                    {availableExchanges.map(ex => (
                                         <SelectItem key={ex} value={ex}>{ex}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -255,12 +281,24 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                                     <SelectValue placeholder="Data provider" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {DATA_PROVIDERS.map(dp => (
+                                    {availableDataProviders.map(dp => (
                                         <SelectItem key={dp} value={dp}>{dp}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    {/* Symbol input */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium">Symbol</label>
+                        <Input
+                            placeholder={placeholder}
+                            value={newPair}
+                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
+                            className="font-mono uppercase"
+                            disabled={isValidating}
+                        />
                     </div>
 
                     {/* Inferred currency */}
@@ -292,9 +330,16 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     )
 }
 
+const MARKET_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+    'Crypto':    { bg: 'bg-yellow-500/10', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-500/20', dot: 'bg-yellow-500' },
+    'US Stocks': { bg: 'bg-green-500/10',  text: 'text-green-600 dark:text-green-400',   border: 'border-green-500/20',  dot: 'bg-green-500' },
+    'CN Stocks': { bg: 'bg-red-500/10',    text: 'text-red-600 dark:text-red-400',       border: 'border-red-500/20',    dot: 'bg-red-500' },
+}
+
 export default function TradingPairs() {
     const { setMobileHeader } = useMobileHeader()
     const [addModalOpen, setAddModalOpen] = useState(false)
+    const [activeMarket, setActiveMarket] = useState<string | null>(null)
 
     useEffect(() => {
         setMobileHeader({
@@ -315,9 +360,18 @@ export default function TradingPairs() {
     }, [setMobileHeader])
 
     const {
-        pairConfigs, pinnedPairs, prices,
-        removePair, updatePairExchange, updatePairDataProvider, togglePinPair, fetchPrices,
+        pairConfigs, enabledMarkets, pinnedPairs, prices,
+        removePair, updatePairExchange, updatePairDataProvider, toggleMarket, togglePinPair, fetchPrices,
     } = useSettingsStore()
+
+    const filteredConfigs = activeMarket
+        ? pairConfigs.filter(c => c.market === activeMarket)
+        : pairConfigs
+
+    const marketCounts = SUPPORTED_MARKETS.reduce<Record<string, number>>((acc, m) => {
+        acc[m] = pairConfigs.filter(c => c.market === m).length
+        return acc
+    }, {})
 
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
@@ -419,11 +473,78 @@ export default function TradingPairs() {
                 </Button>
             </div>
 
+            {/* Market management */}
+            <div className="bg-card rounded-xl border shadow-sm">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                    <h2 className="text-sm font-semibold text-muted-foreground">Markets</h2>
+                    {activeMarket && (
+                        <button
+                            onClick={() => setActiveMarket(null)}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Show All
+                        </button>
+                    )}
+                </div>
+                <div className="divide-y divide-border/40">
+                    {SUPPORTED_MARKETS.map(m => {
+                        const style = MARKET_STYLES[m] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50', dot: 'bg-muted-foreground' }
+                        const isActive = activeMarket === m
+                        const isEnabled = enabledMarkets.includes(m)
+                        const count = marketCounts[m] ?? 0
+                        return (
+                            <div
+                                key={m}
+                                className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                                    isEnabled ? 'hover:bg-muted/20' : 'opacity-50'
+                                } ${isActive ? 'bg-muted/30' : ''}`}
+                            >
+                                {/* Color dot + market info — clickable to filter */}
+                                <button
+                                    onClick={() => isEnabled && setActiveMarket(isActive ? null : m)}
+                                    disabled={!isEnabled}
+                                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                                >
+                                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${isEnabled ? style.dot : 'bg-muted-foreground/20'}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-semibold">{m}</span>
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                            {count} {count === 1 ? 'pair' : 'pairs'}
+                                        </span>
+                                    </div>
+                                    {isActive && (
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${style.bg} ${style.text}`}>
+                                            Filtered
+                                        </span>
+                                    )}
+                                </button>
+                                {/* Toggle switch */}
+                                <button
+                                    role="switch"
+                                    aria-checked={isEnabled}
+                                    onClick={() => toggleMarket(m)}
+                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                        isEnabled ? 'bg-primary' : 'bg-input'
+                                    }`}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${
+                                            isEnabled ? 'translate-x-4' : 'translate-x-0'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+
             {/* Pairs list */}
             <div className="bg-card rounded-xl border shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                     <span className="text-sm font-semibold text-muted-foreground">
-                        {pairConfigs.length} {pairConfigs.length === 1 ? 'Pair' : 'Pairs'}
+                        {filteredConfigs.length} {filteredConfigs.length === 1 ? 'Pair' : 'Pairs'}
+                        {activeMarket && <span className="ml-1">in {activeMarket}</span>}
                     </span>
                     <div className="flex items-center gap-2">
                         <Button
@@ -439,7 +560,7 @@ export default function TradingPairs() {
                                             </div>
                 </div>
 
-                {pairConfigs.length === 0 ? (
+                {filteredConfigs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                         <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                             <Activity className="h-7 w-7 text-primary/60" />
@@ -455,7 +576,7 @@ export default function TradingPairs() {
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">
-                        {pairConfigs.map(({ pair, exchange, dataProvider, currency }) => {
+                        {filteredConfigs.map(({ pair, market, exchange, dataProvider, currency }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
                                 ? `${getCurrencySymbol(currency)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
@@ -473,114 +594,138 @@ export default function TradingPairs() {
                             const providerIsDefault = dataProvider === defaultDataProvider(exchange)
 
                             return (
-                                <div key={pair} className="px-4 py-3.5 group hover:bg-muted/20 transition-colors">
-                                    <div className="flex items-start gap-3">
-                                        {/* Main content */}
-                                        <div className="flex-1 min-w-0 space-y-2">
-                                            {/* Top row: pair name + price */}
-                                            <div className="flex items-baseline justify-between gap-2">
-                                                <span className="font-mono font-bold text-base leading-none">{pair}</span>
-                                                <span className="font-mono text-sm font-semibold tabular-nums shrink-0">
-                                                    {priceDisplay}
-                                                </span>
-                                            </div>
-
-                                            {/* Meta row: exchange, data source, currency */}
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                                                {isValidatingExch ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
-                                                        <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                        {exchange}
+                                <SwipeActions
+                                    key={pair}
+                                    className=""
+                                    actions={[
+                                        {
+                                            icon: <Trash2 className="h-4 w-4" />,
+                                            bg: 'bg-red-500',
+                                            onAction: () => removePair(pair),
+                                        },
+                                    ]}
+                                >
+                                    <div className="px-4 py-3.5 group hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-start gap-3">
+                                            {/* Main content */}
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                                {/* Top row: pair name + price */}
+                                                <div className="flex items-baseline justify-between gap-2">
+                                                    <span className="font-mono font-bold text-base leading-none">{pair}</span>
+                                                    <span className="font-mono text-sm font-semibold tabular-nums shrink-0">
+                                                        {priceDisplay}
                                                     </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => setDialogPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${exStyle.badge}`}
-                                                        title="Change exchange"
-                                                    >
-                                                        {exchange}
-                                                        <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-                                                    </button>
+                                                </div>
+
+                                                {/* Meta row: market, exchange, data source, currency */}
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    {(() => {
+                                                        const mStyle = MARKET_STYLES[market] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50', dot: 'bg-muted-foreground' }
+                                                        return (
+                                                            <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${mStyle.bg} ${mStyle.text} ${mStyle.border}`}>
+                                                                {market}
+                                                            </span>
+                                                        )
+                                                    })()}
+
+                                                    <span className="text-[10px] text-border">&middot;</span>
+
+                                                    {isValidatingExch ? (
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
+                                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                                            {exchange}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setDialogPair(pair)}
+                                                            className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${exStyle.badge}`}
+                                                            title="Change exchange"
+                                                        >
+                                                            {exchange}
+                                                            <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                                                        </button>
+                                                    )}
+
+                                                    <span className="text-[10px] text-border">·</span>
+
+                                                    {isValidatingProv ? (
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${dpStyle.badge} opacity-60`}>
+                                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                                            {dataProvider}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setDialogProviderPair(pair)}
+                                                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
+                                                            title="Change data source"
+                                                        >
+                                                            {dataProvider}
+                                                            <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                                                        </button>
+                                                    )}
+
+                                                    <span className="text-[10px] text-border">·</span>
+
+                                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
+                                                        {currency}
+                                                    </span>
+                                                </div>
+
+                                                {/* Sync time */}
+                                                {lastSync && (
+                                                    <p className="text-[10px] text-muted-foreground/50">
+                                                        synced {lastSync}
+                                                    </p>
                                                 )}
 
-                                                <span className="text-[10px] text-border">·</span>
-
-                                                                                                {isValidatingProv ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${dpStyle.badge} opacity-60`}>
-                                                        <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                        {dataProvider}
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => setDialogProviderPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
-                                                        title="Change data source"
-                                                    >
-                                                        {dataProvider}
-                                                        <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-                                                    </button>
+                                                {/* Errors */}
+                                                {rowError && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-destructive">
+                                                        {rowError}
+                                                    </p>
                                                 )}
-
-                                                <span className="text-[10px] text-border">·</span>
-
-                                                                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
-                                                    {currency}
-                                                </span>
+                                                {provError && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-destructive">
+                                                        {provError}
+                                                    </p>
+                                                )}
                                             </div>
 
-                                            {/* Sync time */}
-                                            {lastSync && (
-                                                <p className="text-[10px] text-muted-foreground/50">
-                                                    synced {lastSync}
-                                                </p>
-                                            )}
-
-                                            {/* Errors */}
-                                            {rowError && (
-                                                <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                    {rowError}
-                                                </p>
-                                            )}
-                                            {provError && (
-                                                <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                    {provError}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-0.5 shrink-0 opacity-100 transition-opacity pt-0.5">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => togglePinPair(pair)}
-                                                className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
-                                                title={isPinned ? "Unpin from Dashboard" : "Pin to Dashboard"}
-                                            >
-                                                <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                disabled={syncingPairs[pair]}
-                                                onClick={() => handleManualSync(pair)}
-                                                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                                title="Sync price"
-                                            >
-                                                <RefreshCw className={`h-3 w-3 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removePair(pair)}
-                                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                                title="Remove pair"
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </Button>
+                                            {/* Actions: pin + sync always visible; delete desktop-only */}
+                                            <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => togglePinPair(pair)}
+                                                    className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
+                                                    title={isPinned ? "Unpin from Dashboard" : "Pin to Dashboard"}
+                                                >
+                                                    <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    disabled={syncingPairs[pair]}
+                                                    onClick={() => handleManualSync(pair)}
+                                                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                                    title="Sync price"
+                                                >
+                                                    <RefreshCw className={`h-3 w-3 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
+                                                </Button>
+                                                {/* Delete: desktop hover-only, mobile uses swipe */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removePair(pair)}
+                                                    className="hidden md:flex h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                                                    title="Remove pair"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </SwipeActions>
                             )
                         })}
                     </div>
@@ -590,31 +735,37 @@ export default function TradingPairs() {
             {/* Add pair modal */}
             <AddPairModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
 
-            {/* Trading exchange dialog */}
+            {/* Trading exchange dialog — scoped to the pair's market */}
             {dialogConfig && (
                 <SelectionDialog
                     open={dialogPair !== null}
                     pair={dialogConfig.pair}
                     current={dialogConfig.exchange}
                     title="Change Exchange"
-                    groups={EXCHANGE_GROUPS}
+                    groups={{ [dialogConfig.market]: MARKET_EXCHANGES[dialogConfig.market] ?? [] }}
                     onSelect={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
                     onClose={() => setDialogPair(null)}
                 />
             )}
 
-            {/* Data provider dialog */}
-            {dialogProviderConfig && (
-                <SelectionDialog
-                    open={dialogProviderPair !== null}
-                    pair={dialogProviderConfig.pair}
-                    current={dialogProviderConfig.dataProvider}
-                    title="Change Data Source"
-                    groups={DATA_PROVIDER_GROUPS}
-                    onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
-                    onClose={() => setDialogProviderPair(null)}
-                />
-            )}
+            {/* Data provider dialog — scoped to the pair's market */}
+            {dialogProviderConfig && (() => {
+                const marketProviders = MARKET_DATA_PROVIDERS[dialogProviderConfig.market]
+                const groups = marketProviders
+                    ? { [dialogProviderConfig.market]: marketProviders }
+                    : DATA_PROVIDER_GROUPS
+                return (
+                    <SelectionDialog
+                        open={dialogProviderPair !== null}
+                        pair={dialogProviderConfig.pair}
+                        current={dialogProviderConfig.dataProvider}
+                        title="Change Data Source"
+                        groups={groups}
+                        onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
+                        onClose={() => setDialogProviderPair(null)}
+                    />
+                )
+            })()}
         </div>
     )
 }

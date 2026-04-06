@@ -245,7 +245,7 @@ describe('backup logic', () => {
                 ...makePayload(),
                 settings: {
                     predefinedPairs: ['BTC/USDT'],
-                    pairConfigs: [{ pair: 'BTC/USDT', exchange: 'OKX', dataProvider: 'OKX', currency: 'USDT' }],
+                    pairConfigs: [{ pair: 'BTC/USDT', market: 'Crypto', exchange: 'OKX', dataProvider: 'OKX', currency: 'USDT' }],
                     dashboardTimeRange: '1Y',
                     theme: 'dark',
                 },

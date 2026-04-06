@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider } from './useSettingsStore';
+import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider, inferMarket, MARKET_DATA_PROVIDERS } from './useSettingsStore';
 import type { PairConfig } from './useSettingsStore';
 
 // Mock localStorage for Zustand persist
@@ -278,18 +278,52 @@ describe('getCurrencySymbol', () => {
 
 describe('getCurrencySymbolForPair', () => {
     it('returns ¥ for a CNY pair', () => {
-        const configs = [{ pair: '600036', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }];
+        const configs = [{ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }];
         expect(getCurrencySymbolForPair('600036', configs)).toBe('¥');
     });
 
     it('returns $ for a USD pair', () => {
-        const configs = [{ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' }];
+        const configs = [{ pair: 'BTC/USDT', market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' }];
         expect(getCurrencySymbolForPair('BTC/USDT', configs)).toBe('$');
     });
 
     it('defaults to $ when pair is not in configs', () => {
         expect(getCurrencySymbolForPair('UNKNOWN', [])).toBe('$');
     });
+});
+
+// ---------------------------------------------------------------------------
+// MARKET_DATA_PROVIDERS
+// ---------------------------------------------------------------------------
+describe('MARKET_DATA_PROVIDERS', () => {
+    it('Crypto market includes only crypto exchanges as data providers', () => {
+        expect(MARKET_DATA_PROVIDERS['Crypto']).toContain('Binance');
+        expect(MARKET_DATA_PROVIDERS['Crypto']).not.toContain('Yahoo Finance');
+    });
+
+    it('US Stocks market includes only Yahoo Finance', () => {
+        expect(MARKET_DATA_PROVIDERS['US Stocks']).toEqual(['Yahoo Finance']);
+    });
+
+    it('CN Stocks market includes only Yahoo Finance', () => {
+        expect(MARKET_DATA_PROVIDERS['CN Stocks']).toEqual(['Yahoo Finance']);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// inferMarket
+// ---------------------------------------------------------------------------
+describe('inferMarket', () => {
+    it('returns Crypto for Binance', () => expect(inferMarket('Binance')).toBe('Crypto'));
+    it('returns Crypto for OKX', () => expect(inferMarket('OKX')).toBe('Crypto'));
+    it('returns Crypto for HTX', () => expect(inferMarket('HTX')).toBe('Crypto'));
+    it('returns Crypto for Gate.io', () => expect(inferMarket('Gate.io')).toBe('Crypto'));
+    it('returns Crypto for MEXC', () => expect(inferMarket('MEXC')).toBe('Crypto'));
+    it('returns US Stocks for NYSE', () => expect(inferMarket('NYSE')).toBe('US Stocks'));
+    it('returns US Stocks for NASDAQ', () => expect(inferMarket('NASDAQ')).toBe('US Stocks'));
+    it('returns CN Stocks for SSE', () => expect(inferMarket('SSE')).toBe('CN Stocks'));
+    it('returns CN Stocks for SZSE', () => expect(inferMarket('SZSE')).toBe('CN Stocks'));
+    it('defaults to Crypto for unknown exchange', () => expect(inferMarket('Unknown')).toBe('Crypto'));
 });
 
 // ---------------------------------------------------------------------------
@@ -302,6 +336,7 @@ describe('useSettingsStore', () => {
         useSettingsStore.setState({
             predefinedPairs: [],
             pairConfigs: [],
+            enabledMarkets: ['Crypto', 'US Stocks', 'CN Stocks'],
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
@@ -327,7 +362,7 @@ describe('useSettingsStore', () => {
         addPair('DOGE/USDT');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('DOGE/USDT');
-        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'DOGE/USDT', market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' });
     });
 
     it('adds pair with explicit exchange and infers USD currency for stocks', () => {
@@ -335,28 +370,28 @@ describe('useSettingsStore', () => {
         addPair('AAPL', 'NASDAQ');
         const state = useSettingsStore.getState();
         expect(state.predefinedPairs).toContain('AAPL');
-        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', exchange: 'NASDAQ', dataProvider: 'Yahoo Finance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', market: 'US Stocks', exchange: 'NASDAQ', dataProvider: 'Yahoo Finance', currency: 'USD' });
     });
 
     it('adds SSE pair and infers CNY currency with Yahoo Finance provider', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: '600036', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' });
+        expect(state.pairConfigs).toContainEqual({ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' });
     });
 
     it('adds pair with NYSE exchange and infers USD currency with Yahoo Finance provider', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('JPM', 'NYSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'JPM', market: 'US Stocks', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' });
     });
 
     it('adds pair with explicit dataProvider different from exchange default', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('BTC/USDT', 'HTX', 'Binance');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', market: 'Crypto', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' });
     });
 
     it('does not add duplicate pair', () => {
@@ -386,12 +421,14 @@ describe('useSettingsStore', () => {
         expect(state.pairConfigs.find(p => p.pair === 'TSLA')?.exchange).toBe('NASDAQ');
     });
 
-    it('updatePairExchange re-infers currency when exchange changes', () => {
+    it('updatePairExchange re-infers currency and market when exchange changes', () => {
         const { addPair, updatePairExchange } = useSettingsStore.getState();
-        addPair('600036', 'NYSE');   // wrong exchange, currency = USD
+        addPair('600036', 'NYSE');   // wrong exchange, currency = USD, market = US Stocks
+        expect(useSettingsStore.getState().pairConfigs.find(p => p.pair === '600036')?.market).toBe('US Stocks');
         updatePairExchange('600036', 'SSE');
         const state = useSettingsStore.getState();
         expect(state.pairConfigs.find(p => p.pair === '600036')?.currency).toBe('CNY');
+        expect(state.pairConfigs.find(p => p.pair === '600036')?.market).toBe('CN Stocks');
     });
 
     it('toggles pinned pairs', () => {
@@ -402,10 +439,34 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().pinnedPairs).not.toContain('ETH/USDT');
     });
 
+    it('toggleMarket disables and re-enables a market', () => {
+        const { toggleMarket } = useSettingsStore.getState();
+        expect(useSettingsStore.getState().enabledMarkets).toContain('US Stocks');
+        toggleMarket('US Stocks');
+        expect(useSettingsStore.getState().enabledMarkets).not.toContain('US Stocks');
+        toggleMarket('US Stocks');
+        expect(useSettingsStore.getState().enabledMarkets).toContain('US Stocks');
+    });
+
+    it('fetchPrices still fetches pairs even when their market is disabled', async () => {
+        useSettingsStore.setState({
+            predefinedPairs: ['AAPL'],
+            pairConfigs: [{ pair: 'AAPL', market: 'US Stocks', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
+            enabledMarkets: ['Crypto'], // US Stocks disabled but prices should still fetch
+        });
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '175.00' }),
+        });
+        await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);
+        expect(fetch).toHaveBeenCalled();
+        expect(useSettingsStore.getState().prices['AAPL']?.price).toBe('175.00');
+    });
+
     it('fetchPrices uses dataProvider from pairConfigs for Binance pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'BTC/USDT', market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -421,7 +482,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses dataProvider (not exchange) to fetch prices', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'BTC/USDT', market: 'Crypto', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -437,7 +498,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses Yahoo Finance proxy for NYSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'AAPL', market: 'US Stocks', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -453,7 +514,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses Yahoo Finance proxy and appends .SS for SSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['600036'],
-            pairConfigs: [{ pair: '600036', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }],
+            pairConfigs: [{ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -466,7 +527,7 @@ describe('useSettingsStore', () => {
     it('fetchPrices does not update store when price fetch fails', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
-            pairConfigs: [{ pair: 'AAPL', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'AAPL', market: 'US Stocks', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
         await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);

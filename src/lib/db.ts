@@ -6,7 +6,7 @@ import { MIGRATIONS } from './migrations';
 export const DB_NAME = 'CryptoFolioDB';
 
 /** Current schema version. Increment this when the DB schema changes. */
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 // Extend Dexie to declare DB structure
 const db = new Dexie(DB_NAME) as Dexie & {
@@ -50,6 +50,16 @@ db.version(4)
         funds: 'id, status, createdAt',
     })
     .upgrade(MIGRATIONS[3].upgradeIdb);
+
+// v5 — add market field to pairConfigs in localStorage.
+//      IndexedDB stores and indices are unchanged from v4.
+db.version(5)
+    .stores({
+        transactions: 'id, date, symbol, type',
+        positions: 'id, symbol, status, fundId',
+        funds: 'id, status, createdAt',
+    })
+    .upgrade(MIGRATIONS[4].upgradeIdb);
 
 // HOW TO ADD A FUTURE SCHEMA MIGRATION:
 // 1. Increment DB_VERSION above.
