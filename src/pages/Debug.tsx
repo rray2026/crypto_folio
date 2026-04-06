@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db, DB_VERSION } from "@/lib/db"
@@ -15,7 +14,6 @@ import {
 import { AlertTriangle, Trash2, Bug, Database } from "lucide-react"
 
 export default function Debug() {
-    const navigate = useNavigate()
     const { setMobileHeader } = useMobileHeader()
     useEffect(() => { setMobileHeader({ title: "Debug" }) }, [setMobileHeader])
 
@@ -25,13 +23,6 @@ export default function Debug() {
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
     const [isClearing, setIsClearing] = useState(false)
-
-    // Guard: redirect if debug is not enabled (production build)
-    useEffect(() => {
-        if (__IS_DEBUG_ENABLED__ !== "true" && import.meta.env.MODE !== "development") {
-            navigate("/settings", { replace: true })
-        }
-    }, [navigate])
 
     const handleClearAllData = async () => {
         setIsClearing(true)

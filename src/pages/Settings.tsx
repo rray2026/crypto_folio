@@ -43,11 +43,7 @@ export default function Settings() {
     // Debug mode Easter egg: tap version text N times to enter debug page
     const tapCountRef = useRef(0)
     const tapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-    const isDebugAvailable = __IS_DEBUG_ENABLED__ === "true" || import.meta.env.DEV
-
     const handleVersionTap = useCallback(() => {
-        if (!isDebugAvailable) return
-
         tapCountRef.current += 1
         clearTimeout(tapTimerRef.current)
 
@@ -60,7 +56,7 @@ export default function Settings() {
         tapTimerRef.current = setTimeout(() => {
             tapCountRef.current = 0
         }, DEBUG_TAP_TIMEOUT)
-    }, [isDebugAvailable, navigate])
+    }, [navigate])
 
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)

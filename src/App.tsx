@@ -46,9 +46,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/trading-pairs" element={<TradingPairs />} />
           <Route path="/glossary" element={<Glossary />} />
-          {(__IS_DEBUG_ENABLED__ === "true" || import.meta.env.DEV) && (
-            <Route path="/debug" element={<Debug />} />
-          )}
+          <Route path="/debug" element={<Debug />} />
         </Route>
       </Routes>
     </BrowserRouter>
