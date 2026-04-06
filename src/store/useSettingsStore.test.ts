@@ -448,16 +448,19 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().enabledMarkets).toContain('US Stocks');
     });
 
-    it('fetchPrices skips pairs whose market is disabled', async () => {
+    it('fetchPrices still fetches pairs even when their market is disabled', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['AAPL'],
             pairConfigs: [{ pair: 'AAPL', market: 'US Stocks', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
-            enabledMarkets: ['Crypto'], // US Stocks disabled
+            enabledMarkets: ['Crypto'], // US Stocks disabled but prices should still fetch
         });
-        const fetchSpy = vi.fn();
-        globalThis.fetch = fetchSpy;
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '175.00' }),
+        });
         await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);
-        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalled();
+        expect(useSettingsStore.getState().prices['AAPL']?.price).toBe('175.00');
     });
 
     it('fetchPrices uses dataProvider from pairConfigs for Binance pair', async () => {

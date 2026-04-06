@@ -256,14 +256,13 @@ export const useSettingsStore = create<SettingsState>()(
                     : [...state.pinnedPairs, pair.toUpperCase()]
             })),
             fetchPrices: async (symbols?: string[], force: boolean = false, exactSymbolsOnly: boolean = false) => {
-                const { predefinedPairs, pairConfigs, enabledMarkets, prices } = get();
+                const { predefinedPairs, pairConfigs, prices } = get();
                 const now = Date.now();
                 const CACHE_TTL = 5 * 60 * 1000;
 
                 const newPrices = { ...prices };
                 let hasUpdates = false;
 
-                const enabledSet = new Set(enabledMarkets);
                 const symbolsToFetch = exactSymbolsOnly && symbols
                     ? Array.from(new Set(symbols))
                     : Array.from(new Set([...predefinedPairs, ...(symbols || [])]));
@@ -271,15 +270,12 @@ export const useSettingsStore = create<SettingsState>()(
                 const configMap = new Map(pairConfigs.map(p => [p.pair, p]));
 
                 for (const pair of symbolsToFetch) {
-                    const config = configMap.get(pair);
-                    // Skip pairs whose market is disabled
-                    if (config?.market && !enabledSet.has(config.market)) continue;
-
                     const cached = prices[pair];
                     if (!force && cached && (now - cached.timestamp < CACHE_TTL)) {
                         continue;
                     }
 
+                    const config = configMap.get(pair);
                     const provider = config?.dataProvider ?? defaultDataProvider(config?.exchange ?? 'Binance');
                     const price = await fetchPriceFromProvider(pair, provider, config?.exchange);
                     if (price !== null) {
@@ -324,6 +320,10 @@ export const useSettingsStore = create<SettingsState>()(
                 }
                 if (version < 5) {
                     Object.assign(state, MIGRATIONS[4].upgradeLocalStorage!(state as Record<string, unknown>));
+                    // Backfill enabledMarkets for users upgrading — all markets enabled by default
+                    if (!state.enabledMarkets) {
+                        state.enabledMarkets = ['Crypto', 'US Stocks', 'CN Stocks'];
+                    }
                 }
                 return state;
             },
