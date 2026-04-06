@@ -353,16 +353,16 @@ export default function FundDetails() {
                                         ]}
                                     >
                                         <div
-                                            className="p-3 border bg-card transition-colors cursor-pointer"
+                                            className="p-3 border bg-card hover:bg-card/80 transition-colors cursor-pointer"
                                             onClick={() => navigate(`/positions/${pos.id}`)}
                                         >
                                         {/* Row 1: badges + name + actions */}
-                                        <div className="flex items-center justify-between gap-1">
-                                            <div className="flex items-center gap-1 min-w-0">
-                                                <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
                                                     pos.status === 'OPEN'
-                                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                    : 'bg-muted text-muted-foreground'
+                                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                                    : 'bg-muted text-muted-foreground border-border'
                                                 }`}>
                                                     {pos.status}
                                                 </span>
@@ -374,11 +374,11 @@ export default function FundDetails() {
                                                     {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                     {metrics.positionType}
                                                 </span>
-                                                <p className="font-medium text-xs truncate">{pos.strategyName || pos.symbol}</p>
+                                                <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                             </div>
                                             {/* Desktop only */}
                                             <div className="hidden md:flex items-center gap-0.5 shrink-0">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); navigate(`/positions/${pos.id}`); }}>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={(e) => { e.stopPropagation(); navigate(`/positions/${pos.id}`); }}>
                                                     <Eye className="h-3.5 w-3.5" />
                                                 </Button>
                                                 <Button
@@ -394,27 +394,27 @@ export default function FundDetails() {
                                             </div>
                                         </div>
                                         {/* Row 2: metrics */}
-                                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
+                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
                                             <span className="font-mono text-muted-foreground">{pos.symbol}</span>
                                             <span className="text-muted-foreground/40">•</span>
                                             <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
-                                            {metrics.totalPnL !== 0 && (
-                                                <>
-                                                    <span className="text-muted-foreground/40">•</span>
-                                                    <span className={`font-mono font-semibold ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                                                        {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
-                                                        <span className="font-normal ml-0.5">({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(1)}%)</span>
-                                                    </span>
-                                                </>
-                                            )}
+                                            <span className="text-muted-foreground/40">•</span>
+                                            <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                PnL {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
+                                            </span>
+                                            <span className={`font-mono ${metrics.roi >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
+                                            </span>
                                         </div>
+                                        {/* Row 3: price info */}
                                         {metrics.avgBuyPrice > 0 && (
-                                            <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
-                                                Avg Buy <span className="text-foreground/70">{unassignedCurrencySymbol}{metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
-                                                {metrics.totalRemaining !== 0 && <span className="ml-2">Holding <span className="text-foreground/70">{metrics.totalRemaining.toLocaleString()}</span></span>}
+                                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
+                                                <span>Avg Buy <span className="text-foreground/70">{unassignedCurrencySymbol}{metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
+                                                {metrics.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">{unassignedCurrencySymbol}{metrics.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
+                                                {metrics.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{metrics.totalRemaining.toLocaleString()}</span></span>}
                                             </div>
                                         )}
-                                        {/* Dates */}
+                                        {/* Row 4: dates */}
                                         <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
