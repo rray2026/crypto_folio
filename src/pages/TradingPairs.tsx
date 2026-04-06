@@ -24,7 +24,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity, Power } from "lucide-react"
+import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
     Binance: {
@@ -327,10 +327,10 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     )
 }
 
-const MARKET_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-    'Crypto':    { bg: 'bg-yellow-500/10', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-500/20' },
-    'US Stocks': { bg: 'bg-green-500/10',  text: 'text-green-600 dark:text-green-400',   border: 'border-green-500/20' },
-    'CN Stocks': { bg: 'bg-red-500/10',    text: 'text-red-600 dark:text-red-400',       border: 'border-red-500/20' },
+const MARKET_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+    'Crypto':    { bg: 'bg-yellow-500/10', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-500/20', dot: 'bg-yellow-500' },
+    'US Stocks': { bg: 'bg-green-500/10',  text: 'text-green-600 dark:text-green-400',   border: 'border-green-500/20',  dot: 'bg-green-500' },
+    'CN Stocks': { bg: 'bg-red-500/10',    text: 'text-red-600 dark:text-red-400',       border: 'border-red-500/20',    dot: 'bg-red-500' },
 }
 
 export default function TradingPairs() {
@@ -470,9 +470,9 @@ export default function TradingPairs() {
                 </Button>
             </div>
 
-            {/* Market filter */}
-            <div className="bg-card rounded-xl border shadow-sm p-4 space-y-3">
-                <div className="flex items-center justify-between">
+            {/* Market management */}
+            <div className="bg-card rounded-xl border shadow-sm">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                     <h2 className="text-sm font-semibold text-muted-foreground">Markets</h2>
                     {activeMarket && (
                         <button
@@ -483,45 +483,52 @@ export default function TradingPairs() {
                         </button>
                     )}
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="divide-y divide-border/40">
                     {SUPPORTED_MARKETS.map(m => {
-                        const style = MARKET_STYLES[m] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50' }
+                        const style = MARKET_STYLES[m] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50', dot: 'bg-muted-foreground' }
                         const isActive = activeMarket === m
                         const isEnabled = enabledMarkets.includes(m)
                         const count = marketCounts[m] ?? 0
                         return (
                             <div
                                 key={m}
-                                className={`relative flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border text-center transition-all ${
-                                    !isEnabled
-                                        ? 'bg-muted/10 text-muted-foreground/40 border-border/20'
-                                        : isActive
-                                            ? `${style.bg} ${style.text} ${style.border} ring-1 ring-current/20`
-                                            : 'bg-muted/20 text-muted-foreground border-border/30 hover:bg-muted/40'
-                                }`}
+                                className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                                    isEnabled ? 'hover:bg-muted/20' : 'opacity-50'
+                                } ${isActive ? 'bg-muted/30' : ''}`}
                             >
-                                {/* Enable/disable toggle */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); toggleMarket(m) }}
-                                    className={`absolute top-1.5 right-1.5 p-0.5 rounded transition-colors ${
-                                        isEnabled
-                                            ? 'text-emerald-500 hover:text-emerald-600'
-                                            : 'text-muted-foreground/30 hover:text-muted-foreground/60'
-                                    }`}
-                                    title={isEnabled ? `Disable ${m}` : `Enable ${m}`}
-                                >
-                                    <Power className="h-3 w-3" />
-                                </button>
-                                {/* Clickable area for filtering */}
+                                {/* Color dot + market info — clickable to filter */}
                                 <button
                                     onClick={() => isEnabled && setActiveMarket(isActive ? null : m)}
                                     disabled={!isEnabled}
-                                    className="flex flex-col items-center gap-1 w-full"
+                                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
                                 >
-                                    <span className="text-sm font-semibold">{m}</span>
-                                    <span className={`text-xs ${isEnabled ? (isActive ? 'opacity-80' : 'opacity-50') : 'opacity-30'}`}>
-                                        {isEnabled ? `${count} ${count === 1 ? 'pair' : 'pairs'}` : 'Disabled'}
-                                    </span>
+                                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${isEnabled ? style.dot : 'bg-muted-foreground/20'}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-semibold">{m}</span>
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                            {count} {count === 1 ? 'pair' : 'pairs'}
+                                        </span>
+                                    </div>
+                                    {isActive && (
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${style.bg} ${style.text}`}>
+                                            Filtered
+                                        </span>
+                                    )}
+                                </button>
+                                {/* Toggle switch */}
+                                <button
+                                    role="switch"
+                                    aria-checked={isEnabled}
+                                    onClick={() => toggleMarket(m)}
+                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                        isEnabled ? 'bg-primary' : 'bg-input'
+                                    }`}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${
+                                            isEnabled ? 'translate-x-4' : 'translate-x-0'
+                                        }`}
+                                    />
                                 </button>
                             </div>
                         )
