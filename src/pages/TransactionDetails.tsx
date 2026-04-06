@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { format } from "date-fns"
-import { ArrowLeft, Trash2, Edit, Calendar, Clock, Wallet, Activity, Hash, Link as LinkIcon, Circle } from "lucide-react"
+import { ArrowLeft, Trash2, Edit, Calendar, Clock, Wallet, Activity, Hash, Link as LinkIcon, Circle, EllipsisVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -25,6 +25,7 @@ export default function TransactionDetails() {
     const deleteTransaction = useTransactionStore(state => state.deleteTransaction)
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const { setMobileHeader } = useMobileHeader()
 
     const transaction = useLiveQuery(() => id ? db.transactions.get(id) : undefined, [id])
@@ -43,25 +44,16 @@ export default function TransactionDetails() {
                 </button>
             ),
             rightActions: (
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setIsEditDialogOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                        aria-label="Edit"
-                    >
-                        <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setIsDeleteConfirmOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-                        aria-label="Delete"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="More actions"
+                >
+                    <EllipsisVertical className="h-5 w-5" />
+                </button>
             ),
         })
-    }, [transaction, navigate, setMobileHeader, setIsEditDialogOpen, setIsDeleteConfirmOpen, id])
+    }, [transaction, navigate, setMobileHeader])
 
     if (transaction === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (transaction === null) return <div className="p-8 text-center text-foreground">Transaction not found.</div>
@@ -126,13 +118,39 @@ export default function TransactionDetails() {
                 </DialogContent>
             </Dialog>
 
-            {/* Single Edit dialog — shared between desktop and mobile header trigger */}
+            {/* Single Edit dialog — shared between desktop and mobile menu */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Edit Transaction</DialogTitle>
                     </DialogHeader>
                     <TransactionEditForm transaction={transaction} onSuccess={() => setIsEditDialogOpen(false)} />
+                </DialogContent>
+            </Dialog>
+
+            {/* Mobile action menu */}
+            <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <DialogContent className="sm:max-w-[320px] p-0 gap-0 rounded-xl md:hidden">
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Actions</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col py-2">
+                        <button
+                            className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsEditDialogOpen(true); }}
+                        >
+                            <Edit className="h-4 w-4 text-muted-foreground" />
+                            Edit
+                        </button>
+                        <div className="border-t border-border/50 my-1" />
+                        <button
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsDeleteConfirmOpen(true); }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </button>
+                    </div>
                 </DialogContent>
             </Dialog>
 

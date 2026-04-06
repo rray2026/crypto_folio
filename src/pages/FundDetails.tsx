@@ -8,7 +8,7 @@ import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsS
 import { getPositionMetrics, getFundMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 import type { Position } from "@/lib/types"
 import { format } from "date-fns"
-import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, AlertCircle, TrendingUp, TrendingDown, Calendar, EllipsisVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -29,6 +29,7 @@ export default function FundDetails() {
 
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const { setMobileHeader } = useMobileHeader()
 
     const fund = useLiveQuery(() => id ? db.funds.get(id) : undefined, [id])
@@ -48,25 +49,16 @@ export default function FundDetails() {
                 </button>
             ),
             rightActions: (
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setIsEditOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                        aria-label="Edit"
-                    >
-                        <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setIsDeleteConfirmOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-                        aria-label="Delete"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="More actions"
+                >
+                    <EllipsisVertical className="h-5 w-5" />
+                </button>
             ),
         })
-    }, [fund, navigate, setMobileHeader, setIsDeleteConfirmOpen])
+    }, [fund, navigate, setMobileHeader])
 
     const getPosMetrics = useCallback((pos: Position) => {
         const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId))
@@ -170,6 +162,32 @@ export default function FundDetails() {
                         <DialogTitle>Edit Fund</DialogTitle>
                     </DialogHeader>
                     <FundForm initialValues={fund} onSuccess={() => setIsEditOpen(false)} />
+                </DialogContent>
+            </Dialog>
+
+            {/* Mobile action menu */}
+            <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <DialogContent className="sm:max-w-[320px] p-0 gap-0 rounded-xl md:hidden">
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Actions</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col py-2">
+                        <button
+                            className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsEditOpen(true); }}
+                        >
+                            <Edit className="h-4 w-4 text-muted-foreground" />
+                            Edit
+                        </button>
+                        <div className="border-t border-border/50 my-1" />
+                        <button
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); setIsDeleteConfirmOpen(true); }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </button>
+                    </div>
                 </DialogContent>
             </Dialog>
 
