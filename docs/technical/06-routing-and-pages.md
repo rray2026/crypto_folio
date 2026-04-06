@@ -16,6 +16,7 @@ Uses React Router v7 (browser mode). Routes are configured in `src/App.tsx`:
 /settings                   → Settings
 /settings/trading-pairs     → TradingPairs
 /glossary                   → Glossary
+/debug                      → Debug
 ```
 
 All routes are wrapped by `AppLayout`, sharing the same navigation shell.
@@ -244,6 +245,7 @@ const linkedTxs = useLiveQuery(
 
 **Features:**
 - Manage the predefined trading pair list.
+- Filter pairs by market category (Crypto / US Stocks / CN Stocks) via `enabledMarkets`.
 - Configure Exchange and data provider per pair.
 - Pin / unpin pairs to the dashboard.
 - Live test price fetching (refresh button per pair).
@@ -257,6 +259,13 @@ const linkedTxs = useLiveQuery(
 ### 4.10 Glossary (`/glossary`)
 
 - Static page showing definitions and calculation formula explanations.
+
+### 4.11 Debug (`/debug`)
+
+**Features:**
+- View database statistics (record counts per table).
+- Clear all data (transactions, positions, funds).
+- Useful for development and troubleshooting.
 
 ---
 

@@ -1,6 +1,6 @@
-# CryptoFolio Documentation Hub
+# Folio Documentation Hub
 
-A privacy-first local cryptocurrency portfolio tracker. All user data is stored in the browser's IndexedDB — no server-side dependency of any kind.
+A privacy-first local cryptocurrency and stock portfolio tracker. All user data is stored in the browser's IndexedDB — no server-side dependency of any kind. Supports Crypto, US Stocks, and CN Stocks markets.
 
 ---
 

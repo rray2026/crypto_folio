@@ -38,7 +38,7 @@ If either fails, fix all TypeScript, lint, and build errors before pushing.
 
 ## Project Overview
 
-A privacy-first cryptocurrency portfolio tracker. All user data lives in the browser's IndexedDB — there is no server-side storage. The app supports position tracking, fund management, multi-exchange price fetching, and backup/restore.
+Folio is a privacy-first cryptocurrency and stock portfolio tracker. All user data lives in the browser's IndexedDB — there is no server-side storage. The app supports position tracking, fund management, multi-market (Crypto / US Stocks / CN Stocks) price fetching, and backup/restore.
 
 ---
 
@@ -60,7 +60,7 @@ src/
 │   ├── db.ts           # Dexie database setup, version management
 │   ├── math.ts         # Decimal.js arithmetic helpers
 │   ├── metrics.ts      # Position and fund metric calculations
-│   ├── migrations.ts   # DB schema migrations (v1 → v4)
+│   ├── migrations.ts   # DB schema migrations (v1 → v5)
 │   ├── types.ts        # Core data types (source of truth)
 │   └── utils.ts        # cn() utility for class merging
 ├── pages/              # Route-level page components
@@ -112,9 +112,10 @@ Fund {
 
 ## Database (`src/lib/db.ts`)
 
-- **Database**: `CryptoFolioDB`, current version **4**
+- **Database**: `CryptoFolioDB`, current version **5**
 - Tables: `transactions`, `positions`, `funds`
-- Migrations live in `src/lib/migrations.ts` (v1→v2→v3→v4)
+- Migrations live in `src/lib/migrations.ts` (v1→v2→v3→v4→v5)
+- `MIGRATIONS` is a `Record<number, Migration>` keyed by source version (not an array)
 - When adding a new DB version: add a schema snapshot, write an upgrade function, increment `DB_VERSION`
 - Never modify existing migration versions — always add a new one
 
@@ -128,7 +129,7 @@ Four Zustand stores, each wrapping Dexie operations:
 |---|---|
 | `useTransactionStore` | Transaction CRUD, bulk add with dedup |
 | `usePositionStore` | Position CRUD, entry management, open/close |
-| `useSettingsStore` | Prices, pair configs, theme, pinned pairs (persisted) |
+| `useSettingsStore` | Prices, pair configs, market filtering, theme, pinned pairs (persisted) |
 | `useFundStore` | Fund CRUD, position assignment |
 
 **Key conventions:**
@@ -173,15 +174,18 @@ All functions use `Decimal.js` with precision 20 and `ROUND_HALF_UP`. Functions 
 /settings               → Settings
 /settings/trading-pairs → TradingPairs
 /glossary               → Glossary
+/debug                  → Debug (database stats, data clearing)
 ```
 
 ---
 
 ## Price Fetching
 
+Supported markets: Crypto, US Stocks, CN Stocks. Each market has its own set of exchanges and data providers.
+
 Supported data providers: Binance, OKX, Bybit, HTX, Gate.io, MEXC, Yahoo Finance (for stocks via Cloudflare function at `/api/stock-price`).
 
-Chinese stock exchanges (SSE `.SS`, SZSE `.SZ`) route through Yahoo Finance.
+Chinese stock exchanges (SSE `.SS`, SZSE `.SZ`) and US stock exchanges (NYSE, NASDAQ) route through Yahoo Finance.
 
 ---
 

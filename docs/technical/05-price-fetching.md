@@ -141,9 +141,8 @@ function inferCurrency(symbol: string, exchange?: string): string {
 ```typescript
 // Cache is stored in useSettingsStore's prices field (persisted to localStorage)
 prices: Record<string, {
-  price: number;
-  timestamp: number;  // Timestamp of the last successful fetch
-  currency: string;
+  price: string;       // Price as string (Decimal-safe)
+  timestamp: number;   // Timestamp of the last successful fetch
 }>
 
 // TTL: 5 minutes
@@ -224,37 +223,57 @@ export async function onRequestGet(context: EventContext<...>) {
 
 ---
 
-## 7. Pair and Data Provider Configuration
+## 7. Market System and Pair Configuration
 
-### PairConfig structure
+### 7.1 Supported markets
+
+The app organizes trading pairs into three markets:
+
+| Market | Exchanges | Data Provider | Default Currency |
+|---|---|---|---|
+| Crypto | Binance, OKX, Bybit, HTX, Gate.io, MEXC | Same as exchange | USD (stablecoins) |
+| US Stocks | NYSE, NASDAQ | Yahoo Finance | USD |
+| CN Stocks | SSE, SZSE | Yahoo Finance | CNY |
+
+Users can enable/disable markets via `toggleMarket()` in `useSettingsStore`.
+
+### 7.2 PairConfig structure
 
 ```typescript
 interface PairConfig {
-  symbol: string;          // Internal pair, e.g. "BTC/USDT"
-  exchange?: string;       // Exchange name (for display purposes)
-  dataProvider?: string;   // Actual price source, e.g. "Binance"
+  pair: string;             // Internal pair, e.g. "BTC/USDT" or "AAPL"
+  market: string;           // "Crypto", "US Stocks", or "CN Stocks"
+  exchange: string;         // Exchange name, e.g. "Binance", "NYSE"
+  dataProvider: string;     // Actual price source, e.g. "Binance", "Yahoo Finance"
+  currency: string;         // Quote currency, e.g. "USD", "CNY"
 }
 ```
 
-- `exchange` is used for UI display (e.g. "which exchange does the user trade on").
+- `market` is inferred from `exchange` via `inferMarket()`.
+- `exchange` is where the user trades.
 - `dataProvider` determines which API is called to fetch the price.
+- `currency` is inferred from the pair and exchange via `inferCurrency()`.
 - The two can differ (e.g. trade on OKX but fetch prices from Binance).
-- A-share exchanges have `exchange: 'SSE'` or `'SZSE'`, and `dataProvider` automatically resolves to `'Yahoo Finance'`.
 
-### Automatic data provider routing
+### 7.3 Automatic data provider routing
 
 ```typescript
-function resolveDataProvider(config: PairConfig): string {
-  if (config.dataProvider) return config.dataProvider;
-
-  // Stock exchanges automatically use Yahoo Finance
-  if (['NYSE', 'NASDAQ', 'SSE', 'SZSE'].includes(config.exchange ?? '')) {
-    return 'Yahoo Finance';
-  }
-
-  // Default: Binance
-  return 'Binance';
+function defaultDataProvider(exchange: string): string {
+  // Stock exchanges (NYSE, NASDAQ, SSE, SZSE) → 'Yahoo Finance'
+  // Crypto exchanges → use the exchange itself as data provider
+  return YAHOO_EXCHANGES.has(exchange) ? 'Yahoo Finance' : exchange;
 }
+```
+
+### 7.4 Currency symbols
+
+```typescript
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: '$', CNY: '¥', EUR: '€', GBP: '£', JPY: '¥', KRW: '₩',
+};
+
+getCurrencySymbol(currency: string): string     // 'CNY' → '¥'
+getCurrencySymbolForPair(pair: string, pairConfigs: PairConfig[]): string
 ```
 
 ---
