@@ -449,13 +449,15 @@ export default function PositionDetails() {
                 </Card>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-card rounded-xl p-6 border shadow-sm">
-                            <h2 className="text-lg font-semibold mb-4">Linked Trades</h2>
+                    <div className="lg:col-span-2">
+                        <div>
+                            <h2 className="text-base font-semibold mb-3">Linked Trades
+                                <span className="ml-2 text-sm text-muted-foreground font-normal">({linkedTxs.length})</span>
+                            </h2>
                             {linkedTxs.length === 0 ? (
                                 <p className="text-muted-foreground text-sm">No trades linked to this position yet. Link them from the right panel.</p>
                             ) : (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {linkedTxs.map(tx => {
                                         const entry = position.entries.find(e => e.transactionId === tx.id);
                                         return (
