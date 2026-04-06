@@ -24,6 +24,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
+import { SwipeActions } from "@/components/shared/SwipeActions"
 import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
@@ -593,125 +594,138 @@ export default function TradingPairs() {
                             const providerIsDefault = dataProvider === defaultDataProvider(exchange)
 
                             return (
-                                <div key={pair} className="px-4 py-3.5 group hover:bg-muted/20 transition-colors">
-                                    <div className="flex items-start gap-3">
-                                        {/* Main content */}
-                                        <div className="flex-1 min-w-0 space-y-2">
-                                            {/* Top row: pair name + price */}
-                                            <div className="flex items-baseline justify-between gap-2">
-                                                <span className="font-mono font-bold text-base leading-none">{pair}</span>
-                                                <span className="font-mono text-sm font-semibold tabular-nums shrink-0">
-                                                    {priceDisplay}
-                                                </span>
-                                            </div>
+                                <SwipeActions
+                                    key={pair}
+                                    className=""
+                                    actions={[
+                                        {
+                                            icon: <Trash2 className="h-4 w-4" />,
+                                            bg: 'bg-red-500',
+                                            onAction: () => removePair(pair),
+                                        },
+                                    ]}
+                                >
+                                    <div className="px-4 py-3.5 group hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-start gap-3">
+                                            {/* Main content */}
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                                {/* Top row: pair name + price */}
+                                                <div className="flex items-baseline justify-between gap-2">
+                                                    <span className="font-mono font-bold text-base leading-none">{pair}</span>
+                                                    <span className="font-mono text-sm font-semibold tabular-nums shrink-0">
+                                                        {priceDisplay}
+                                                    </span>
+                                                </div>
 
-                                            {/* Meta row: market, exchange, data source, currency */}
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                {(() => {
-                                                    const mStyle = MARKET_STYLES[market] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50' }
-                                                    return (
-                                                        <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${mStyle.bg} ${mStyle.text} ${mStyle.border}`}>
-                                                            {market}
+                                                {/* Meta row: market, exchange, data source, currency */}
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    {(() => {
+                                                        const mStyle = MARKET_STYLES[market] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50', dot: 'bg-muted-foreground' }
+                                                        return (
+                                                            <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${mStyle.bg} ${mStyle.text} ${mStyle.border}`}>
+                                                                {market}
+                                                            </span>
+                                                        )
+                                                    })()}
+
+                                                    <span className="text-[10px] text-border">&middot;</span>
+
+                                                    {isValidatingExch ? (
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
+                                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                                            {exchange}
                                                         </span>
-                                                    )
-                                                })()}
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setDialogPair(pair)}
+                                                            className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${exStyle.badge}`}
+                                                            title="Change exchange"
+                                                        >
+                                                            {exchange}
+                                                            <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                                                        </button>
+                                                    )}
 
-                                                <span className="text-[10px] text-border">&middot;</span>
+                                                    <span className="text-[10px] text-border">·</span>
 
-                                                {isValidatingExch ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${exStyle.badge}`}>
-                                                        <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                        {exchange}
+                                                    {isValidatingProv ? (
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${dpStyle.badge} opacity-60`}>
+                                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                                            {dataProvider}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setDialogProviderPair(pair)}
+                                                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
+                                                            title="Change data source"
+                                                        >
+                                                            {dataProvider}
+                                                            <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                                                        </button>
+                                                    )}
+
+                                                    <span className="text-[10px] text-border">·</span>
+
+                                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
+                                                        {currency}
                                                     </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => setDialogPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${exStyle.badge}`}
-                                                        title="Change exchange"
-                                                    >
-                                                        {exchange}
-                                                        <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-                                                    </button>
+                                                </div>
+
+                                                {/* Sync time */}
+                                                {lastSync && (
+                                                    <p className="text-[10px] text-muted-foreground/50">
+                                                        synced {lastSync}
+                                                    </p>
                                                 )}
 
-                                                <span className="text-[10px] text-border">·</span>
-
-                                                                                                {isValidatingProv ? (
-                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${dpStyle.badge} opacity-60`}>
-                                                        <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                        {dataProvider}
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => setDialogProviderPair(pair)}
-                                                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${dpStyle.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
-                                                        title="Change data source"
-                                                    >
-                                                        {dataProvider}
-                                                        <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-                                                    </button>
+                                                {/* Errors */}
+                                                {rowError && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-destructive">
+                                                        {rowError}
+                                                    </p>
                                                 )}
-
-                                                <span className="text-[10px] text-border">·</span>
-
-                                                                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
-                                                    {currency}
-                                                </span>
+                                                {provError && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-destructive">
+                                                        {provError}
+                                                    </p>
+                                                )}
                                             </div>
 
-                                            {/* Sync time */}
-                                            {lastSync && (
-                                                <p className="text-[10px] text-muted-foreground/50">
-                                                    synced {lastSync}
-                                                </p>
-                                            )}
-
-                                            {/* Errors */}
-                                            {rowError && (
-                                                <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                    {rowError}
-                                                </p>
-                                            )}
-                                            {provError && (
-                                                <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                    {provError}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-0.5 shrink-0 opacity-100 transition-opacity pt-0.5">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => togglePinPair(pair)}
-                                                className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
-                                                title={isPinned ? "Unpin from Dashboard" : "Pin to Dashboard"}
-                                            >
-                                                <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                disabled={syncingPairs[pair]}
-                                                onClick={() => handleManualSync(pair)}
-                                                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                                title="Sync price"
-                                            >
-                                                <RefreshCw className={`h-3 w-3 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removePair(pair)}
-                                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                                title="Remove pair"
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </Button>
+                                            {/* Actions: pin + sync always visible; delete desktop-only */}
+                                            <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => togglePinPair(pair)}
+                                                    className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
+                                                    title={isPinned ? "Unpin from Dashboard" : "Pin to Dashboard"}
+                                                >
+                                                    <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    disabled={syncingPairs[pair]}
+                                                    onClick={() => handleManualSync(pair)}
+                                                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                                    title="Sync price"
+                                                >
+                                                    <RefreshCw className={`h-3 w-3 ${syncingPairs[pair] ? 'animate-spin' : ''}`} />
+                                                </Button>
+                                                {/* Delete: desktop hover-only, mobile uses swipe */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removePair(pair)}
+                                                    className="hidden md:flex h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                                                    title="Remove pair"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </SwipeActions>
                             )
                         })}
                     </div>
