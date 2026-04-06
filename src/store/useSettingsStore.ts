@@ -170,16 +170,12 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
     persist(
         (set, get) => ({
-            predefinedPairs: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'],
-            pairConfigs: [
-                { pair: 'BTC/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
-                { pair: 'ETH/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
-                { pair: 'SOL/USDT', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
-            ],
+            predefinedPairs: [],
+            pairConfigs: [],
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
-            pinnedPairs: ['BTC/USDT'],
+            pinnedPairs: [],
             setDashboardTimeRange: (range) => set({ dashboardTimeRange: range }),
             setTheme: (theme) => set({ theme }),
             addPair: (pair, exchange = 'Binance', dataProvider) => set((state) => {
