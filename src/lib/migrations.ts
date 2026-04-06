@@ -150,6 +150,38 @@ export interface BackupPayloadV4 extends Omit<BackupPayloadV3, 'version'> {
     };
 }
 
+// ---- v5 -------------------------------------------------------------------
+// pairConfigs gains a `market` field ('Crypto' | 'US Stocks' | 'CN Stocks').
+// Backfilled from existing exchange values. No IndexedDB schema changes.
+
+/** Exchanges that belong to each market — used for migration inference. */
+const US_STOCK_EXCHANGES = new Set(['NYSE', 'NASDAQ']);
+const CN_STOCK_EXCHANGES = new Set(['SSE', 'SZSE']);
+
+/** Infer market from exchange for migration purposes. */
+function inferMarketFromExchange(exchange: string): string {
+    if (US_STOCK_EXCHANGES.has(exchange)) return 'US Stocks';
+    if (CN_STOCK_EXCHANGES.has(exchange)) return 'CN Stocks';
+    return 'Crypto';
+}
+
+/** PairConfig shape as stored in backup settings as of v5 (adds market). */
+export interface PairConfigV5 {
+    pair: string;
+    market: string;
+    exchange: string;
+    dataProvider: string;
+    currency: string;
+}
+
+/** Full backup payload shape as of v5. */
+export interface BackupPayloadV5 extends Omit<BackupPayloadV4, 'version' | 'settings'> {
+    version: 5;
+    settings: BackupPayloadV4['settings'] & {
+        pairConfigs?: PairConfigV5[];
+    };
+}
+
 // ---------------------------------------------------------------------------
 // Migration interface
 // ---------------------------------------------------------------------------
@@ -274,6 +306,44 @@ export const MIGRATIONS: Record<number, Migration> = {
                 pairConfigs: configs.map(({ dataSource, ...rest }) => ({
                     ...rest,
                     dataProvider: rest.dataProvider ?? (STOCK_EXCHANGES.has(dataSource ?? '') ? 'Yahoo Finance' : (dataSource ?? rest.exchange)),
+                })),
+            };
+        },
+    },
+
+    // v4 → v5
+    4: {
+        description: 'Add market field to pairConfigs, inferred from exchange',
+        upgradePayload: (p): MigrationState => {
+            const v4 = p as unknown as BackupPayloadV4;
+            const rawConfigs = v4.settings?.pairConfigs;
+            return {
+                ...v4,
+                version: 5,
+                settings: {
+                    ...v4.settings,
+                    ...(rawConfigs !== undefined && {
+                        pairConfigs: rawConfigs.map(c => ({
+                            ...c,
+                            market: inferMarketFromExchange(c.exchange),
+                        })),
+                    }),
+                },
+            } as unknown as MigrationState;
+        },
+        upgradeIdb: async () => {
+            // pairConfigs lives in localStorage via Zustand persist, not in IndexedDB
+        },
+        upgradeLocalStorage: (state) => {
+            const configs = state.pairConfigs as Array<{
+                pair: string; exchange: string; dataProvider: string; currency: string; market?: string;
+            }> | undefined;
+            if (!configs) return state;
+            return {
+                ...state,
+                pairConfigs: configs.map(c => ({
+                    ...c,
+                    market: c.market ?? inferMarketFromExchange(c.exchange),
                 })),
             };
         },
