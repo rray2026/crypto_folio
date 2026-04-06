@@ -164,10 +164,12 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     const inferredCurrency = inferCurrency(newPair.trim().toUpperCase(), newExchange)
 
     const handleClose = () => {
+        const defMarket = enabledMarkets[0] ?? 'Crypto'
+        const defExch = MARKET_DEFAULT_EXCHANGE[defMarket] ?? 'Binance'
         setNewPair("")
-        setNewMarket("Crypto")
-        setNewExchange("Binance")
-        setNewDataProvider("Binance")
+        setNewMarket(defMarket)
+        setNewExchange(defExch)
+        setNewDataProvider(defaultDataProvider(defExch))
         setAddError(null)
         onClose()
     }
@@ -239,19 +241,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                         </div>
                     </div>
 
-                    {/* Pair input */}
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium">Symbol</label>
-                        <Input
-                            placeholder={placeholder}
-                            value={newPair}
-                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
-                            className="font-mono uppercase"
-                            disabled={isValidating}
-                        />
-                    </div>
-
-                    {/* Exchange + Data provider row */}
+                    {/* Exchange + Data source row */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium">
@@ -296,6 +286,18 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    {/* Symbol input */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium">Symbol</label>
+                        <Input
+                            placeholder={placeholder}
+                            value={newPair}
+                            onChange={(e) => { setNewPair(e.target.value); setAddError(null) }}
+                            className="font-mono uppercase"
+                            disabled={isValidating}
+                        />
                     </div>
 
                     {/* Inferred currency */}
