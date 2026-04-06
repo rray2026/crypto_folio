@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -45,6 +45,7 @@ export default function PositionDetails() {
     const [allocInputValue, setAllocInputValue] = useState<string>('')
     const [isSharePopoverOpen, setIsSharePopoverOpen] = useState(false)
     const [isAiDialogOpen, setIsAiDialogOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
     const { assignPositionToFund, unassignPosition } = useFundStore()
     const { setMobileHeader } = useMobileHeader()
@@ -70,25 +71,16 @@ export default function PositionDetails() {
                 </button>
             ),
             rightActions: (
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setIsAiDialogOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                        aria-label="Ask AI"
-                    >
-                        <Share2 className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setIsEditDialogOpen(true)}
-                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                        aria-label="Edit"
-                    >
-                        <Edit className="h-4 w-4" />
-                    </button>
-                </div>
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="More actions"
+                >
+                    <EllipsisVertical className="h-5 w-5" />
+                </button>
             ),
         })
-    }, [position, navigate, setMobileHeader, setIsAiDialogOpen, setIsEditDialogOpen])
+    }, [position, navigate, setMobileHeader])
 
     // Initial price fetch when position loads or symbol changes
     useEffect(() => {
@@ -362,13 +354,14 @@ export default function PositionDetails() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-start w-full md:w-auto">
-                        <Button variant={position.status === 'OPEN' ? 'secondary' : 'default'} onClick={toggleStatus} className="gap-2 flex-1 md:flex-none">
+                    {/* Desktop action buttons */}
+                    <div className="hidden md:flex items-center gap-2 self-start">
+                        <Button variant={position.status === 'OPEN' ? 'secondary' : 'default'} onClick={toggleStatus} className="gap-2">
                             {position.status === 'OPEN' ? <><Square className="h-4 w-4" /> Close</> : <><Play className="h-4 w-4" /> Re-open</>}
                         </Button>
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" className="hidden md:inline-flex shrink-0">
+                                <Button variant="outline" size="icon" className="shrink-0">
                                     <Edit className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
@@ -380,10 +373,9 @@ export default function PositionDetails() {
                             </DialogContent>
                         </Dialog>
 
-                        {/* Share Button (desktop only — mobile uses header button) */}
                         <Popover open={isSharePopoverOpen} onOpenChange={setIsSharePopoverOpen}>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" size="icon" className="hidden md:inline-flex shrink-0">
+                                <Button variant="outline" size="icon" className="shrink-0">
                                     <Share2 className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
@@ -393,45 +385,80 @@ export default function PositionDetails() {
                                     onClick={() => { setIsSharePopoverOpen(false); setIsAiDialogOpen(true); }}
                                 >
                                     <Bot className="h-4 w-4 text-primary shrink-0" />
-                                    问 AI
-                                </button>
-                                <button
-                                    disabled
-                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground cursor-not-allowed text-left opacity-50"
-                                >
-                                    <Share2 className="h-4 w-4 shrink-0" />
-                                    更多（待定）
+                                    Ask AI
                                 </button>
                             </PopoverContent>
                         </Popover>
-
-                        {/* Ask AI Dialog */}
-                        <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
-                                <DialogHeader>
-                                    <DialogTitle className="flex items-center gap-2">
-                                        <Bot className="h-5 w-5 text-primary" />
-                                        问 AI — 已生成提示词
-                                    </DialogTitle>
-                                </DialogHeader>
-                                <p className="text-xs text-muted-foreground -mt-1">复制下方提示词，粘贴到任意 AI 对话框中获取分析建议。</p>
-                                <div className="flex-1 overflow-y-auto mt-2">
-                                    <pre className="text-xs bg-muted/40 rounded-lg p-4 whitespace-pre-wrap break-words font-mono border border-border/50 leading-relaxed">
-                                        {generateAiPrompt()}
-                                    </pre>
-                                </div>
-                                <div className="flex justify-end pt-2 border-t border-border/40">
-                                    <Button onClick={handleCopyPrompt} className="gap-2" size="sm">
-                                        {isCopied ? <><Check className="h-4 w-4" /> 已复制</> : <><Copy className="h-4 w-4" /> 复制提示词</>}
-                                    </Button>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
 
                         <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={handleDeletePosition}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
+
+                    {/* Ask AI Dialog (shared by mobile menu and desktop) */}
+                    <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Bot className="h-5 w-5 text-primary" />
+                                    Ask AI
+                                </DialogTitle>
+                            </DialogHeader>
+                            <p className="text-xs text-muted-foreground -mt-1">Copy the prompt below and paste it into any AI chat to get analysis.</p>
+                            <div className="flex-1 overflow-y-auto mt-2">
+                                <pre className="text-xs bg-muted/40 rounded-lg p-4 whitespace-pre-wrap break-words font-mono border border-border/50 leading-relaxed">
+                                    {generateAiPrompt()}
+                                </pre>
+                            </div>
+                            <div className="flex justify-end pt-2 border-t border-border/40">
+                                <Button onClick={handleCopyPrompt} className="gap-2" size="sm">
+                                    {isCopied ? <><Check className="h-4 w-4" /> Copied</> : <><Copy className="h-4 w-4" /> Copy Prompt</>}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Mobile action menu */}
+                    <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                        <DialogContent className="sm:max-w-[320px] p-0 gap-0 rounded-xl md:hidden">
+                            <DialogHeader className="sr-only">
+                                <DialogTitle>Actions</DialogTitle>
+                            </DialogHeader>
+                            <div className="flex flex-col py-2">
+                                <button
+                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
+                                    onClick={() => { setIsMobileMenuOpen(false); setIsEditDialogOpen(true); }}
+                                >
+                                    <Edit className="h-4 w-4 text-muted-foreground" />
+                                    Edit
+                                </button>
+                                <button
+                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
+                                    onClick={() => { setIsMobileMenuOpen(false); setIsAiDialogOpen(true); }}
+                                >
+                                    <Bot className="h-4 w-4 text-muted-foreground" />
+                                    Ask AI
+                                </button>
+                                <button
+                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left"
+                                    onClick={() => { setIsMobileMenuOpen(false); toggleStatus(); }}
+                                >
+                                    {position.status === 'OPEN'
+                                        ? <><Square className="h-4 w-4 text-muted-foreground" /> Close Position</>
+                                        : <><Play className="h-4 w-4 text-muted-foreground" /> Re-open Position</>
+                                    }
+                                </button>
+                                <div className="border-t border-border/50 my-1" />
+                                <button
+                                    className="flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                                    onClick={() => { setIsMobileMenuOpen(false); handleDeletePosition(); }}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete
+                                </button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
 
