@@ -24,6 +24,8 @@ jobs:
 
       - name: Build Application
         run: npm run build
+        env:
+          VITE_NIGHTLY: 'true'
 
       - name: Deploy to Cloudflare (Nightly)
         uses: cloudflare/wrangler-action@v3
