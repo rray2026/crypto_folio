@@ -59,6 +59,13 @@ export const DATA_PROVIDER_GROUPS: Record<string, string[]> = {
     'Stock Data':  ['Yahoo Finance'],
 };
 
+/** Data providers available for each market. Crypto exchanges cannot fetch stock data and vice versa. */
+export const MARKET_DATA_PROVIDERS: Record<string, string[]> = {
+    'Crypto':    ['Binance', 'OKX', 'Bybit', 'HTX', 'Gate.io', 'MEXC'],
+    'US Stocks': ['Yahoo Finance'],
+    'CN Stocks': ['Yahoo Finance'],
+};
+
 /** Stock exchanges that route through Yahoo Finance for price data. */
 const YAHOO_EXCHANGES = new Set(['NYSE', 'NASDAQ', 'SSE', 'SZSE']);
 
@@ -173,6 +180,7 @@ export async function fetchPriceFromProvider(pair: string, provider: string, exc
 interface SettingsState {
     predefinedPairs: string[];
     pairConfigs: PairConfig[];
+    enabledMarkets: string[];
     prices: Record<string, { price: string; timestamp: number }>;
     dashboardTimeRange: DashboardTimeRange;
     theme: Theme;
@@ -183,6 +191,7 @@ interface SettingsState {
     removePair: (pair: string) => void;
     updatePairExchange: (pair: string, exchange: string) => void;
     updatePairDataProvider: (pair: string, dataProvider: string) => void;
+    toggleMarket: (market: string) => void;
     togglePinPair: (pair: string) => void;
     fetchPrices: (symbols?: string[], force?: boolean, exactSymbolsOnly?: boolean) => Promise<void>;
 }
@@ -196,6 +205,7 @@ export const useSettingsStore = create<SettingsState>()(
                 { pair: 'ETH/USDT', market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
                 { pair: 'SOL/USDT', market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: 'USD' },
             ],
+            enabledMarkets: ['Crypto', 'US Stocks', 'CN Stocks'],
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
@@ -235,19 +245,25 @@ export const useSettingsStore = create<SettingsState>()(
                         : p
                 ),
             })),
+            toggleMarket: (market) => set((state) => ({
+                enabledMarkets: state.enabledMarkets.includes(market)
+                    ? state.enabledMarkets.filter(m => m !== market)
+                    : [...state.enabledMarkets, market],
+            })),
             togglePinPair: (pair) => set((state) => ({
                 pinnedPairs: state.pinnedPairs.includes(pair.toUpperCase())
                     ? state.pinnedPairs.filter(p => p !== pair.toUpperCase())
                     : [...state.pinnedPairs, pair.toUpperCase()]
             })),
             fetchPrices: async (symbols?: string[], force: boolean = false, exactSymbolsOnly: boolean = false) => {
-                const { predefinedPairs, pairConfigs, prices } = get();
+                const { predefinedPairs, pairConfigs, enabledMarkets, prices } = get();
                 const now = Date.now();
                 const CACHE_TTL = 5 * 60 * 1000;
 
                 const newPrices = { ...prices };
                 let hasUpdates = false;
 
+                const enabledSet = new Set(enabledMarkets);
                 const symbolsToFetch = exactSymbolsOnly && symbols
                     ? Array.from(new Set(symbols))
                     : Array.from(new Set([...predefinedPairs, ...(symbols || [])]));
@@ -255,12 +271,15 @@ export const useSettingsStore = create<SettingsState>()(
                 const configMap = new Map(pairConfigs.map(p => [p.pair, p]));
 
                 for (const pair of symbolsToFetch) {
+                    const config = configMap.get(pair);
+                    // Skip pairs whose market is disabled
+                    if (config?.market && !enabledSet.has(config.market)) continue;
+
                     const cached = prices[pair];
                     if (!force && cached && (now - cached.timestamp < CACHE_TTL)) {
                         continue;
                     }
 
-                    const config = configMap.get(pair);
                     const provider = config?.dataProvider ?? defaultDataProvider(config?.exchange ?? 'Binance');
                     const price = await fetchPriceFromProvider(pair, provider, config?.exchange);
                     if (price !== null) {

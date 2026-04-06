@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider, inferMarket } from './useSettingsStore';
+import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider, inferMarket, MARKET_DATA_PROVIDERS } from './useSettingsStore';
 import type { PairConfig } from './useSettingsStore';
 
 // Mock localStorage for Zustand persist
@@ -293,6 +293,24 @@ describe('getCurrencySymbolForPair', () => {
 });
 
 // ---------------------------------------------------------------------------
+// MARKET_DATA_PROVIDERS
+// ---------------------------------------------------------------------------
+describe('MARKET_DATA_PROVIDERS', () => {
+    it('Crypto market includes only crypto exchanges as data providers', () => {
+        expect(MARKET_DATA_PROVIDERS['Crypto']).toContain('Binance');
+        expect(MARKET_DATA_PROVIDERS['Crypto']).not.toContain('Yahoo Finance');
+    });
+
+    it('US Stocks market includes only Yahoo Finance', () => {
+        expect(MARKET_DATA_PROVIDERS['US Stocks']).toEqual(['Yahoo Finance']);
+    });
+
+    it('CN Stocks market includes only Yahoo Finance', () => {
+        expect(MARKET_DATA_PROVIDERS['CN Stocks']).toEqual(['Yahoo Finance']);
+    });
+});
+
+// ---------------------------------------------------------------------------
 // inferMarket
 // ---------------------------------------------------------------------------
 describe('inferMarket', () => {
@@ -318,6 +336,7 @@ describe('useSettingsStore', () => {
         useSettingsStore.setState({
             predefinedPairs: [],
             pairConfigs: [],
+            enabledMarkets: ['Crypto', 'US Stocks', 'CN Stocks'],
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
@@ -418,6 +437,27 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().pinnedPairs).toContain('ETH/USDT');
         togglePinPair('ETH/USDT');
         expect(useSettingsStore.getState().pinnedPairs).not.toContain('ETH/USDT');
+    });
+
+    it('toggleMarket disables and re-enables a market', () => {
+        const { toggleMarket } = useSettingsStore.getState();
+        expect(useSettingsStore.getState().enabledMarkets).toContain('US Stocks');
+        toggleMarket('US Stocks');
+        expect(useSettingsStore.getState().enabledMarkets).not.toContain('US Stocks');
+        toggleMarket('US Stocks');
+        expect(useSettingsStore.getState().enabledMarkets).toContain('US Stocks');
+    });
+
+    it('fetchPrices skips pairs whose market is disabled', async () => {
+        useSettingsStore.setState({
+            predefinedPairs: ['AAPL'],
+            pairConfigs: [{ pair: 'AAPL', market: 'US Stocks', exchange: 'NYSE', dataProvider: 'Yahoo Finance', currency: 'USD' }],
+            enabledMarkets: ['Crypto'], // US Stocks disabled
+        });
+        const fetchSpy = vi.fn();
+        globalThis.fetch = fetchSpy;
+        await useSettingsStore.getState().fetchPrices(['AAPL'], true, true);
+        expect(fetchSpy).not.toHaveBeenCalled();
     });
 
     it('fetchPrices uses dataProvider from pairConfigs for Binance pair', async () => {

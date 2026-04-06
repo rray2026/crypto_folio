@@ -14,6 +14,7 @@ export interface BackupPayload {
     settings: {
         predefinedPairs: string[];
         pairConfigs?: PairConfig[];
+        enabledMarkets?: string[];
         dashboardTimeRange: DashboardTimeRange;
         theme: Theme;
     };
@@ -39,6 +40,7 @@ export async function exportData(): Promise<void> {
             settings: {
                 predefinedPairs: settingsState.predefinedPairs,
                 pairConfigs: settingsState.pairConfigs,
+                enabledMarkets: settingsState.enabledMarkets,
                 dashboardTimeRange: settingsState.dashboardTimeRange,
                 theme: settingsState.theme,
             }
@@ -146,6 +148,9 @@ export async function importData(file: File): Promise<void> {
                                 pair: p, market: 'Crypto', exchange: 'Binance', dataProvider: 'Binance', currency: inferCurrency(p, 'Binance'),
                             })),
                         });
+                    }
+                    if (payload.settings.enabledMarkets !== undefined) {
+                        useSettingsStore.setState({ enabledMarkets: payload.settings.enabledMarkets });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {
                         store.setDashboardTimeRange(payload.settings.dashboardTimeRange);

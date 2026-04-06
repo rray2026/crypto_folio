@@ -4,8 +4,8 @@ import { format } from "date-fns"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import {
     useSettingsStore,
-    SUPPORTED_MARKETS, MARKET_EXCHANGES, MARKET_DEFAULT_EXCHANGE,
-    DATA_PROVIDERS, DATA_PROVIDER_GROUPS,
+    SUPPORTED_MARKETS, MARKET_EXCHANGES, MARKET_DEFAULT_EXCHANGE, MARKET_DATA_PROVIDERS,
+    DATA_PROVIDER_GROUPS,
     fetchPriceFromProvider, defaultDataProvider, getCurrencySymbol, inferCurrency,
 } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity } from "lucide-react"
+import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity, Power } from "lucide-react"
 
 const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }> = {
     Binance: {
@@ -150,16 +150,17 @@ interface AddPairModalProps {
 }
 
 function AddPairModal({ open, onClose }: AddPairModalProps) {
-    const { addPair } = useSettingsStore()
+    const { addPair, enabledMarkets } = useSettingsStore()
 
     const [newPair, setNewPair] = useState("")
-    const [newMarket, setNewMarket] = useState<string>("Crypto")
-    const [newExchange, setNewExchange] = useState<string>("Binance")
-    const [newDataProvider, setNewDataProvider] = useState<string>("Binance")
+    const [newMarket, setNewMarket] = useState<string>(() => enabledMarkets[0] ?? 'Crypto')
+    const [newExchange, setNewExchange] = useState<string>(() => MARKET_DEFAULT_EXCHANGE[enabledMarkets[0] ?? 'Crypto'] ?? 'Binance')
+    const [newDataProvider, setNewDataProvider] = useState<string>(() => defaultDataProvider(MARKET_DEFAULT_EXCHANGE[enabledMarkets[0] ?? 'Crypto'] ?? 'Binance'))
     const [addError, setAddError] = useState<string | null>(null)
     const [isValidating, setIsValidating] = useState(false)
 
     const availableExchanges = MARKET_EXCHANGES[newMarket] ?? []
+    const availableDataProviders = MARKET_DATA_PROVIDERS[newMarket] ?? []
     const inferredCurrency = inferCurrency(newPair.trim().toUpperCase(), newExchange)
 
     const handleClose = () => {
@@ -216,11 +217,11 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                 </DialogHeader>
 
                 <form onSubmit={handleAdd} className="space-y-4 pt-1">
-                    {/* Market selector */}
+                    {/* Market selector — only show enabled markets */}
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium">Market</label>
                         <div className="flex gap-2">
-                            {SUPPORTED_MARKETS.map(m => (
+                            {SUPPORTED_MARKETS.filter(m => enabledMarkets.includes(m)).map(m => (
                                 <button
                                     key={m}
                                     type="button"
@@ -289,7 +290,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                                     <SelectValue placeholder="Data provider" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {DATA_PROVIDERS.map(dp => (
+                                    {availableDataProviders.map(dp => (
                                         <SelectItem key={dp} value={dp}>{dp}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -356,8 +357,8 @@ export default function TradingPairs() {
     }, [setMobileHeader])
 
     const {
-        pairConfigs, pinnedPairs, prices,
-        removePair, updatePairExchange, updatePairDataProvider, togglePinPair, fetchPrices,
+        pairConfigs, enabledMarkets, pinnedPairs, prices,
+        removePair, updatePairExchange, updatePairDataProvider, toggleMarket, togglePinPair, fetchPrices,
     } = useSettingsStore()
 
     const filteredConfigs = activeMarket
@@ -486,22 +487,43 @@ export default function TradingPairs() {
                     {SUPPORTED_MARKETS.map(m => {
                         const style = MARKET_STYLES[m] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/50' }
                         const isActive = activeMarket === m
+                        const isEnabled = enabledMarkets.includes(m)
                         const count = marketCounts[m] ?? 0
                         return (
-                            <button
+                            <div
                                 key={m}
-                                onClick={() => setActiveMarket(isActive ? null : m)}
-                                className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border text-center transition-all ${
-                                    isActive
-                                        ? `${style.bg} ${style.text} ${style.border} ring-1 ring-current/20`
-                                        : 'bg-muted/20 text-muted-foreground border-border/30 hover:bg-muted/40'
+                                className={`relative flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border text-center transition-all ${
+                                    !isEnabled
+                                        ? 'bg-muted/10 text-muted-foreground/40 border-border/20'
+                                        : isActive
+                                            ? `${style.bg} ${style.text} ${style.border} ring-1 ring-current/20`
+                                            : 'bg-muted/20 text-muted-foreground border-border/30 hover:bg-muted/40'
                                 }`}
                             >
-                                <span className="text-sm font-semibold">{m}</span>
-                                <span className={`text-xs ${isActive ? 'opacity-80' : 'opacity-50'}`}>
-                                    {count} {count === 1 ? 'pair' : 'pairs'}
-                                </span>
-                            </button>
+                                {/* Enable/disable toggle */}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleMarket(m) }}
+                                    className={`absolute top-1.5 right-1.5 p-0.5 rounded transition-colors ${
+                                        isEnabled
+                                            ? 'text-emerald-500 hover:text-emerald-600'
+                                            : 'text-muted-foreground/30 hover:text-muted-foreground/60'
+                                    }`}
+                                    title={isEnabled ? `Disable ${m}` : `Enable ${m}`}
+                                >
+                                    <Power className="h-3 w-3" />
+                                </button>
+                                {/* Clickable area for filtering */}
+                                <button
+                                    onClick={() => isEnabled && setActiveMarket(isActive ? null : m)}
+                                    disabled={!isEnabled}
+                                    className="flex flex-col items-center gap-1 w-full"
+                                >
+                                    <span className="text-sm font-semibold">{m}</span>
+                                    <span className={`text-xs ${isEnabled ? (isActive ? 'opacity-80' : 'opacity-50') : 'opacity-30'}`}>
+                                        {isEnabled ? `${count} ${count === 1 ? 'pair' : 'pairs'}` : 'Disabled'}
+                                    </span>
+                                </button>
+                            </div>
                         )
                     })}
                 </div>
@@ -703,18 +725,24 @@ export default function TradingPairs() {
                 />
             )}
 
-            {/* Data provider dialog */}
-            {dialogProviderConfig && (
-                <SelectionDialog
-                    open={dialogProviderPair !== null}
-                    pair={dialogProviderConfig.pair}
-                    current={dialogProviderConfig.dataProvider}
-                    title="Change Data Source"
-                    groups={DATA_PROVIDER_GROUPS}
-                    onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
-                    onClose={() => setDialogProviderPair(null)}
-                />
-            )}
+            {/* Data provider dialog — scoped to the pair's market */}
+            {dialogProviderConfig && (() => {
+                const marketProviders = MARKET_DATA_PROVIDERS[dialogProviderConfig.market]
+                const groups = marketProviders
+                    ? { [dialogProviderConfig.market]: marketProviders }
+                    : DATA_PROVIDER_GROUPS
+                return (
+                    <SelectionDialog
+                        open={dialogProviderPair !== null}
+                        pair={dialogProviderConfig.pair}
+                        current={dialogProviderConfig.dataProvider}
+                        title="Change Data Source"
+                        groups={groups}
+                        onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
+                        onClose={() => setDialogProviderPair(null)}
+                    />
+                )
+            })()}
         </div>
     )
 }
