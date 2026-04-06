@@ -8,6 +8,7 @@ import TransactionDetails from "./pages/TransactionDetails"
 import Settings from "./pages/Settings"
 import TradingPairs from "./pages/TradingPairs"
 import Glossary from "./pages/Glossary"
+import Debug from "./pages/Debug"
 import AssetDetails from "./pages/AssetDetails"
 import Funds from "./pages/Funds"
 import FundDetails from "./pages/FundDetails"
@@ -45,6 +46,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/trading-pairs" element={<TradingPairs />} />
           <Route path="/glossary" element={<Glossary />} />
+          <Route path="/debug" element={<Debug />} />
         </Route>
       </Routes>
     </BrowserRouter>

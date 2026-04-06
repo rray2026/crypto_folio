@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import type { Theme } from "@/store/useSettingsStore"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -27,7 +27,11 @@ import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
 import { version } from "../../package.json"
 
+const DEBUG_TAP_COUNT = 5
+const DEBUG_TAP_TIMEOUT = 3000
+
 export default function Settings() {
+    const navigate = useNavigate()
     const { predefinedPairs, theme, setTheme } = useSettingsStore()
 
     const txCount   = useLiveQuery(() => db.transactions.count(), [])
@@ -35,6 +39,24 @@ export default function Settings() {
     const fundCount = useLiveQuery(() => db.funds.count(), [])
     const { setMobileHeader } = useMobileHeader()
     useEffect(() => { setMobileHeader({ title: "Settings" }) }, [setMobileHeader])
+
+    // Debug mode Easter egg: tap version text N times to enter debug page
+    const tapCountRef = useRef(0)
+    const tapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+    const handleVersionTap = useCallback(() => {
+        tapCountRef.current += 1
+        clearTimeout(tapTimerRef.current)
+
+        if (tapCountRef.current >= DEBUG_TAP_COUNT) {
+            tapCountRef.current = 0
+            navigate("/debug")
+            return
+        }
+
+        tapTimerRef.current = setTimeout(() => {
+            tapCountRef.current = 0
+        }, DEBUG_TAP_TIMEOUT)
+    }, [navigate])
 
     // Backup State
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -257,7 +279,10 @@ export default function Settings() {
             </div>
 
             <div className="pt-8 pb-4 text-center">
-                <p className="text-[10px] md:text-xs text-muted-foreground/40 font-mono tracking-widest uppercase">
+                <p
+                    className="text-[10px] md:text-xs text-muted-foreground/40 font-mono tracking-widest uppercase select-none cursor-default"
+                    onClick={handleVersionTap}
+                >
                     Folio v{version} · Built {__BUILD_DATE__}
                 </p>
             </div>
