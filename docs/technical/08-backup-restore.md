@@ -16,15 +16,16 @@ The backup and restore feature is implemented in `src/lib/backup.ts`. It is the 
 
 ```typescript
 interface BackupPayload {
-  version: number;         // Backup version (current: 4)
+  version: number;         // Backup version (current: 5, synced with DB_VERSION)
   timestamp: number;       // Unix timestamp of the export
-  appName: 'CryptoFolio'; // App identifier (used for validation)
+  appName: string;         // 'Folio' (also accepts legacy 'CryptoFolio' on import)
   transactions: Transaction[];
   positions: Position[];
   funds: Fund[];
   settings: {
     predefinedPairs: string[];
-    pairConfigs?: PairConfig[];
+    pairConfigs?: PairConfig[];    // includes market, exchange, dataProvider, currency per pair
+    enabledMarkets?: string[];     // e.g. ['Crypto', 'US Stocks', 'CN Stocks']
     dashboardTimeRange: DashboardTimeRange;
     theme: Theme;
     // Note: prices cache is NOT exported (real-time data; re-fetched on restore)
@@ -36,10 +37,10 @@ interface BackupPayload {
 ### 2.2 File naming
 
 ```
-cryptofolio-backup-YYYY-MM-DD.json
+folio-backup-YYYY-MM-DD.json
 ```
 
-Example: `cryptofolio-backup-2026-04-03.json`
+Example: `folio-backup-2026-04-06.json`
 
 ---
 
@@ -54,23 +55,23 @@ async function exportData(): Promise<void> {
     db.funds.toArray(),
   ]);
 
-  // 2. Read Zustand persisted settings from localStorage
-  const settingsRaw = localStorage.getItem('crypto-folio-settings');
-  const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
+  // 2. Read settings from the Zustand store
+  const settingsState = useSettingsStore.getState();
 
   // 3. Build the payload
   const payload: BackupPayload = {
-    version: BACKUP_VERSION,  // current: 4
+    version: DB_VERSION,      // current: 5
     timestamp: Date.now(),
-    appName: 'CryptoFolio',
+    appName: 'Folio',
     transactions,
     positions,
     funds,
     settings: {
-      predefinedPairs: settings.state?.predefinedPairs ?? [],
-      pairConfigs: settings.state?.pairConfigs ?? [],
-      dashboardTimeRange: settings.state?.dashboardTimeRange ?? 'ALL',
-      theme: settings.state?.theme ?? 'system',
+      predefinedPairs: settingsState.predefinedPairs,
+      pairConfigs: settingsState.pairConfigs,
+      enabledMarkets: settingsState.enabledMarkets,
+      dashboardTimeRange: settingsState.dashboardTimeRange,
+      theme: settingsState.theme,
     },
   };
 
@@ -80,7 +81,7 @@ async function exportData(): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `cryptofolio-backup-${formatDate(new Date())}.json`;
+  a.download = `folio-backup-${dateStr}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -88,7 +89,7 @@ async function exportData(): Promise<void> {
 
 **Key design decisions:**
 - The price cache (`prices`) is not exported — it is real-time data and will be re-fetched after restore.
-- Settings are read directly from `localStorage` rather than from the Zustand store instance, ensuring they can be read at any point in time.
+- Settings are read from the Zustand store instance via `getState()`.
 
 ---
 
@@ -100,20 +101,20 @@ async function importData(file: File): Promise<void> {
   const text = await file.text();
   let payload: BackupPayload = JSON.parse(text);
 
-  // 2. Validate the file
-  if (payload.appName !== 'CryptoFolio') {
-    throw new Error('Not a valid CryptoFolio backup file');
+  // 2. Validate the file (accepts both 'Folio' and legacy 'CryptoFolio')
+  if (payload.appName !== 'Folio' && payload.appName !== 'CryptoFolio') {
+    throw new Error('Not a valid Folio backup file');
   }
   if (typeof payload.version !== 'number') {
     throw new Error('Backup file is missing a version field');
   }
-  if (payload.version > BACKUP_VERSION) {
+  if (payload.version > DB_VERSION) {
     throw new Error('Backup file was created with a newer version of the app — please update the app first');
   }
 
   // 3. Migrate if the backup version is older than the current version
-  if (payload.version < BACKUP_VERSION) {
-    payload = migratePayload(payload, payload.version, BACKUP_VERSION);
+  if (payload.version < DB_VERSION) {
+    payload = migratePayload(payload, DB_VERSION);
   }
 
   // 4. Clear all existing data
@@ -130,25 +131,15 @@ async function importData(file: File): Promise<void> {
     db.funds.bulkAdd(payload.funds ?? []),
   ]);
 
-  // 6. Restore settings to localStorage
-  const existingRaw = localStorage.getItem('crypto-folio-settings');
-  const existing = existingRaw ? JSON.parse(existingRaw) : { state: {} };
-  const mergedSettings = {
-    ...existing,
-    state: {
-      ...existing.state,
-      predefinedPairs: payload.settings.predefinedPairs ?? existing.state.predefinedPairs,
-      pairConfigs: payload.settings.pairConfigs ?? existing.state.pairConfigs,
-      dashboardTimeRange: payload.settings.dashboardTimeRange ?? existing.state.dashboardTimeRange,
-      theme: payload.settings.theme ?? existing.state.theme,
-    },
-    version: BACKUP_VERSION,
-  };
-  localStorage.setItem('crypto-folio-settings', JSON.stringify(mergedSettings));
-
-  // 7. Force a full page reload to reinitialize React and Zustand from fresh data
-  window.location.reload();
+  // 6. Restore settings via the Zustand store
+  if (payload.settings) {
+    // Hydrate predefinedPairs, pairConfigs (with market/currency backfill),
+    // enabledMarkets, dashboardTimeRange, and theme via useSettingsStore.setState()
+  }
 }
+```
+
+> **Note:** The import no longer forces `window.location.reload()`. Settings are hydrated directly into the Zustand store.
 ```
 
 **Key design decisions:**
@@ -172,26 +163,24 @@ Uses a "backup wins" merge: fields present in the backup overwrite the current v
 ```typescript
 // src/lib/migrations.ts
 export function migratePayload(
-  payload: BackupPayload,
-  fromVersion: number,
-  toVersion: number
-): BackupPayload {
-  let current = { ...payload };
-
-  for (let v = fromVersion; v < toVersion; v++) {
-    // MIGRATIONS array is 0-indexed; index 0 handles v1→v2
-    const migration = MIGRATIONS[v - 1];
-    current = migration.upgradePayload(current);
-    current.version = v + 1;
+  payload: Record<string, unknown>,
+  targetVersion: number,
+): Record<string, unknown> {
+  let p = payload;
+  while ((p.version as number) < targetVersion) {
+    const currentVersion = p.version as number;
+    const step = MIGRATIONS[currentVersion];
+    if (!step) throw new Error(`No migration for v${currentVersion} → v${currentVersion + 1}.`);
+    p = step.upgradePayload(p);
   }
-
-  return current;
+  return p;
 }
 ```
 
-**Example:** importing a v2 backup into a v4 app:
-1. Run `MIGRATIONS[1].upgradePayload()` (v2 → v3): ensure the `funds` array exists.
-2. Run `MIGRATIONS[2].upgradePayload()` (v3 → v4): rename `dataSource` → `dataProvider`.
+**Example:** importing a v2 backup into a v5 app:
+1. Run `MIGRATIONS[2].upgradePayload()` (v2 → v3): ensure the `funds` array exists.
+2. Run `MIGRATIONS[3].upgradePayload()` (v3 → v4): rename `dataSource` → `dataProvider`.
+3. Run `MIGRATIONS[4].upgradePayload()` (v4 → v5): add `market` field to pairConfigs.
 
 ---
 
@@ -201,7 +190,7 @@ Errors that can be thrown during import:
 
 | Error | Cause | Handling |
 |---|---|---|
-| `appName` mismatch | Not a CryptoFolio backup | Prompt user to select the correct file |
+| `appName` mismatch | Not a Folio/CryptoFolio backup | Prompt user to select the correct file |
 | `version` missing or non-numeric | File is corrupted | Inform user the file is corrupted |
 | Backup version > app version | Backup from a newer app | Prompt user to update the app |
 | `JSON.parse` failure | File content is not valid JSON | Inform user the file is corrupted |
@@ -218,7 +207,7 @@ All exceptions are caught by the UI layer (Settings page) and surfaced as toast 
 Every time `Transaction`, `Position`, `Fund`, or Settings structure changes, you must:
 
 1. Add a new Migration to `src/lib/migrations.ts` (implement `upgradePayload`).
-2. Increment `BACKUP_VERSION` (keep it in sync with `DB_VERSION`).
+2. Increment `DB_VERSION` in `src/lib/db.ts` (backup version is derived from `DB_VERSION`).
 3. Confirm that `exportData` in `src/lib/backup.ts` correctly exports the new fields.
 4. Add tests for the new migration (`src/lib/backup.test.ts` and `src/lib/migrations.test.ts`).
 

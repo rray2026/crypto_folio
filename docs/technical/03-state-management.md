@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-CryptoFolio uses [Zustand](https://github.com/pmndrs/zustand) v5 for global state management, organized into four stores:
+Folio uses [Zustand](https://github.com/pmndrs/zustand) v5 for global state management, organized into four stores:
 
 | Store | File | Responsibility | Persistence |
 |---|---|---|---|
@@ -173,13 +173,15 @@ const useSettingsStore = create(
   persist(
     (set, get) => ({ ...actions }),
     {
-      name: 'crypto-folio-settings', // localStorage key
-      version: 4,                    // in sync with DB_VERSION
+      name: 'folio-settings',        // localStorage key (migrated from 'crypto-folio-settings')
+      version: 5,                    // in sync with DB_VERSION
       migrate: (state, version) => { /* localStorage migration */ },
     }
   )
 );
 ```
+
+> **Note:** The localStorage key was migrated from `'crypto-folio-settings'` to `'folio-settings'`. A one-time migration at module load copies the old key to the new key if it exists.
 
 ### 5.2 State structure
 
@@ -187,14 +189,14 @@ const useSettingsStore = create(
 interface SettingsState {
   // Trading pair configuration
   predefinedPairs: string[];         // Suggested trading pair list (defaults include BTC/USDT, etc.)
-  pairConfigs: PairConfig[];         // Exchange and dataProvider mapping per pair
+  pairConfigs: PairConfig[];         // Exchange, market, and dataProvider mapping per pair
+  enabledMarkets: string[];          // Which markets to show ('Crypto', 'US Stocks', 'CN Stocks')
   pinnedPairs: string[];             // Pairs pinned to the dashboard ticker
 
   // Price cache
   prices: Record<string, {
-    price: number;
+    price: string;                   // Price as string (Decimal-safe)
     timestamp: number;               // Last fetch time (for TTL comparison)
-    currency: string;                // Quote currency
   }>;
 
   // UI settings
@@ -203,9 +205,11 @@ interface SettingsState {
 }
 
 interface PairConfig {
-  symbol: string;           // e.g. "BTC/USDT"
-  exchange?: string;        // e.g. "Binance"
-  dataProvider?: string;    // e.g. "Yahoo Finance"
+  pair: string;             // e.g. "BTC/USDT"
+  market: string;           // e.g. "Crypto", "US Stocks", "CN Stocks"
+  exchange: string;         // e.g. "Binance", "NYSE"
+  dataProvider: string;     // e.g. "Binance", "Yahoo Finance"
+  currency: string;         // e.g. "USD", "CNY"
 }
 ```
 
@@ -224,7 +228,10 @@ interface SettingsActions {
   removePair(pair: string): void
   updatePairExchange(pair: string, exchange: string): void
   updatePairDataProvider(pair: string, dataProvider: string): void
-  togglePinPair(pair: string): void  // Pin/unpin from the dashboard
+  togglePinPair(pair: string): void    // Pin/unpin from the dashboard
+
+  // Market filtering
+  toggleMarket(market: string): void   // Enable/disable a market category
 
   // Prices
   fetchPrices(
@@ -290,7 +297,11 @@ migrate: (persistedState, version) => {
   let state = persistedState;
   // Upgrade step by step, analogous to the database migration system
   if (version < 4) {
-    // Run MIGRATIONS[2].upgradeLocalStorage(state)
+    // Run MIGRATIONS[3].upgradeLocalStorage(state)
+  }
+  if (version < 5) {
+    // Run MIGRATIONS[4].upgradeLocalStorage(state)
+    // Backfill enabledMarkets = ['Crypto', 'US Stocks', 'CN Stocks']
   }
   return state;
 }

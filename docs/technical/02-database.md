@@ -5,14 +5,14 @@
 - **Engine**: IndexedDB (native browser API)
 - **Wrapper**: [Dexie.js](https://dexie.org/) v4
 - **Database name**: `CryptoFolioDB`
-- **Current version**: 4
+- **Current version**: 5
 - **Source files**: `src/lib/db.ts`, `src/lib/migrations.ts`
 
 All data is stored entirely in the user's browser locally. There is no server-side persistence of any kind.
 
 ---
 
-## 2. Database Schema (current v4)
+## 2. Database Schema (current v5)
 
 ```typescript
 // src/lib/db.ts
@@ -26,19 +26,25 @@ db.version(1).stores({
 db.version(2).stores({
   transactions: 'id, date, symbol, type',
   positions: 'id, symbol, status',
-}).upgrade(tx => migrations[0].upgradeIdb(tx));
+}).upgrade(MIGRATIONS[1].upgradeIdb);
 
 db.version(3).stores({
   transactions: 'id, date, symbol, type',
   positions: 'id, symbol, status, fundId',  // fundId index added
   funds: 'id, status, createdAt',           // funds table added
-}).upgrade(tx => migrations[1].upgradeIdb(tx));
+}).upgrade(MIGRATIONS[2].upgradeIdb);
 
 db.version(4).stores({
   transactions: 'id, date, symbol, type',
   positions: 'id, symbol, status, fundId',
   funds: 'id, status, createdAt',
-}).upgrade(tx => migrations[2].upgradeIdb(tx));
+}).upgrade(MIGRATIONS[3].upgradeIdb);
+
+db.version(5).stores({
+  transactions: 'id, date, symbol, type',
+  positions: 'id, symbol, status, fundId',
+  funds: 'id, status, createdAt',
+}).upgrade(MIGRATIONS[4].upgradeIdb);
 ```
 
 **Index reference:**
@@ -94,26 +100,28 @@ This check is performed at app startup (`App.tsx`). If the result is `'incompati
 interface Migration {
   description: string;           // Human-readable description of the change
   upgradePayload: (             // JSON transformation for backup files
-    payload: BackupPayload
-  ) => BackupPayload;
+    payload: MigrationState
+  ) => MigrationState;
   upgradeIdb: (                 // Live IndexedDB upgrade function
     tx: Dexie.Transaction
-  ) => Promise<void>;
+  ) => Promise<void> | void;
   upgradeLocalStorage?: (       // Optional: transform Zustand persisted state in localStorage
-    state: unknown
-  ) => unknown;
+    state: MigrationState
+  ) => MigrationState;
 }
 
-export const MIGRATIONS: Migration[] = [
-  /* index 0: v1 → v2 */
-  /* index 1: v2 → v3 */
-  /* index 2: v3 → v4 */
-];
+// Key = source version (being upgraded FROM). Value = migration that produces source + 1.
+export const MIGRATIONS: Record<number, Migration> = {
+  1: { /* v1 → v2 */ },
+  2: { /* v2 → v3 */ },
+  3: { /* v3 → v4 */ },
+  4: { /* v4 → v5 */ },
+};
 ```
 
 ### 4.3 Migration details by version
 
-#### v1 → v2 (MIGRATIONS[0])
+#### v1 → v2 (MIGRATIONS[1])
 
 **Changes:**
 - Position gains `type` field: all existing positions default to `'PRIMARY'`.
@@ -143,7 +151,7 @@ payload.positions = payload.positions.map(p => ({
 
 ---
 
-#### v2 → v3 (MIGRATIONS[1])
+#### v2 → v3 (MIGRATIONS[2])
 
 **Changes:**
 - New `funds` table (Dexie creates this automatically via the schema declaration; no data transform needed).
@@ -159,7 +167,7 @@ payload.funds = payload.funds ?? [];
 
 ---
 
-#### v3 → v4 (MIGRATIONS[2])
+#### v3 → v4 (MIGRATIONS[3])
 
 **Changes:**
 - Settings `pairConfigs[].dataSource` field renamed to `dataProvider`.
@@ -193,25 +201,55 @@ state.pairConfigs = state.pairConfigs?.map(c => ({
 
 ---
 
+#### v4 → v5 (MIGRATIONS[4])
+
+**Changes:**
+- Settings `pairConfigs[]` gains a `market` field (`'Crypto'` | `'US Stocks'` | `'CN Stocks'`).
+- Market is inferred from the existing `exchange` value: NYSE/NASDAQ → `'US Stocks'`, SSE/SZSE → `'CN Stocks'`, all others → `'Crypto'`.
+- Settings gain a new `enabledMarkets` array (defaults to all three markets enabled).
+
+**IndexedDB upgrade logic:** No IndexedDB changes (pairConfigs lives in localStorage).
+
+**Backup file transformation:**
+```typescript
+payload.settings?.pairConfigs?.forEach(config => {
+  config.market = inferMarketFromExchange(config.exchange);
+});
+```
+
+**localStorage upgrade logic:**
+```typescript
+state.pairConfigs = state.pairConfigs?.map(c => ({
+  ...c,
+  market: c.market ?? inferMarketFromExchange(c.exchange),
+}));
+if (!state.enabledMarkets) {
+  state.enabledMarkets = ['Crypto', 'US Stocks', 'CN Stocks'];
+}
+```
+
+---
+
 ### 4.4 Backup migration entry point
 
 ```typescript
 // src/lib/migrations.ts
 export function migratePayload(
-  payload: BackupPayload,
-  fromVersion: number,
-  toVersion: number
-): BackupPayload {
-  let current = { ...payload };
-  for (let v = fromVersion; v < toVersion; v++) {
-    current = MIGRATIONS[v - 1].upgradePayload(current);
-    current.version = v + 1;
+  payload: Record<string, unknown>,
+  targetVersion: number,
+): Record<string, unknown> {
+  let p = payload;
+  while ((p.version as number) < targetVersion) {
+    const currentVersion = p.version as number;
+    const step = MIGRATIONS[currentVersion];
+    if (!step) throw new Error(`No migration defined for v${currentVersion} → v${currentVersion + 1}.`);
+    p = step.upgradePayload(p);
   }
-  return current;
+  return p;
 }
 ```
 
-When a backup file is imported, `backup.ts` calls this function to incrementally upgrade the old JSON to the current version before writing it to the database.
+Key = source version means `MIGRATIONS[currentVersion]` upgrades **from** that version to the next. When a backup file is imported, `backup.ts` calls this function to incrementally upgrade the old JSON to the current version before writing it to the database.
 
 ---
 
@@ -228,13 +266,11 @@ Dexie is the **only persistent write path**:
 
 When a data structure change is needed:
 
-1. **In `src/lib/db.ts`**: Copy the latest `db.version(N).stores(...)` block, increment the version to `N+1`, apply schema changes in `.stores()`, and add `.upgrade(tx => migrations[N-1].upgradeIdb(tx))`.
+1. **In `src/lib/db.ts`**: Copy the latest `db.version(N).stores(...)` block, increment the version to `N+1`, apply schema changes in `.stores()`, and add `.upgrade(MIGRATIONS[N].upgradeIdb)`.
 
-2. **In `src/lib/migrations.ts`**: Append a new Migration object to the end of the `MIGRATIONS` array. Implement `upgradePayload`, `upgradeIdb`, and optionally `upgradeLocalStorage`.
+2. **In `src/lib/migrations.ts`**: Add a new entry to the `MIGRATIONS` record with the key being the source version (N). Implement `upgradePayload`, `upgradeIdb`, and optionally `upgradeLocalStorage`.
 
 3. **Update `DB_VERSION` constant** in `src/lib/db.ts` to the new version number.
-
-4. **Update `BACKUP_VERSION` constant** in `src/lib/backup.ts`.
 
 5. **Write tests** for the new migration in `src/lib/migrations.test.ts`.
 

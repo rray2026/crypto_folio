@@ -1,6 +1,6 @@
 # Technical Architecture Overview
 
-This document describes the system design principles, technology choices, and key architectural decisions in CryptoFolio.
+This document describes the system design principles, technology choices, and key architectural decisions in Folio.
 For detailed implementation of each module, see the files under `docs/technical/`.
 
 ---
