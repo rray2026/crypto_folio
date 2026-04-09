@@ -63,7 +63,18 @@ export default function PositionDetails() {
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
+    const allPositions = useLiveQuery(() => db.positions.toArray())
     const allFunds = useLiveQuery(() => db.funds.toArray())
+
+    // Compute total allocated quantity per transaction across all positions
+    const getTxAllocated = useCallback((txId: string, excludePositionId?: string) => {
+        if (!allPositions) return 0
+        return allPositions.reduce((sum, p) => {
+            if (p.id === excludePositionId) return sum
+            const entry = p.entries.find(e => e.transactionId === txId)
+            return sum + (entry?.allocatedAmount ?? 0)
+        }, 0)
+    }, [allPositions])
 
     const toggleStatus = useCallback(async () => {
         if (!id || !position) return;
@@ -169,12 +180,16 @@ export default function PositionDetails() {
 
     const now = useState(() => Date.now())[0]
 
-    // Available transactions matching symbol (safe to compute before guard — returns [] if no position)
+    // Available transactions: same symbol, not already linked, and have remaining allocatable quantity
     const availableTxs = useMemo(() => {
         if (!position || !allTransactions) return []
         const linkedIds = new Set(position.entries.map(e => e.transactionId))
-        return allTransactions.filter(tx => tx.symbol === position.symbol && !linkedIds.has(tx.id)).sort((a, b) => b.date - a.date)
-    }, [position, allTransactions])
+        return allTransactions.filter(tx => {
+            if (tx.symbol !== position.symbol || linkedIds.has(tx.id)) return false
+            const allocated = getTxAllocated(tx.id)
+            return tx.quantity - allocated > 0
+        }).sort((a, b) => b.date - a.date)
+    }, [position, allTransactions, getTxAllocated])
 
     const filteredAvailableTxs = useMemo(() => {
         if (linkTimeFilter === 'ALL') return availableTxs
@@ -199,11 +214,16 @@ export default function PositionDetails() {
         if (!id || selectedTxIds.size === 0) return
         for (const txId of selectedTxIds) {
             const tx = availableTxs.find(t => t.id === txId)
-            if (tx) await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: tx.quantity })
+            if (tx) {
+                const remaining = tx.quantity - getTxAllocated(tx.id)
+                if (remaining > 0) {
+                    await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: remaining })
+                }
+            }
         }
         setSelectedTxIds(new Set())
         setIsLinkDialogOpen(false)
-    }, [id, selectedTxIds, availableTxs, addTransactionToPosition])
+    }, [id, selectedTxIds, availableTxs, addTransactionToPosition, getTxAllocated])
 
     if (position === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (position === null) return <div className="p-8 text-center text-foreground">Position not found.</div>
@@ -226,7 +246,12 @@ export default function PositionDetails() {
     const commitEditAlloc = async (txId: string) => {
         const val = parseFloat(allocInputValue);
         if (!id || isNaN(val) || val <= 0) { setEditingAllocTxId(null); return; }
-        await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: val });
+        const tx = allTransactions?.find(t => t.id === txId);
+        if (!tx) { setEditingAllocTxId(null); return; }
+        const maxAlloc = tx.quantity - getTxAllocated(txId, id);
+        const clamped = Math.min(val, maxAlloc);
+        if (clamped <= 0) { setEditingAllocTxId(null); return; }
+        await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: clamped });
         setEditingAllocTxId(null);
     }
 
@@ -704,6 +729,9 @@ export default function PositionDetails() {
                                     {filteredAvailableTxs.length > 0 ? (
                                         filteredAvailableTxs.map(tx => {
                                             const isSelected = selectedTxIds.has(tx.id)
+                                            const allocated = getTxAllocated(tx.id)
+                                            const remaining = tx.quantity - allocated
+                                            const isPartial = allocated > 0
                                             return (
                                                 <button
                                                     key={tx.id}
@@ -720,7 +748,7 @@ export default function PositionDetails() {
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1">
                                                         <p className="font-mono text-xs font-medium truncate">
-                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
+                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {isPartial ? <><span className="text-primary">{remaining}</span><span className="text-muted-foreground">/{tx.quantity}</span></> : tx.quantity}
                                                         </p>
                                                         <p className="text-[10px] text-muted-foreground mt-0.5">
                                                             {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
