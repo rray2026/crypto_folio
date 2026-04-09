@@ -144,6 +144,10 @@ export default function TradingSimulator() {
     const lastPriceRef = useRef<number | null>(null)
     const lastQtyRef = useRef<number | null>(null)
 
+    // Smooth recentering transition after release
+    const [priceRecentering, setPriceRecentering] = useState(false)
+    const [qtyRecentering, setQtyRecentering] = useState(false)
+
     // Pending committed sim trades (in-memory only)
     const [pendingTrades, setPendingTrades] = useState<SimTrade[]>([])
 
@@ -196,6 +200,7 @@ export default function TradingSimulator() {
     // Price drag with haptic feedback on preset crossings
     const handlePriceChange = useCallback(([v]: number[]) => {
         setSimPrice(v)
+        setPriceRecentering(false)
         const prev = lastPriceRef.current
         if (prev !== null && refPrice > 0) {
             for (const pct of [-20, -10, -5, 0, 5, 10, 20]) {
@@ -206,16 +211,19 @@ export default function TradingSimulator() {
         lastPriceRef.current = v
     }, [refPrice])
 
-    // Price commit: recenter range on new value
+    // Price commit: recenter range with smooth transition
     const handlePriceCommit = useCallback(([v]: number[]) => {
         setSimPrice(v)
         setPriceAnchor(v)
         lastPriceRef.current = v
+        setPriceRecentering(true)
+        setTimeout(() => setPriceRecentering(false), 350)
     }, [])
 
     // Qty drag with haptic on holding-% crossings
     const handleQtyChange = useCallback(([v]: number[]) => {
         setSimQty(v)
+        setQtyRecentering(false)
         const prev = lastQtyRef.current
         const holding = Math.abs(pendingMetrics?.totalRemaining ?? 0)
         if (prev !== null && holding > 0) {
@@ -227,11 +235,15 @@ export default function TradingSimulator() {
         lastQtyRef.current = v
     }, [pendingMetrics?.totalRemaining])
 
-    // Qty commit: auto-expand if near max
+    // Qty commit: auto-expand with smooth transition if near max
     const handleQtyCommit = useCallback(([v]: number[]) => {
         setSimQty(v)
         lastQtyRef.current = v
-        if (v > effQtyMax * 0.8) setQtyRangeMax(v * 2)
+        if (v > effQtyMax * 0.8) {
+            setQtyRangeMax(v * 2)
+            setQtyRecentering(true)
+            setTimeout(() => setQtyRecentering(false), 350)
+        }
     }, [effQtyMax])
 
     // Set price from tappable/preset (also recenters anchor)
@@ -492,7 +504,9 @@ export default function TradingSimulator() {
                             step={defaultPriceBounds.step}
                             onValueChange={handlePriceChange}
                             onValueCommit={handlePriceCommit}
-                            className="relative flex w-full touch-none select-none items-center"
+                            className={`relative flex w-full touch-none select-none items-center ${
+                                priceRecentering ? "[&_span]:transition-[left,right] [&_span]:duration-300 [&_span]:ease-out" : ""
+                            }`}
                         >
                             <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
                                 <SliderPrimitive.Range className="absolute h-full bg-primary" />
@@ -546,7 +560,9 @@ export default function TradingSimulator() {
                             step={defaultQtyBounds.step}
                             onValueChange={handleQtyChange}
                             onValueCommit={handleQtyCommit}
-                            className="relative flex w-full touch-none select-none items-center"
+                            className={`relative flex w-full touch-none select-none items-center ${
+                                qtyRecentering ? "[&_span]:transition-[left,right] [&_span]:duration-300 [&_span]:ease-out" : ""
+                            }`}
                         >
                             <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
                                 <SliderPrimitive.Range className="absolute h-full bg-primary" />
