@@ -88,12 +88,12 @@ function RangeSlider({
             <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
                 <SliderPrimitive.Range className="absolute h-full bg-primary/40" />
             </SliderPrimitive.Track>
-            {/* Low bound thumb - rectangular */}
-            <SliderPrimitive.Thumb className="block h-4 w-2 rounded-sm border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            {/* Low bound thumb - rectangular, enlarged touch target */}
+            <SliderPrimitive.Thumb className="relative block h-4 w-2 rounded-sm border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring before:absolute before:inset-[-10px] before:content-['']" />
             {/* Value thumb - round, larger */}
             <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-            {/* High bound thumb - rectangular */}
-            <SliderPrimitive.Thumb className="block h-4 w-2 rounded-sm border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            {/* High bound thumb - rectangular, enlarged touch target */}
+            <SliderPrimitive.Thumb className="relative block h-4 w-2 rounded-sm border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring before:absolute before:inset-[-10px] before:content-['']" />
         </SliderPrimitive.Root>
     )
 }
