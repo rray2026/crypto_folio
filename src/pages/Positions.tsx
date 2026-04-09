@@ -179,10 +179,14 @@ export default function Positions() {
                             <button
                                 type="button"
                                 onClick={() => setArchivedExpanded(prev => !prev)}
-                                className="flex items-center gap-1.5 py-2 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                                className="flex items-center gap-3 w-full py-4 group"
                             >
-                                <ChevronDown className={`h-3 w-3 transition-transform ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
-                                Archived ({archivedPositions.length})
+                                <div className="h-px flex-1 bg-border/40" />
+                                <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
+                                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                                    {archivedPositions.length} archived
+                                </span>
+                                <div className="h-px flex-1 bg-border/40" />
                             </button>
                             {archivedExpanded && renderPositionGrid(archivedPositions)}
                         </div>
