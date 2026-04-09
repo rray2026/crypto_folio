@@ -138,10 +138,10 @@ export function TransactionCard({
                         },
                     ]}
                 >
-                    <Card className={`overflow-hidden transition-all duration-200 border-border/40 ${
+                    <Card className={`overflow-hidden transition-all duration-200 border-border/50 ${
                         isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-background'
                     }`}>
-                        <CardContent className="p-4 space-y-4">
+                        <CardContent className="p-3 space-y-3">
                             <div className="flex justify-between items-start">
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
@@ -160,7 +160,7 @@ export function TransactionCard({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/20">
+                            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/30">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Price</span>
                                     <span className="font-mono text-sm">{currencySymbol}{tx.price.toLocaleString()}</span>

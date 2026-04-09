@@ -613,7 +613,7 @@ export default function PositionDetails() {
                                     ]}
                                 >
                                     <div
-                                        className="flex items-center justify-between p-3 border bg-card hover:bg-card/80 transition-colors group cursor-pointer"
+                                        className="flex items-center justify-between p-3 border border-border/50 bg-card hover:bg-card/80 transition-colors group cursor-pointer"
                                         onClick={() => navigate(`/transactions/${tx.id}`)}
                                     >
                                         <div className="flex gap-3 md:gap-4 items-center min-w-0">

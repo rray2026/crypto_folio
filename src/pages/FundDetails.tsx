@@ -286,7 +286,7 @@ export default function FundDetails() {
                                 ]}
                             >
                                 <div
-                                    className="p-3 border bg-card hover:bg-card/80 transition-colors cursor-pointer group"
+                                    className="p-3 border border-border/50 bg-card hover:bg-card/80 transition-colors cursor-pointer group"
                                     onClick={() => navigate(`/positions/${pos.id}`)}
                                 >
                                     {/* Row 1: badges + name + actions */}
@@ -307,7 +307,7 @@ export default function FundDetails() {
                                                 {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                 {metrics.positionType}
                                             </span>
-                                            <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
+                                            <p className="font-semibold text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                         </div>
                                         {/* Desktop only: hover-reveal buttons */}
                                         <div className="hidden md:flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
@@ -436,7 +436,7 @@ export default function FundDetails() {
                                                         {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                         {metrics.positionType}
                                                     </span>
-                                                    <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
+                                                    <p className="font-semibold text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                                 </div>
                                                 {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
                                             </div>

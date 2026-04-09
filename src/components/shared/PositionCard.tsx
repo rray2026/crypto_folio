@@ -44,12 +44,12 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                         </h3>
                         <div className="flex justify-end gap-1 shrink-0 flex-wrap">
                             {fundName && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/40">
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/40">
                                     <Layers className="h-2.5 w-2.5" />
                                     {fundName}
                                 </span>
                             )}
-                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${
                                 metrics.positionType === 'LONG'
                                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
                                     : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
@@ -57,7 +57,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                                 {metrics.positionType === 'LONG' ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                 {metrics.positionType}
                             </span>
-                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${
                                 isActive
                                     ? 'bg-primary/10 text-primary border-primary/20'
                                     : 'bg-muted text-muted-foreground border-border'
