@@ -2,11 +2,11 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { ArrowLeft, RotateCcw, Minus, Plus, PlusCircle, X } from "lucide-react"
+import { ArrowLeft, RotateCcw, PlusCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
-import { useState, useEffect, useMemo, useCallback } from "react"
+import * as SliderPrimitive from "@radix-ui/react-slider"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { mul, div, add, sub } from "@/lib/math"
@@ -51,6 +51,109 @@ function getQtyBounds(holding: number) {
     return { min: 0, max: parseFloat(max.toFixed(10)), step: parseFloat(step.toFixed(10)) }
 }
 
+// --- 3-Thumb Range Slider ---
+
+function RangeSlider({
+    low, value, high, min, max, step,
+    onLowChange, onValueChange, onHighChange,
+}: {
+    low: number; value: number; high: number
+    min: number; max: number; step: number
+    onLowChange: (v: number) => void
+    onValueChange: (v: number) => void
+    onHighChange: (v: number) => void
+}) {
+    const handleChange = useCallback((vals: number[]) => {
+        const [newLow, newVal, newHigh] = vals
+        onLowChange(newLow)
+        onValueChange(newVal)
+        onHighChange(newHigh)
+    }, [onLowChange, onValueChange, onHighChange])
+
+    return (
+        <SliderPrimitive.Root
+            value={[low, value, high]}
+            min={min}
+            max={max}
+            step={step}
+            minStepsBetweenThumbs={0}
+            onValueChange={handleChange}
+            className="relative flex w-full touch-none select-none items-center"
+        >
+            <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
+                <SliderPrimitive.Range className="absolute h-full bg-primary/40" />
+            </SliderPrimitive.Track>
+            {/* Low bound thumb - smaller, muted */}
+            <SliderPrimitive.Thumb className="block h-3.5 w-3.5 rounded-full border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            {/* Value thumb - main, larger */}
+            <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            {/* High bound thumb - smaller, muted */}
+            <SliderPrimitive.Thumb className="block h-3.5 w-3.5 rounded-full border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        </SliderPrimitive.Root>
+    )
+}
+
+// --- Tappable Value Editor ---
+
+function TappableValue({
+    value, onCommit, prefix, suffix, className,
+    minFrac = 2, maxFrac = 6,
+}: {
+    value: number; onCommit: (v: number) => void
+    prefix?: string; suffix?: string; className?: string
+    minFrac?: number; maxFrac?: number
+}) {
+    const [editing, setEditing] = useState(false)
+    const [editText, setEditText] = useState("")
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    const startEdit = useCallback(() => {
+        setEditText(String(value))
+        setEditing(true)
+    }, [value])
+
+    useEffect(() => {
+        if (editing && inputRef.current) {
+            inputRef.current.focus()
+            inputRef.current.select()
+        }
+    }, [editing])
+
+    const commit = useCallback(() => {
+        const parsed = parseFloat(editText)
+        if (!isNaN(parsed) && parsed >= 0) {
+            onCommit(parsed)
+        }
+        setEditing(false)
+    }, [editText, onCommit])
+
+    if (editing) {
+        return (
+            <input
+                ref={inputRef}
+                type="number"
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+                onBlur={commit}
+                onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false) }}
+                className="font-mono text-sm font-bold bg-muted/50 border border-primary/30 rounded px-1.5 py-0.5 w-28 text-right outline-none focus:border-primary"
+                step="any"
+                min="0"
+            />
+        )
+    }
+
+    return (
+        <button
+            type="button"
+            onClick={startEdit}
+            className={`font-mono text-sm font-bold hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 transition-colors cursor-text ${className ?? ""}`}
+        >
+            {prefix}{formatNum(value, minFrac, maxFrac)}{suffix}
+        </button>
+    )
+}
+
 let simIdCounter = 0
 
 // --- Component ---
@@ -69,6 +172,12 @@ export default function TradingSimulator() {
     const [simPriceRaw, setSimPrice] = useState<number | null>(null)
     const [simQty, setSimQty] = useState(0)
     const [simTimestamp] = useState(() => Date.now())
+
+    // Adjustable range bounds
+    const [priceLow, setPriceLow] = useState<number | null>(null)
+    const [priceHigh, setPriceHigh] = useState<number | null>(null)
+    const [qtyLow, setQtyLow] = useState<number | null>(null)
+    const [qtyHigh, setQtyHigh] = useState<number | null>(null)
 
     // Pending committed sim trades (in-memory only)
     const [pendingTrades, setPendingTrades] = useState<SimTrade[]>([])
@@ -107,9 +216,15 @@ export default function TradingSimulator() {
 
     const simPrice = simPriceRaw ?? refPrice
 
-    const priceBounds = useMemo(() => getPriceBounds(refPrice), [refPrice])
-    // Qty bounds based on simulated holding (after pending trades)
-    const qtyBounds = useMemo(() => getQtyBounds(pendingMetrics?.totalRemaining ?? 0), [pendingMetrics?.totalRemaining])
+    // Default bounds from reference values
+    const defaultPriceBounds = useMemo(() => getPriceBounds(refPrice), [refPrice])
+    const defaultQtyBounds = useMemo(() => getQtyBounds(pendingMetrics?.totalRemaining ?? 0), [pendingMetrics?.totalRemaining])
+
+    // Effective bounds: user-adjustable via outer thumbs
+    const effPriceLow = priceLow ?? defaultPriceBounds.min
+    const effPriceHigh = priceHigh ?? defaultPriceBounds.max
+    const effQtyLow = qtyLow ?? defaultQtyBounds.min
+    const effQtyHigh = qtyHigh ?? defaultQtyBounds.max
 
     // Full metrics: pending trades + current draft
     const simMetrics = useMemo(() => {
@@ -150,6 +265,10 @@ export default function TradingSimulator() {
         setSimPrice(null)
         setSimQty(0)
         setPendingTrades([])
+        setPriceLow(null)
+        setPriceHigh(null)
+        setQtyLow(null)
+        setQtyHigh(null)
     }, [])
 
     // Mobile header
@@ -335,38 +454,27 @@ export default function TradingSimulator() {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">Price</span>
-                            <span className="font-mono text-sm font-bold">
-                                {currencySymbol}{formatNum(simPrice)}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <button
-                                type="button"
-                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
-                                onClick={() => setSimPrice(prev => Math.max(priceBounds.min, sub(prev ?? refPrice, priceBounds.step)))}
-                            >
-                                <Minus className="h-3 w-3" />
-                            </button>
-                            <Slider
-                                value={[simPrice]}
-                                min={priceBounds.min}
-                                max={priceBounds.max}
-                                step={priceBounds.step}
-                                onValueChange={([v]) => setSimPrice(v)}
-                                className="flex-1"
+                            <TappableValue
+                                value={simPrice}
+                                onCommit={v => setSimPrice(v)}
+                                prefix={currencySymbol}
                             />
-                            <button
-                                type="button"
-                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
-                                onClick={() => setSimPrice(prev => Math.min(priceBounds.max, add(prev ?? refPrice, priceBounds.step)))}
-                            >
-                                <Plus className="h-3 w-3" />
-                            </button>
                         </div>
+                        <RangeSlider
+                            low={effPriceLow}
+                            value={simPrice}
+                            high={effPriceHigh}
+                            min={defaultPriceBounds.min}
+                            max={defaultPriceBounds.max}
+                            step={defaultPriceBounds.step}
+                            onLowChange={setPriceLow}
+                            onValueChange={v => setSimPrice(v)}
+                            onHighChange={setPriceHigh}
+                        />
                         <div className="flex gap-1 flex-wrap">
                             {refPrice > 0 && [-20, -10, -5, 0, 5, 10, 20].map(pct => {
                                 const val = mul(refPrice, add(1, div(pct, 100)))
-                                const isActive = Math.abs(simPrice - val) < priceBounds.step * 0.5
+                                const isActive = Math.abs(simPrice - val) < defaultPriceBounds.step * 0.5
                                 return (
                                     <button
                                         key={pct}
@@ -394,39 +502,31 @@ export default function TradingSimulator() {
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">Quantity</span>
                             <div className="flex items-baseline gap-1">
-                                <span className="font-mono text-sm font-bold">{formatNum(simQty, 0, 8)}</span>
+                                <TappableValue
+                                    value={simQty}
+                                    onCommit={v => setSimQty(v)}
+                                    minFrac={0}
+                                    maxFrac={8}
+                                />
                                 <span className="text-[10px] text-muted-foreground uppercase">{baseAsset}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <button
-                                type="button"
-                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
-                                onClick={() => setSimQty(prev => Math.max(0, sub(prev, qtyBounds.step)))}
-                            >
-                                <Minus className="h-3 w-3" />
-                            </button>
-                            <Slider
-                                value={[simQty]}
-                                min={qtyBounds.min}
-                                max={qtyBounds.max}
-                                step={qtyBounds.step}
-                                onValueChange={([v]) => setSimQty(v)}
-                                className="flex-1"
-                            />
-                            <button
-                                type="button"
-                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
-                                onClick={() => setSimQty(prev => Math.min(qtyBounds.max, add(prev, qtyBounds.step)))}
-                            >
-                                <Plus className="h-3 w-3" />
-                            </button>
-                        </div>
+                        <RangeSlider
+                            low={effQtyLow}
+                            value={simQty}
+                            high={effQtyHigh}
+                            min={defaultQtyBounds.min}
+                            max={defaultQtyBounds.max}
+                            step={defaultQtyBounds.step}
+                            onLowChange={setQtyLow}
+                            onValueChange={v => setSimQty(v)}
+                            onHighChange={setQtyHigh}
+                        />
                         {pendingMetrics && Math.abs(pendingMetrics.totalRemaining) > 0 && (
                             <div className="flex gap-1 flex-wrap">
                                 {[10, 25, 50, 75, 100].map(pct => {
                                     const val = mul(Math.abs(pendingMetrics.totalRemaining), div(pct, 100))
-                                    const isActive = simQty > 0 && Math.abs(simQty - val) < qtyBounds.step * 0.5
+                                    const isActive = simQty > 0 && Math.abs(simQty - val) < defaultQtyBounds.step * 0.5
                                     return (
                                         <button
                                             key={pct}
@@ -487,7 +587,11 @@ export default function TradingSimulator() {
                             >
                                 <div className="flex items-center gap-2 min-w-0">
                                     <span className="text-muted-foreground/50 font-mono w-4 text-center shrink-0">#{i + 1}</span>
-                                    <span className={`font-semibold shrink-0 ${t.side === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                                        t.side === "BUY"
+                                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                            : "bg-red-500/15 text-red-600 dark:text-red-400"
+                                    }`}>
                                         {t.side}
                                     </span>
                                     <span className="text-muted-foreground truncate">
