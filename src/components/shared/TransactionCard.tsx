@@ -81,9 +81,9 @@ export function TransactionCard({
             <div className={`hidden md:grid ${gridCols} items-center px-6 py-3 rounded-xl border ${
                 isSelected
                 ? 'bg-primary/5 border-primary shadow-sm'
-                : 'bg-card border-border/40 hover:border-border hover:bg-card/80'
+                : 'bg-card border-border/50 hover:border-border hover:bg-card/80'
             }`}>
-                {showAsset && <div className="font-bold text-base tracking-tight">{tx.symbol}</div>}
+                {showAsset && <div className="font-semibold text-sm tracking-tight">{tx.symbol}</div>}
                 <div className="text-[11px] font-mono text-muted-foreground/80">
                     {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
                 </div>
@@ -98,7 +98,7 @@ export function TransactionCard({
                 </div>
                 <div className="text-right font-mono font-medium text-sm text-foreground/80">{currencySymbol}{tx.price.toLocaleString()}</div>
                 <div className="text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
-                <div className="text-right font-mono font-bold text-sm text-primary/90">{currencySymbol}{tx.amount.toLocaleString()}</div>
+                <div className="text-right font-mono font-semibold text-sm text-primary/90">{currencySymbol}{tx.amount.toLocaleString()}</div>
                 <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
 
                 <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
@@ -138,14 +138,14 @@ export function TransactionCard({
                         },
                     ]}
                 >
-                    <Card className={`overflow-hidden transition-all duration-200 border-border/40 rounded-none ${
-                        isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'
+                    <Card className={`overflow-hidden transition-all duration-200 border-border/40 ${
+                        isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-background'
                     }`}>
                         <CardContent className="p-4 space-y-4">
                             <div className="flex justify-between items-start">
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
-                                        {showAsset && <span className="font-bold text-lg">{tx.symbol}</span>}
+                                        {showAsset && <span className="font-semibold text-sm">{tx.symbol}</span>}
                                         <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
                                             tx.type === "BUY"
                                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
@@ -162,19 +162,19 @@ export function TransactionCard({
 
                             <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/20">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Price</span>
+                                    <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Price</span>
                                     <span className="font-mono text-sm">{currencySymbol}{tx.price.toLocaleString()}</span>
                                 </div>
                                 <div className="flex flex-col text-right">
-                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Quantity</span>
+                                    <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Quantity</span>
                                     <span className="font-mono text-sm">{tx.quantity.toLocaleString()} <span className="text-[10px]">{base}</span></span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Total</span>
-                                    <span className="font-mono text-sm font-bold text-primary">{currencySymbol}{tx.amount.toLocaleString()}</span>
+                                    <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Total</span>
+                                    <span className="font-mono text-sm font-semibold text-primary/90">{currencySymbol}{tx.amount.toLocaleString()}</span>
                                 </div>
                                 <div className="flex flex-col text-right">
-                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Fee</span>
+                                    <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Fee</span>
                                     <span className="font-mono text-xs text-muted-foreground">{currencySymbol}{tx.fee.toLocaleString()}</span>
                                 </div>
                             </div>
