@@ -4,22 +4,14 @@ import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair, getCurrencySymbol } from "@/store/useSettingsStore"
-import type { Position } from "@/lib/types"
+import type { Position, PositionMetrics } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 
-import { Plus, Target, Activity, Wallet, LineChart, TrendingUp } from "lucide-react"
+import { Plus, Target, ChevronDown } from "lucide-react"
 import { differenceInDays } from "date-fns"
-import { getPositionMetrics, getPortfolioMetrics, comparePositionsByMetrics } from "@/lib/metrics"
-import type { PositionMetrics } from "@/lib/types"
+import { getPositionMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 
 import { Button } from "@/components/ui/button"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import {
     Dialog,
     DialogContent,
@@ -27,11 +19,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Positions() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const [archivedExpanded, setArchivedExpanded] = useState(false)
     const { setMobileHeader } = useMobileHeader()
     const openAdd = useCallback(() => setIsAddDialogOpen(true), [])
     useEffect(() => {
@@ -48,7 +39,7 @@ export default function Positions() {
             ),
         })
     }, [setMobileHeader, openAdd])
-    const { prices, fetchPrices, dashboardTimeRange, setDashboardTimeRange, pairConfigs } = useSettingsStore()
+    const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     const positions = useLiveQuery(() => db.positions.toArray())
     const transactions = useLiveQuery(() => db.transactions.toArray())
@@ -56,7 +47,6 @@ export default function Positions() {
     const fundMap = Object.fromEntries((funds ?? []).map(f => [f.id, f.name]))
 
     // Fetch prices for all OPEN symbols
-    // Fetch prices for all OPEN symbols periodically (every 5 mins)
     useEffect(() => {
         const interval = setInterval(() => {
             if (!positions) return;
@@ -66,7 +56,7 @@ export default function Positions() {
             }
         }, 300000);
         return () => clearInterval(interval);
-    }, [positions, fetchPrices]); // Added dependencies
+    }, [positions, fetchPrices]);
 
     // Non-blocking fetch on render if not cached
     useEffect(() => {
@@ -76,7 +66,7 @@ export default function Positions() {
                 fetchPrices(openSymbols);
             }
         }
-    }, [positions, fetchPrices]); // Added dependencies
+    }, [positions, fetchPrices]);
 
     const getMetrics = (pos: Position) => {
         if (!transactions) return { realizedPnL: 0, unrealizedPnL: 0, totalPnL: 0, roi: 0, totalInvestment: 0, totalRemaining: 0, currentPrice: 0, positionType: 'LONG' as const, derivedStartDate: pos.startDate, derivedEndDate: pos.endDate, avgBuyPrice: 0, avgSellPrice: 0, breakevenPrice: 0 };
@@ -85,21 +75,39 @@ export default function Positions() {
         return getPositionMetrics(pos, linkedTxs, prices);
     };
 
-
-    // Detect mixed currencies across the portfolio (display only)
-    const portfolioCurrencies = new Set(
-        (positions ?? []).map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
-    );
-    const mixedCurrencies = portfolioCurrencies.size > 1;
-    const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD';
-    const totalsCurrencySymbol = getCurrencySymbol(singleCurrency);
-
     const now = useState(() => Date.now())[0];
-    const isLoadingMetrics = !positions || !transactions;
-    const { totalRealizedPnL, totalUnrealizedPnL, globalROI, winRate, winningTrades, closedTrades, timeThreshold } =
-        !isLoadingMetrics
-            ? getPortfolioMetrics(positions, transactions, prices, dashboardTimeRange)
-            : { totalRealizedPnL: 0, totalUnrealizedPnL: 0, globalROI: 0, winRate: 0, winningTrades: 0, closedTrades: 0, timeThreshold: 0 };
+
+    const activePositions = positions?.filter(p => p.status === 'OPEN') ?? []
+    const archivedPositions = positions?.filter(p => p.status === 'CLOSED') ?? []
+
+    const totalUnrealizedPnL = activePositions.reduce((sum, pos) => sum + getMetrics(pos).unrealizedPnL, 0)
+    const portfolioCurrencies = new Set(
+        activePositions.map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
+    )
+    const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD'
+    const currSymbol = getCurrencySymbol(singleCurrency)
+
+    const renderPositionGrid = (list: Position[]) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {list
+                .map((pos) => ({ pos, metrics: getMetrics(pos) }))
+                .sort(comparePositionsByMetrics)
+                .map(({ pos, metrics }: { pos: Position, metrics: PositionMetrics }) => {
+                    const duration = metrics.derivedStartDate ? differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate) : 0;
+                    return (
+                        <PositionCard
+                            key={pos.id}
+                            position={pos}
+                            metrics={metrics}
+                            isActive={pos.status === 'OPEN'}
+                            duration={duration}
+                            fundName={pos.fundId ? fundMap[pos.fundId] : undefined}
+                            currencySymbol={getCurrencySymbolForPair(pos.symbol, pairConfigs)}
+                        />
+                    );
+                })}
+        </div>
+    )
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -108,47 +116,12 @@ export default function Positions() {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <Select value={dashboardTimeRange} onValueChange={(val) => setDashboardTimeRange(val as '1M' | '3M' | '6M' | '1Y' | 'ALL')}>
-                        <SelectTrigger className="h-9 w-[150px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
-                            <div className="flex items-center gap-2">
-                                <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-                                <SelectValue placeholder="Range" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="1M">Last 1 Month</SelectItem>
-                            <SelectItem value="3M">Last 3 Months</SelectItem>
-                            <SelectItem value="6M">Last 6 Months</SelectItem>
-                            <SelectItem value="1Y">Last 1 Year</SelectItem>
-                            <SelectItem value="ALL">All Time</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
-                        <Plus className="h-4 w-4" />
-                        New Position
-                    </Button>
-                </div>
+                <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                    New Position
+                </Button>
             </div>
-            {/* Mobile: time range filter row */}
-            <div className="flex sm:hidden items-center gap-2 mb-4">
-                <Select value={dashboardTimeRange} onValueChange={(val) => setDashboardTimeRange(val as '1M' | '3M' | '6M' | '1Y' | 'ALL')}>
-                    <SelectTrigger className="h-9 flex-1 bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
-                        <div className="flex items-center gap-2">
-                            <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-                            <SelectValue placeholder="Range" />
-                        </div>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                        <SelectItem value="1M">Last 1 Month</SelectItem>
-                        <SelectItem value="3M">Last 3 Months</SelectItem>
-                        <SelectItem value="6M">Last 6 Months</SelectItem>
-                        <SelectItem value="1Y">Last 1 Year</SelectItem>
-                        <SelectItem value="ALL">All Time</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            {/* Dialog (no trigger here on mobile — triggered from MobileHeader) */}
+
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                     <DialogHeader>
@@ -161,69 +134,22 @@ export default function Positions() {
                 </DialogContent>
             </Dialog>
 
-            {/* Portfolio Summary Card */}
-            <Card className="mb-8 overflow-hidden border border-border/50 bg-card shadow-sm">
-                <CardContent className="p-0">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border/40">
-                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
-                            <div className="flex items-center gap-1.5">
-                                <Wallet className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Realized PnL</span>
-                            </div>
-                            {isLoadingMetrics
-                                ? <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
-                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalRealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalRealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
-                                    {totalsCurrencySymbol}{totalRealizedPnL > 0 ? '+' : ''}{totalRealizedPnL.toFixed(2)}
-                                </div>
-                            }
-                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 font-medium">USD only</div>}
-                        </div>
-
-                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
-                            <div className="flex items-center gap-1.5">
-                                <LineChart className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Unrealized PnL</span>
-                            </div>
-                            {isLoadingMetrics
-                                ? <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
-                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
-                                    {totalsCurrencySymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toFixed(2)}
-                                </div>
-                            }
-                            {!isLoadingMetrics && mixedCurrencies && <div className="text-[10px] text-amber-500 font-medium">USD only</div>}
-                        </div>
-
-                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
-                            <div className="flex items-center gap-1.5">
-                                <TrendingUp className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Global ROI</span>
-                            </div>
-                            {isLoadingMetrics
-                                ? <div className="h-8 w-24 rounded-lg bg-muted animate-pulse" />
-                                : <div className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${globalROI > 0 ? 'text-emerald-500 dark:text-emerald-400' : globalROI < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
-                                    {globalROI > 0 ? '+' : ''}{globalROI.toFixed(2)}%
-                                </div>
-                            }
-                        </div>
-
-                        <div className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
-                            <div className="flex items-center gap-1.5">
-                                <Target className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Win Rate</span>
-                            </div>
-                            {isLoadingMetrics
-                                ? <div className="h-8 w-20 rounded-lg bg-muted animate-pulse" />
-                                : <>
-                                    <div className="text-xl md:text-2xl font-bold font-mono tracking-tight text-foreground">
-                                        {winRate.toFixed(1)}%
-                                    </div>
-                                    <div className="text-[10px] text-muted-foreground font-medium">{winningTrades}W / {closedTrades}C</div>
-                                </>
-                            }
-                        </div>
+            {/* Summary bar */}
+            {positions && positions.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="bg-card rounded-xl border border-border/40 p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Active Positions</p>
+                        <p className="text-2xl font-bold font-mono">{activePositions.length}</p>
                     </div>
-                </CardContent>
-            </Card>
+                    <div className="bg-card rounded-xl border border-border/40 p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Unrealized PnL</p>
+                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                            {currSymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {!positions?.length ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center mt-6">
                     <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
@@ -239,60 +165,34 @@ export default function Positions() {
                     </Button>
                 </div>
             ) : (
-                <Tabs defaultValue="active" className="w-full">
-                    <TabsList className="mb-6">
-                        <TabsTrigger value="active">Active ({positions.filter(p => p.status === 'OPEN').length})</TabsTrigger>
-                        <TabsTrigger value="archived">Archived ({positions.filter(p => p.status === 'CLOSED').length})</TabsTrigger>
-                        <TabsTrigger value="all">All</TabsTrigger>
-                    </TabsList>
+                <div className="space-y-6">
+                    {activePositions.length > 0 ? (
+                        renderPositionGrid(activePositions)
+                    ) : (
+                        <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50 font-medium">
+                            No active strategies.
+                        </div>
+                    )}
 
-                    {['active', 'archived', 'all'].map(tab => {
-                        const filteredPositions = positions.filter(p => {
-                            if (tab === 'active') return p.status === 'OPEN';
-                            if (tab === 'archived') return p.status === 'CLOSED';
-                            return true; // all
-                        });
-
-                        return (
-                            <TabsContent value={tab} key={tab}>
-                                {filteredPositions.length === 0 ? (
-                                    <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50 font-medium">
-                                        No {tab} strategies found.
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                        {filteredPositions
-                                            ?.filter((p) => {
-                                                if (timeThreshold === 0) return true;
-                                                const metrics = getMetrics(p);
-                                                return (metrics.derivedStartDate || p.startDate) >= timeThreshold;
-                                            })
-                                            .map((pos) => ({ pos, metrics: getMetrics(pos) }))
-                                            .sort(comparePositionsByMetrics)
-                                            .map(({ pos, metrics }: { pos: Position, metrics: PositionMetrics }) => {
-                                                const duration = metrics.derivedStartDate ? differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate) : 0;
-                                                const isActive = pos.status === 'OPEN';
-
-                                                return (
-                                                    <PositionCard
-                                                        key={pos.id}
-                                                        position={pos}
-                                                        metrics={metrics}
-                                                        isActive={isActive}
-                                                        duration={duration}
-                                                        fundName={pos.fundId ? fundMap[pos.fundId] : undefined}
-                                                        currencySymbol={getCurrencySymbolForPair(pos.symbol, pairConfigs)}
-                                                    />
-                                                );
-                                            })}
-                                    </div>
-                                )}
-                            </TabsContent>
-                        )
-                    })}
-                </Tabs>
+                    {archivedPositions.length > 0 && (
+                        <div>
+                            <button
+                                type="button"
+                                onClick={() => setArchivedExpanded(prev => !prev)}
+                                className="flex items-center gap-3 w-full py-4 group"
+                            >
+                                <div className="h-px flex-1 bg-border/40" />
+                                <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
+                                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                                    {archivedPositions.length} more archived
+                                </span>
+                                <div className="h-px flex-1 bg-border/40" />
+                            </button>
+                            {archivedExpanded && renderPositionGrid(archivedPositions)}
+                        </div>
+                    )}
+                </div>
             )}
-
         </div>
     )
 }

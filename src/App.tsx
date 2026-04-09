@@ -12,6 +12,7 @@ import Debug from "./pages/Debug"
 import AssetDetails from "./pages/AssetDetails"
 import Funds from "./pages/Funds"
 import FundDetails from "./pages/FundDetails"
+import TradingSimulator from "./pages/TradingSimulator"
 import { useEffect } from "react"
 import { useSettingsStore } from "./store/useSettingsStore"
 
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/positions" element={<Positions />} />
           <Route path="/positions/:id" element={<PositionDetails />} />
+          <Route path="/positions/:id/simulator" element={<TradingSimulator />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/transactions/:id" element={<TransactionDetails />} />
           <Route path="/assets/:symbol" element={<AssetDetails />} />

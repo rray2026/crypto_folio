@@ -52,13 +52,27 @@ export const usePositionStore = create<PositionState>(() => ({
             const pos = await db.positions.get(positionId);
             const tx = await db.transactions.get(entry.transactionId);
             if (pos && tx) {
+                // Calculate total already allocated to OTHER positions
+                const allPositions = await db.positions.toArray();
+                const allocatedElsewhere = allPositions.reduce((sum, p) => {
+                    if (p.id === positionId) return sum; // skip current position (will be replaced)
+                    const e = p.entries.find(e => e.transactionId === entry.transactionId);
+                    return sum + (e?.allocatedAmount ?? 0);
+                }, 0);
+
+                const remaining = tx.quantity - allocatedElsewhere;
+                const clamped = Math.min(entry.allocatedAmount, remaining);
+                if (clamped <= 0) return; // nothing left to allocate
+
+                const clampedEntry = { ...entry, allocatedAmount: clamped };
+
                 // Check if entry already exists, update amount if it does
                 const existingEntryIndex = pos.entries.findIndex(e => e.transactionId === entry.transactionId);
                 const newEntries = [...pos.entries];
                 if (existingEntryIndex >= 0) {
-                    newEntries[existingEntryIndex] = entry;
+                    newEntries[existingEntryIndex] = clampedEntry;
                 } else {
-                    newEntries.push(entry);
+                    newEntries.push(clampedEntry);
                 }
 
                 await db.positions.update(positionId, { entries: newEntries });

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SymbolSelector } from "../transactions/SymbolSelector"
-import { DateTimePicker } from "../ui/DateTimePicker"
 
 export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
     const createPosition = usePositionStore(state => state.createPosition)
@@ -12,7 +11,6 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
     const [strategyName, setStrategyName] = useState("")
     const [notes, setNotes] = useState("")
     const [type, setType] = useState<'PRIMARY' | 'SHADOW'>('PRIMARY')
-    const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 16))
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -23,7 +21,7 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
             strategyName: strategyName || undefined,
             type,
             notes: notes || undefined,
-            startDate: new Date(startDate).getTime()
+            startDate: Date.now()
         })
         onSuccess()
     }
@@ -37,17 +35,12 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
 
             <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Strategy Name</Label>
-                <Input 
-                    placeholder="e.g. Q4 BTC Accumulation" 
-                    value={strategyName} 
+                <Input
+                    placeholder="e.g. Q4 Swing Trade"
+                    value={strategyName}
                     onChange={e => setStrategyName(e.target.value)}
                     className="rounded-xl border-border/50 h-11 font-medium"
                 />
-            </div>
-
-            <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Start Date & Time</Label>
-                <DateTimePicker value={startDate} onChange={setStartDate} />
             </div>
 
             <div className="space-y-3">
