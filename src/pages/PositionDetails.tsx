@@ -20,7 +20,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
@@ -48,7 +47,6 @@ export default function PositionDetails() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
-    const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
     const { assignPositionToFund, unassignPosition } = useFundStore()
     const { setMobileHeader } = useMobileHeader()
 
@@ -188,24 +186,6 @@ export default function PositionDetails() {
         setEditingAllocTxId(null);
     }
 
-    const handleBulkLink = async () => {
-        if (!id || selectedTxIds.size === 0) return
-        for (const txId of selectedTxIds) {
-            const tx = availableTxs.find(t => t.id === txId)
-            if (tx) await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: tx.quantity })
-        }
-        setSelectedTxIds(new Set())
-        setIsLinkDialogOpen(false)
-    }
-
-    const toggleSelectTx = (txId: string) => {
-        setSelectedTxIds(prev => {
-            const next = new Set(prev)
-            if (next.has(txId)) next.delete(txId)
-            else next.add(txId)
-            return next
-        })
-    }
 
     const handleRefresh = async () => {
         if (position?.symbol) {
@@ -634,38 +614,30 @@ export default function PositionDetails() {
                             );
                         })}
 
-                        {/* Link More button */}
-                        {availableTxs.length > 0 && (
+                        {/* Link More / empty state */}
+                        {availableTxs.length > 0 ? (
                             <button
                                 type="button"
-                                onClick={() => { setSelectedTxIds(new Set()); setIsLinkDialogOpen(true); }}
+                                onClick={() => setIsLinkDialogOpen(true)}
                                 className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
                             >
                                 <Plus className="h-4 w-4" />
-                                Link More ({availableTxs.length})
+                                Link More
                             </button>
-                        )}
-
-                        {linkedTxs.length === 0 && availableTxs.length === 0 && (
-                            <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
-                                <p className="text-sm text-muted-foreground">No trades linked yet.</p>
-                            </div>
-                        )}
-
-                        {linkedTxs.length === 0 && availableTxs.length > 0 && (
+                        ) : linkedTxs.length === 0 ? (
                             <div className="border border-dashed border-border/50 rounded-xl p-6 text-center">
-                                <p className="text-sm text-muted-foreground mb-3">No trades linked yet.</p>
+                                <p className="text-sm text-muted-foreground mb-3">No trades for {position.symbol} yet.</p>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     className="gap-1.5"
-                                    onClick={() => { setSelectedTxIds(new Set()); setIsLinkDialogOpen(true); }}
+                                    onClick={() => navigate("/transactions")}
                                 >
                                     <Plus className="h-3.5 w-3.5" />
-                                    Link Trades ({availableTxs.length})
+                                    Add Transaction
                                 </Button>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
 
@@ -675,52 +647,34 @@ export default function PositionDetails() {
                         <DialogHeader>
                             <DialogTitle>Link Trades</DialogTitle>
                             <p className="text-sm text-muted-foreground">
-                                Select trades to link to this position.
+                                Tap a trade to link it to this position.
                             </p>
                         </DialogHeader>
                         <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
                             {availableTxs.map(tx => (
-                                <label
+                                <button
                                     key={tx.id}
-                                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                                        selectedTxIds.has(tx.id)
-                                            ? "bg-primary/5 border-primary/30"
-                                            : "border-border/50 hover:bg-muted/30"
-                                    }`}
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!id) return
+                                        await addTransactionToPosition(id, { transactionId: tx.id, allocatedAmount: tx.quantity })
+                                    }}
+                                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-primary/5 hover:border-primary/30 transition-colors text-left"
                                 >
-                                    <Checkbox
-                                        checked={selectedTxIds.has(tx.id)}
-                                        onCheckedChange={() => toggleSelectTx(tx.id)}
-                                    />
-                                    <div className="flex gap-3 items-center min-w-0 flex-1">
-                                        <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border shrink-0 ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
-                                            {tx.type}
-                                        </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <p className="font-mono text-xs font-medium truncate">
-                                                {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
-                                            </p>
-                                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                                                {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                            </p>
-                                        </div>
+                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border shrink-0 ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                        {tx.type}
                                     </div>
-                                </label>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <p className="font-mono text-xs font-medium truncate">
+                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                        </p>
+                                    </div>
+                                    <LinkIcon className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                                </button>
                             ))}
-                        </div>
-                        <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                            <span className="text-xs text-muted-foreground">
-                                {selectedTxIds.size} selected
-                            </span>
-                            <Button
-                                onClick={handleBulkLink}
-                                disabled={selectedTxIds.size === 0}
-                                size="sm"
-                                className="gap-1.5"
-                            >
-                                <LinkIcon className="h-3.5 w-3.5" />
-                                Link {selectedTxIds.size > 0 ? `(${selectedTxIds.size})` : ""}
-                            </Button>
                         </div>
                     </DialogContent>
                 </Dialog>
