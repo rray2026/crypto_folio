@@ -199,66 +199,80 @@ export default function TradingSimulator() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
                         {/* Realized PnL */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Realized PnL</span>
+                                <DeltaBadge delta={deltaRealizedPnL} prefix={currencySymbol} />
+                            </div>
                             <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(simMetrics.realizedPnL)}`}>
                                 {currencySymbol}{simMetrics.realizedPnL > 0 ? "+" : ""}{simMetrics.realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
-                            <DeltaBadge delta={deltaRealizedPnL} prefix={currencySymbol} />
                         </div>
 
                         {/* Unrealized PnL */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Unrealized PnL</span>
+                                <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? deltaUnrealizedPnL : 0} prefix={currencySymbol} />
+                            </div>
                             <span className={`text-base sm:text-xl font-bold font-mono ${simMetrics.totalRemaining !== 0 ? pnlColor(simMetrics.unrealizedPnL) : "text-foreground"}`}>
                                 {simMetrics.totalRemaining !== 0 ? `${currencySymbol}${simMetrics.unrealizedPnL > 0 ? "+" : ""}${simMetrics.unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "--"}
                             </span>
-                            <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? deltaUnrealizedPnL : 0} prefix={currencySymbol} />
                         </div>
 
                         {/* Avg Buy Price */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Avg Buy</span>
+                                <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgBuyPrice, currentMetrics.avgBuyPrice) : 0} prefix={currencySymbol} />
+                            </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {simMetrics.avgBuyPrice > 0 ? `${currencySymbol}${simMetrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
                             </span>
-                            <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgBuyPrice, currentMetrics.avgBuyPrice) : 0} prefix={currencySymbol} />
                         </div>
 
                         {/* Avg Sell Price */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Avg Sell</span>
+                                <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgSellPrice, currentMetrics.avgSellPrice) : 0} prefix={currencySymbol} />
+                            </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {simMetrics.avgSellPrice > 0 ? `${currencySymbol}${simMetrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
                             </span>
-                            <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgSellPrice, currentMetrics.avgSellPrice) : 0} prefix={currencySymbol} />
                         </div>
 
                         {/* ROI */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">ROI</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">ROI</span>
+                                <DeltaBadge delta={deltaRoi} suffix="%" />
+                            </div>
                             <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(simMetrics.roi)}`}>
                                 {simMetrics.roi > 0 ? "+" : ""}{simMetrics.roi.toFixed(2)}%
                             </span>
-                            <DeltaBadge delta={deltaRoi} suffix="%" />
                         </div>
 
                         {/* Holding */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Holding</span>
+                                <DeltaBadge delta={hasSimTrade ? sub(simMetrics.totalRemaining, currentMetrics.totalRemaining) : 0} suffix={` ${baseAsset}`} />
+                            </div>
                             <div className="flex items-baseline gap-1 truncate">
                                 <span className="text-base sm:text-xl font-bold font-mono">{simMetrics.totalRemaining.toLocaleString()}</span>
                                 <span className="text-[10px] text-muted-foreground uppercase">{baseAsset}</span>
                             </div>
-                            <DeltaBadge delta={hasSimTrade ? sub(simMetrics.totalRemaining, currentMetrics.totalRemaining) : 0} suffix={` ${baseAsset}`} />
                         </div>
 
                         {/* Avg Cost (Breakeven) */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider" title="Breakeven price considering realized PnL">Avg Cost</span>
+                                <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? sub(simMetrics.breakevenPrice, currentMetrics.breakevenPrice) : 0} prefix={currencySymbol} />
+                            </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {(simMetrics.breakevenPrice > 0 && simMetrics.totalRemaining !== 0) ? `${currencySymbol}${simMetrics.breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
                             </span>
-                            <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? sub(simMetrics.breakevenPrice, currentMetrics.breakevenPrice) : 0} prefix={currencySymbol} />
                         </div>
                     </div>
                 </CardContent>
@@ -435,7 +449,7 @@ function DeltaBadge({ delta, prefix, suffix }: { delta: number; prefix?: string;
     if (delta === 0) return null
     const isPositive = delta > 0
     return (
-        <span className={`mt-1 inline-flex items-center self-start text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md ${
+        <span className={`inline-flex items-center text-[9px] font-mono font-semibold px-1 py-px rounded ${
             isPositive
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 : "bg-red-500/10 text-red-600 dark:text-red-400"
