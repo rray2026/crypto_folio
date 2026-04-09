@@ -26,9 +26,10 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const predefinedPairs = useSettingsStore((state) => state.predefinedPairs)
   const pairConfigs = useSettingsStore((state) => state.pairConfigs)
+  const pinnedPairs = useSettingsStore((state) => state.pinnedPairs)
   const [searchValue, setSearchValue] = React.useState("")
 
-  const commonAssets = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"]
+  const quickPicks = pinnedPairs.length > 0 ? pinnedPairs : predefinedPairs.slice(0, 4)
 
   return (
     <div className="space-y-3">
@@ -111,9 +112,9 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
         </PopoverContent>
       </Popover>
 
-      {/* Quick Picks for Mobile */}
+      {/* Quick Picks */}
       <div className="flex flex-wrap gap-1.5 pt-0.5">
-        {commonAssets.map(asset => (
+        {quickPicks.map(asset => (
           <button
             key={asset}
             type="button"
