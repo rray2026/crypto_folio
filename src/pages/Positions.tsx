@@ -3,7 +3,7 @@ import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
-import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
+import { useSettingsStore, getCurrencySymbolForPair, getCurrencySymbol } from "@/store/useSettingsStore"
 import type { Position, PositionMetrics } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 
@@ -80,6 +80,13 @@ export default function Positions() {
     const activePositions = positions?.filter(p => p.status === 'OPEN') ?? []
     const archivedPositions = positions?.filter(p => p.status === 'CLOSED') ?? []
 
+    const totalUnrealizedPnL = activePositions.reduce((sum, pos) => sum + getMetrics(pos).unrealizedPnL, 0)
+    const portfolioCurrencies = new Set(
+        activePositions.map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
+    )
+    const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD'
+    const currSymbol = getCurrencySymbol(singleCurrency)
+
     const renderPositionGrid = (list: Position[]) => (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {list
@@ -126,6 +133,22 @@ export default function Positions() {
                     <PositionForm onSuccess={() => setIsAddDialogOpen(false)} />
                 </DialogContent>
             </Dialog>
+
+            {/* Summary bar */}
+            {positions && positions.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="bg-card rounded-xl border border-border/40 p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Active Positions</p>
+                        <p className="text-2xl font-bold font-mono">{activePositions.length}</p>
+                    </div>
+                    <div className="bg-card rounded-xl border border-border/40 p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Unrealized PnL</p>
+                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                            {currSymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {!positions?.length ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center mt-6">
