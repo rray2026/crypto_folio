@@ -57,7 +57,7 @@ export default function PositionDetails() {
     const [isCopied, setIsCopied] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
     const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
-    const [linkTimeFilter, setLinkTimeFilter] = useState<'1M' | '3M' | '6M' | '1Y' | 'ALL'>('ALL')
+    const [linkTimeFilter, setLinkTimeFilter] = useState<'7D' | '1M' | '6M' | 'ALL'>('ALL')
     const [linkAddMode, setLinkAddMode] = useState<'list' | 'choice' | 'manual' | 'ai'>('list')
     const { assignPositionToFund, unassignPosition } = useFundStore()
     const { setMobileHeader } = useMobileHeader()
@@ -180,10 +180,9 @@ export default function PositionDetails() {
     const filteredAvailableTxs = useMemo(() => {
         if (linkTimeFilter === 'ALL') return availableTxs
         const cutoff = {
+            '7D': now - 7 * 24 * 60 * 60 * 1000,
             '1M': now - 30 * 24 * 60 * 60 * 1000,
-            '3M': now - 90 * 24 * 60 * 60 * 1000,
             '6M': now - 180 * 24 * 60 * 60 * 1000,
-            '1Y': now - 365 * 24 * 60 * 60 * 1000,
         }[linkTimeFilter]
         return availableTxs.filter(tx => tx.date >= cutoff)
     }, [availableTxs, linkTimeFilter, now])
@@ -689,23 +688,22 @@ export default function PositionDetails() {
                         setLinkAddMode('list')
                     }
                 }}>
-                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col">
+                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col [&>button.absolute]:hidden">
                         <DialogHeader>
                             <div className="flex items-center justify-between">
                                 <DialogTitle>
                                     {linkAddMode === 'manual' ? 'Record Transaction' : linkAddMode === 'ai' ? 'AI-Assisted Import' : 'Link Trades'}
                                 </DialogTitle>
-                                {linkAddMode === 'list' && availableTxs.length > 0 && (
-                                    <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '1M' | '3M' | '6M' | '1Y' | 'ALL')}>
+                                {linkAddMode === 'list' && (
+                                    <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '7D' | '1M' | '6M' | 'ALL')}>
                                         <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
                                             <Calendar className="h-3 w-3 opacity-50" />
                                             <SelectValue placeholder="Range" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl">
+                                            <SelectItem value="7D">Last 7 Days</SelectItem>
                                             <SelectItem value="1M">Last 1 Month</SelectItem>
-                                            <SelectItem value="3M">Last 3 Months</SelectItem>
                                             <SelectItem value="6M">Last 6 Months</SelectItem>
-                                            <SelectItem value="1Y">Last 1 Year</SelectItem>
                                             <SelectItem value="ALL">All Time</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -801,17 +799,15 @@ export default function PositionDetails() {
                                                         : `No unlinked trades for ${position.symbol}.`
                                                     }
                                                 </p>
-                                                {availableTxs.length === 0 && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="gap-1.5"
-                                                        onClick={() => setLinkAddMode('choice')}
-                                                    >
-                                                        <Plus className="h-3.5 w-3.5" />
-                                                        Add Transaction
-                                                    </Button>
-                                                )}
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-1.5"
+                                                    onClick={() => setLinkAddMode('choice')}
+                                                >
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                    Add Transaction
+                                                </Button>
                                             </div>
                                         </div>
                                     )}
