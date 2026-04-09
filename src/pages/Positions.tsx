@@ -184,7 +184,7 @@ export default function Positions() {
                                 <div className="h-px flex-1 bg-border/40" />
                                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
                                     <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
-                                    {archivedPositions.length} archived
+                                    {archivedPositions.length} more
                                 </span>
                                 <div className="h-px flex-1 bg-border/40" />
                             </button>
