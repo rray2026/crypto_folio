@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { ArrowLeft, RotateCcw, Minus, Plus } from "lucide-react"
+import { ArrowLeft, RotateCcw, Minus, Plus, PlusCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
@@ -11,6 +11,15 @@ import { getPositionMetrics } from "@/lib/metrics"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { mul, div, add, sub } from "@/lib/math"
 import type { Transaction, Position } from "@/lib/types"
+
+// --- Types ---
+
+interface SimTrade {
+    id: string
+    side: "BUY" | "SELL"
+    price: number
+    qty: number
+}
 
 // --- Helpers ---
 
@@ -24,27 +33,25 @@ function pnlColor(v: number): string {
     return "text-foreground"
 }
 
-/** Determine smart slider bounds for price around a reference price */
 function getPriceBounds(refPrice: number) {
     if (refPrice <= 0) return { min: 0, max: 1, step: 0.01 }
     const magnitude = Math.pow(10, Math.floor(Math.log10(refPrice)))
-    const step = magnitude / 1000 // 0.1% granularity
-    const min = Math.max(0, refPrice - refPrice * 0.5) // -50%
-    const max = refPrice + refPrice * 0.5 // +50%
+    const step = magnitude / 1000
+    const min = Math.max(0, refPrice - refPrice * 0.5)
+    const max = refPrice + refPrice * 0.5
     return { min: parseFloat(min.toFixed(10)), max: parseFloat(max.toFixed(10)), step: parseFloat(step.toFixed(10)) }
 }
 
-/** Determine smart slider bounds for quantity */
 function getQtyBounds(holding: number) {
     const absHolding = Math.abs(holding)
-    if (absHolding <= 0) {
-        return { min: 0, max: 100, step: 1 }
-    }
+    if (absHolding <= 0) return { min: 0, max: 100, step: 1 }
     const magnitude = Math.pow(10, Math.floor(Math.log10(absHolding)))
     const step = magnitude / 100
     const max = absHolding * 3
     return { min: 0, max: parseFloat(max.toFixed(10)), step: parseFloat(step.toFixed(10)) }
 }
+
+let simIdCounter = 0
 
 // --- Component ---
 
@@ -57,81 +64,92 @@ export default function TradingSimulator() {
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
 
-    // Sim state
+    // Sim state: current draft
     const [simSide, setSimSide] = useState<"BUY" | "SELL">("BUY")
     const [simPriceRaw, setSimPrice] = useState<number | null>(null)
     const [simQty, setSimQty] = useState(0)
     const [simTimestamp] = useState(() => Date.now())
 
-    // Fetch prices
+    // Pending committed sim trades (in-memory only)
+    const [pendingTrades, setPendingTrades] = useState<SimTrade[]>([])
+
     useEffect(() => {
         if (position?.status === "OPEN") fetchPrices([position.symbol])
     }, [position?.status, position?.symbol, fetchPrices])
 
-    // Linked transactions
     const linkedTxs = useMemo(() => {
         if (!position || !allTransactions) return []
         const linkedIds = new Set(position.entries.map(e => e.transactionId))
         return allTransactions.filter(tx => linkedIds.has(tx.id))
     }, [position, allTransactions])
 
-    // Current metrics (before sim)
+    // Metrics with only pending trades (no current draft)
+    const pendingMetrics = useMemo(() => {
+        if (!position) return null
+        if (pendingTrades.length === 0) return getPositionMetrics(position, linkedTxs, prices)
+
+        const extraTxs: Transaction[] = pendingTrades.map(t => ({
+            id: t.id, date: simTimestamp, symbol: position.symbol,
+            type: t.side, price: t.price, quantity: t.qty,
+            amount: mul(t.price, t.qty), fee: 0, associatedPositionIds: [position.id],
+        }))
+        const extraEntries = pendingTrades.map(t => ({ transactionId: t.id, allocatedAmount: t.qty }))
+        const simPos: Position = { ...position, entries: [...position.entries, ...extraEntries] }
+        return getPositionMetrics(simPos, [...linkedTxs, ...extraTxs], prices)
+    }, [position, linkedTxs, prices, pendingTrades, simTimestamp])
+
+    // Reference price for slider
+    const refPrice = useMemo(() => {
+        if (pendingMetrics && pendingMetrics.currentPrice > 0) return pendingMetrics.currentPrice
+        if (pendingMetrics && pendingMetrics.avgBuyPrice > 0) return pendingMetrics.avgBuyPrice
+        return 0
+    }, [pendingMetrics])
+
+    const simPrice = simPriceRaw ?? refPrice
+
+    const priceBounds = useMemo(() => getPriceBounds(refPrice), [refPrice])
+    // Qty bounds based on simulated holding (after pending trades)
+    const qtyBounds = useMemo(() => getQtyBounds(pendingMetrics?.totalRemaining ?? 0), [pendingMetrics?.totalRemaining])
+
+    // Full metrics: pending trades + current draft
+    const simMetrics = useMemo(() => {
+        if (!position || !pendingMetrics) return null
+        if (simQty <= 0) return pendingMetrics
+
+        const allSimTrades = [...pendingTrades, { id: "__draft__", side: simSide, price: simPrice, qty: simQty }]
+        const extraTxs: Transaction[] = allSimTrades.map(t => ({
+            id: t.id, date: simTimestamp, symbol: position.symbol,
+            type: t.side, price: t.price, quantity: t.qty,
+            amount: mul(t.price, t.qty), fee: 0, associatedPositionIds: [position.id],
+        }))
+        const extraEntries = allSimTrades.map(t => ({ transactionId: t.id, allocatedAmount: t.qty }))
+        const simPos: Position = { ...position, entries: [...position.entries, ...extraEntries] }
+        const simPrices = { ...prices, [position.symbol]: { price: String(simPrice), timestamp: simTimestamp } }
+        return getPositionMetrics(simPos, [...linkedTxs, ...extraTxs], simPrices)
+    }, [position, pendingMetrics, linkedTxs, prices, pendingTrades, simSide, simPrice, simQty, simTimestamp])
+
+    // Current metrics (original, no sim)
     const currentMetrics = useMemo(() => {
         if (!position) return null
         return getPositionMetrics(position, linkedTxs, prices)
     }, [position, linkedTxs, prices])
 
-    // Reference price for slider
-    const refPrice = useMemo(() => {
-        if (currentMetrics && currentMetrics.currentPrice > 0) return currentMetrics.currentPrice
-        if (currentMetrics && currentMetrics.avgBuyPrice > 0) return currentMetrics.avgBuyPrice
-        return 0
-    }, [currentMetrics])
+    // Add current draft to pending list
+    const addTrade = useCallback(() => {
+        if (simQty <= 0) return
+        setPendingTrades(prev => [...prev, { id: `__sim_${++simIdCounter}__`, side: simSide, price: simPrice, qty: simQty }])
+        setSimQty(0)
+    }, [simSide, simPrice, simQty])
 
-    // Effective sim price: use user-set value or fall back to reference price
-    const simPrice = simPriceRaw ?? refPrice
+    const removeTrade = useCallback((tradeId: string) => {
+        setPendingTrades(prev => prev.filter(t => t.id !== tradeId))
+    }, [])
 
-    const priceBounds = useMemo(() => getPriceBounds(refPrice), [refPrice])
-    const qtyBounds = useMemo(() => getQtyBounds(currentMetrics?.totalRemaining ?? 0), [currentMetrics?.totalRemaining])
-
-    // Simulated metrics (after virtual trade)
-    const simMetrics = useMemo(() => {
-        if (!position || !currentMetrics) return null
-        if (simQty <= 0) return currentMetrics // no trade = same
-
-        // Create a virtual transaction
-        const virtualTx: Transaction = {
-            id: "__sim__",
-            date: simTimestamp,
-            symbol: position.symbol,
-            type: simSide,
-            price: simPrice,
-            quantity: simQty,
-            amount: mul(simPrice, simQty),
-            fee: 0,
-            associatedPositionIds: [position.id],
-        }
-
-        // Create a virtual position with the extra entry
-        const simPosition: Position = {
-            ...position,
-            entries: [...position.entries, { transactionId: "__sim__", allocatedAmount: simQty }],
-        }
-
-        // Calculate with simulated trade injected, using simPrice as "current price"
-        const simPrices = {
-            ...prices,
-            [position.symbol]: { price: String(simPrice), timestamp: simTimestamp },
-        }
-
-        return getPositionMetrics(simPosition, [...linkedTxs, virtualTx], simPrices)
-    }, [position, currentMetrics, linkedTxs, prices, simSide, simPrice, simQty, simTimestamp])
-
-    // Reset sim
     const resetSim = useCallback(() => {
         setSimSide("BUY")
         setSimPrice(null)
         setSimQty(0)
+        setPendingTrades([])
     }, [])
 
     // Mobile header
@@ -167,7 +185,7 @@ export default function TradingSimulator() {
     if (!currentMetrics || !simMetrics) return <div className="p-8 text-center text-muted-foreground">Loading metrics...</div>
 
     const simTotal = mul(simPrice, simQty)
-    const hasSimTrade = simQty > 0
+    const hasAnyChange = pendingTrades.length > 0 || simQty > 0
 
     const totalFee = linkedTxs.reduce((sum, tx) => {
         const allocated = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount || 0
@@ -175,10 +193,9 @@ export default function TradingSimulator() {
         return sum + (tx.fee || 0) * ratio
     }, 0)
 
-    // Pre-compute deltas for display
-    const deltaRealizedPnL = hasSimTrade ? sub(simMetrics.realizedPnL, currentMetrics.realizedPnL) : 0
-    const deltaUnrealizedPnL = hasSimTrade ? sub(simMetrics.unrealizedPnL, currentMetrics.unrealizedPnL) : 0
-    const deltaRoi = hasSimTrade ? sub(simMetrics.roi, currentMetrics.roi) : 0
+    const deltaRealizedPnL = hasAnyChange ? sub(simMetrics.realizedPnL, currentMetrics.realizedPnL) : 0
+    const deltaUnrealizedPnL = hasAnyChange ? sub(simMetrics.unrealizedPnL, currentMetrics.unrealizedPnL) : 0
+    const deltaRoi = hasAnyChange ? sub(simMetrics.roi, currentMetrics.roi) : 0
 
     return (
         <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-4 min-h-full">
@@ -199,11 +216,10 @@ export default function TradingSimulator() {
                 </Button>
             </div>
 
-            {/* Metrics Grid — same layout as PositionDetails */}
+            {/* Metrics Grid */}
             <Card className="overflow-hidden border-border/50 shadow-sm">
                 <CardContent className="p-4 sm:p-6">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
-                        {/* Realized PnL */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Realized PnL</span>
@@ -214,40 +230,36 @@ export default function TradingSimulator() {
                             </span>
                         </div>
 
-                        {/* Unrealized PnL */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Unrealized PnL</span>
-                                <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? deltaUnrealizedPnL : 0} prefix={currencySymbol} />
+                                <DeltaBadge delta={hasAnyChange && simMetrics.totalRemaining !== 0 ? deltaUnrealizedPnL : 0} prefix={currencySymbol} />
                             </div>
                             <span className={`text-base sm:text-xl font-bold font-mono ${simMetrics.totalRemaining !== 0 ? pnlColor(simMetrics.unrealizedPnL) : "text-foreground"}`}>
                                 {simMetrics.totalRemaining !== 0 ? `${currencySymbol}${simMetrics.unrealizedPnL > 0 ? "+" : ""}${simMetrics.unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "--"}
                             </span>
                         </div>
 
-                        {/* Avg Buy Price */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Avg Buy</span>
-                                <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgBuyPrice, currentMetrics.avgBuyPrice) : 0} prefix={currencySymbol} />
+                                <DeltaBadge delta={hasAnyChange ? sub(simMetrics.avgBuyPrice, currentMetrics.avgBuyPrice) : 0} prefix={currencySymbol} />
                             </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {simMetrics.avgBuyPrice > 0 ? `${currencySymbol}${simMetrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
                             </span>
                         </div>
 
-                        {/* Avg Sell Price */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Avg Sell</span>
-                                <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgSellPrice, currentMetrics.avgSellPrice) : 0} prefix={currencySymbol} />
+                                <DeltaBadge delta={hasAnyChange ? sub(simMetrics.avgSellPrice, currentMetrics.avgSellPrice) : 0} prefix={currencySymbol} />
                             </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {simMetrics.avgSellPrice > 0 ? `${currencySymbol}${simMetrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
                             </span>
                         </div>
 
-                        {/* Total Fee */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Total Fee</span>
@@ -257,7 +269,6 @@ export default function TradingSimulator() {
                             </span>
                         </div>
 
-                        {/* ROI */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">ROI</span>
@@ -268,11 +279,10 @@ export default function TradingSimulator() {
                             </span>
                         </div>
 
-                        {/* Holding */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Holding</span>
-                                <DeltaBadge delta={hasSimTrade ? sub(simMetrics.totalRemaining, currentMetrics.totalRemaining) : 0} suffix={` ${baseAsset}`} />
+                                <DeltaBadge delta={hasAnyChange ? sub(simMetrics.totalRemaining, currentMetrics.totalRemaining) : 0} suffix={` ${baseAsset}`} />
                             </div>
                             <div className="flex items-baseline gap-1 truncate">
                                 <span className="text-base sm:text-xl font-bold font-mono">{simMetrics.totalRemaining.toLocaleString()}</span>
@@ -280,11 +290,10 @@ export default function TradingSimulator() {
                             </div>
                         </div>
 
-                        {/* Avg Cost (Breakeven) */}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5 mb-1">
                                 <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider" title="Breakeven price considering realized PnL">Avg Cost</span>
-                                <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? sub(simMetrics.breakevenPrice, currentMetrics.breakevenPrice) : 0} prefix={currencySymbol} />
+                                <DeltaBadge delta={hasAnyChange && simMetrics.totalRemaining !== 0 ? sub(simMetrics.breakevenPrice, currentMetrics.breakevenPrice) : 0} prefix={currencySymbol} />
                             </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {(simMetrics.breakevenPrice > 0 && simMetrics.totalRemaining !== 0) ? `${currencySymbol}${simMetrics.breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
@@ -294,10 +303,9 @@ export default function TradingSimulator() {
                 </CardContent>
             </Card>
 
-            {/* Virtual Trade Controls — compact */}
+            {/* Virtual Trade Controls */}
             <Card className="border-border/50 shadow-sm">
                 <CardContent className="p-4 space-y-3.5">
-                    {/* Direction toggle — no label, self-evident */}
                     <div className="flex p-0.5 bg-muted/30 rounded-lg border border-border/50 h-9">
                         <button
                             type="button"
@@ -414,10 +422,10 @@ export default function TradingSimulator() {
                                 <Plus className="h-3 w-3" />
                             </button>
                         </div>
-                        {Math.abs(currentMetrics.totalRemaining) > 0 && (
+                        {pendingMetrics && Math.abs(pendingMetrics.totalRemaining) > 0 && (
                             <div className="flex gap-1 flex-wrap">
                                 {[10, 25, 50, 75, 100].map(pct => {
-                                    const val = mul(Math.abs(currentMetrics.totalRemaining), div(pct, 100))
+                                    const val = mul(Math.abs(pendingMetrics.totalRemaining), div(pct, 100))
                                     const isActive = simQty > 0 && Math.abs(simQty - val) < qtyBounds.step * 0.5
                                     return (
                                         <button
@@ -438,28 +446,76 @@ export default function TradingSimulator() {
                         )}
                     </div>
 
-                    {/* Trade summary */}
-                    {hasSimTrade && (
-                        <div className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
-                            simSide === "BUY"
-                                ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30"
-                                : "bg-red-500/5 border-red-200/30 dark:border-red-800/30"
-                        }`}>
-                            <span className="text-muted-foreground">
-                                {simSide} {formatNum(simQty, 0, 8)} {baseAsset} @ {currencySymbol}{formatNum(simPrice)}
-                            </span>
+                    {/* Add trade button */}
+                    {simQty > 0 && (
+                        <button
+                            type="button"
+                            onClick={addTrade}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors active:scale-[0.99] ${
+                                simSide === "BUY"
+                                    ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 hover:bg-emerald-500/10"
+                                    : "bg-red-500/5 border-red-200/30 dark:border-red-800/30 hover:bg-red-500/10"
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <PlusCircle className="h-3.5 w-3.5" />
+                                <span>{simSide} {formatNum(simQty, 0, 8)} {baseAsset} @ {currencySymbol}{formatNum(simPrice)}</span>
+                            </div>
                             <span className={`font-mono font-bold ${simSide === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                                 {currencySymbol}{formatNum(simTotal)}
                             </span>
-                        </div>
+                        </button>
                     )}
                 </CardContent>
             </Card>
+
+            {/* Pending simulated trades list */}
+            {pendingTrades.length > 0 && (
+                <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 px-1">
+                        Simulated Trades ({pendingTrades.length})
+                    </span>
+                    <div className="space-y-1">
+                        {pendingTrades.map((t, i) => (
+                            <div
+                                key={t.id}
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
+                                    t.side === "BUY"
+                                        ? "bg-emerald-500/5 border-emerald-200/20 dark:border-emerald-800/20"
+                                        : "bg-red-500/5 border-red-200/20 dark:border-red-800/20"
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-muted-foreground/50 font-mono w-4 text-center shrink-0">#{i + 1}</span>
+                                    <span className={`font-semibold shrink-0 ${t.side === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                        {t.side}
+                                    </span>
+                                    <span className="text-muted-foreground truncate">
+                                        {formatNum(t.qty, 0, 8)} {baseAsset} @ {currencySymbol}{formatNum(t.price)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="font-mono font-bold">
+                                        {currencySymbol}{formatNum(mul(t.price, t.qty))}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeTrade(t.id)}
+                                        className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
 
-// --- DeltaBadge: compact inline badge showing +/- change ---
+// --- DeltaBadge ---
 
 function DeltaBadge({ delta, prefix, suffix }: { delta: number; prefix?: string; suffix?: string }) {
     if (delta === 0) return null
