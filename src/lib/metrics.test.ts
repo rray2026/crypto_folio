@@ -11,7 +11,7 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         const pos: Position = {
             id: 'pos-1',
             symbol: 'BTC/USDT',
-            type: 'PRIMARY',
+
             status: 'OPEN',
             entries: [{ transactionId: 'tx-1', allocatedAmount: 1 }],
             startDate: Date.now()
@@ -37,7 +37,7 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         const pos: Position = {
             id: 'pos-1',
             symbol: 'BTC/USDT',
-            type: 'PRIMARY',
+
             status: 'OPEN',
             entries: [
                 { transactionId: 'tx-1', allocatedAmount: 1 },
@@ -83,7 +83,7 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         const pos: Position = {
             id: 'pos-1',
             symbol: 'BTC/USDT',
-            type: 'PRIMARY',
+
             status: 'OPEN',
             entries: [
                 { transactionId: 'tx-1', allocatedAmount: 1 },
@@ -129,7 +129,7 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         const pos: Position = {
             id: 'pos-2',
             symbol: 'ETH/USDT',
-            type: 'PRIMARY',
+
             status: 'OPEN',
             entries: [
                 { transactionId: 'tx-s1', allocatedAmount: 1 },
@@ -176,7 +176,7 @@ describe('getPositionMetrics - Breakeven Price Logic', () => {
         const pos: Position = {
             id: 'pos-3',
             symbol: 'BTC/USDT',
-            type: 'PRIMARY',
+
             status: 'CLOSED',
             entries: [
                 { transactionId: 'tx-1', allocatedAmount: 1 },

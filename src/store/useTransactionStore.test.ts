@@ -65,7 +65,7 @@ describe('useTransactionStore', () => {
 
         // 1. Setup TX and Position
         const txId = await addTransaction({ date: Date.now(), symbol: 'BTC/USDT', type: 'BUY', price: 60000, quantity: 1, amount: 60000, fee: 10 });
-        const posId = await createPosition({ symbol: 'BTC/USDT', strategyName: 'Test', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'BTC/USDT', strategyName: 'Test', startDate: Date.now() });
         
         // 2. Link them
         await addTransactionToPosition(posId, { transactionId: txId, allocatedAmount: 1 });
@@ -91,7 +91,7 @@ describe('useTransactionStore', () => {
 
         const txId1 = await addTransaction({ date: Date.now(), symbol: 'BTC/USDT', type: 'BUY', price: 60000, quantity: 1, amount: 60000, fee: 0 });
         const txId2 = await addTransaction({ date: Date.now(), symbol: 'BTC/USDT', type: 'BUY', price: 61000, quantity: 1, amount: 61000, fee: 0 });
-        const posId = await createPosition({ symbol: 'BTC/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'BTC/USDT', startDate: Date.now() });
 
         await addTransactionToPosition(posId, { transactionId: txId1, allocatedAmount: 1 });
         await addTransactionToPosition(posId, { transactionId: txId2, allocatedAmount: 1 });

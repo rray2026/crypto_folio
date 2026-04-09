@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
-import { TrendingUp, TrendingDown, Eye, Calendar, Clock, Circle, Layers } from "lucide-react"
+import { TrendingUp, TrendingDown, Calendar, Clock, Circle, Layers } from "lucide-react"
 import type { Position, PositionMetrics } from "@/lib/types"
 
 interface PositionCardProps {
@@ -26,7 +26,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                     bg-card hover:bg-card
                     hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5
                     hover:-translate-y-0.5
-                    ${position.type === 'SHADOW' ? 'border-dashed border-border/60' : 'border-border/50'}
+                    border-border/50
                 `}
             >
                 {/* Accent bar top */}
@@ -47,12 +47,6 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/40">
                                     <Layers className="h-2.5 w-2.5" />
                                     {fundName}
-                                </span>
-                            )}
-                            {position.type === 'SHADOW' && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
-                                    <Eye className="h-2.5 w-2.5" />
-                                    SHADOW
                                 </span>
                             )}
                             <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${

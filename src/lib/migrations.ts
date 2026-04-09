@@ -182,6 +182,19 @@ export interface BackupPayloadV5 extends Omit<BackupPayloadV4, 'version' | 'sett
     };
 }
 
+// ---- v6 -------------------------------------------------------------------
+// Remove Position.type ('PRIMARY' | 'SHADOW') field. The distinction is no
+// longer used — all positions are treated equally in portfolio metrics.
+
+/** Positions table as of schema v6 — type field removed. */
+export type PositionV6 = Omit<PositionV3, 'type'>;
+
+/** Full backup payload shape as of v6. */
+export interface BackupPayloadV6 extends Omit<BackupPayloadV5, 'version' | 'positions'> {
+    version: 6;
+    positions: PositionV6[];
+}
+
 // ---------------------------------------------------------------------------
 // Migration interface
 // ---------------------------------------------------------------------------
@@ -346,6 +359,27 @@ export const MIGRATIONS: Record<number, Migration> = {
                     market: c.market ?? inferMarketFromExchange(c.exchange),
                 })),
             };
+        },
+    },
+    // v5 → v6
+    5: {
+        description: 'Remove Position.type field (PRIMARY/SHADOW distinction dropped)',
+        upgradePayload: (p): MigrationState => {
+            const v5 = p as unknown as BackupPayloadV5;
+            return {
+                ...v5,
+                version: 6,
+                positions: v5.positions.map((pos: PositionV3) => {
+                    const cleaned = { ...pos } as Record<string, unknown>;
+                    delete cleaned.type;
+                    return cleaned;
+                }),
+            } as unknown as MigrationState;
+        },
+        upgradeIdb: async (tx) => {
+            await tx.table('positions').toCollection().modify((pos: Record<string, unknown>) => {
+                delete pos.type;
+            });
         },
     },
 };

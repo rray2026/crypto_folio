@@ -6,7 +6,7 @@ import { MIGRATIONS } from './migrations';
 export const DB_NAME = 'CryptoFolioDB';
 
 /** Current schema version. Increment this when the DB schema changes. */
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 // Extend Dexie to declare DB structure
 const db = new Dexie(DB_NAME) as Dexie & {
@@ -60,6 +60,16 @@ db.version(5)
         funds: 'id, status, createdAt',
     })
     .upgrade(MIGRATIONS[4].upgradeIdb);
+
+// v6 — remove Position.type field (PRIMARY/SHADOW distinction dropped).
+//      IndexedDB stores and indices are unchanged from v5.
+db.version(6)
+    .stores({
+        transactions: 'id, date, symbol, type',
+        positions: 'id, symbol, status, fundId',
+        funds: 'id, status, createdAt',
+    })
+    .upgrade(MIGRATIONS[5].upgradeIdb);
 
 // HOW TO ADD A FUTURE SCHEMA MIGRATION:
 // 1. Increment DB_VERSION above.

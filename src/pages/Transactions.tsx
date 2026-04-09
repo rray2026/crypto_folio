@@ -69,7 +69,6 @@ export default function Transactions() {
     const [createPositionError, setCreatePositionError] = useState<string | null>(null)
     const [isFetchingPreviewPrice, setIsFetchingPreviewPrice] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
-    const [newPositionType, setNewPositionType] = useState<'PRIMARY' | 'SHADOW'>('PRIMARY')
     
     const [filterSymbol, setFilterSymbol] = useState<string>("ALL")
     const [filterTimeRange, setFilterTimeRange] = useState<string>("ALL")
@@ -79,7 +78,6 @@ export default function Transactions() {
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
     const createPosition = usePositionStore((state) => state.createPosition)
     const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
-    const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     // Reactively fetch all transactions
@@ -192,7 +190,6 @@ export default function Transactions() {
         const positionId = await createPosition({
             symbol,
             strategyName: newPositionName || undefined,
-            type: newPositionType,
             startDate: Math.min(...selectedTxs.map(tx => tx.date))
         })
 
@@ -470,7 +467,6 @@ export default function Transactions() {
                             const virtualPos = {
                                 symbol,
                                 status: 'OPEN' as const,
-                                type: 'PRIMARY' as const,
                                 entries: selectedTxs.map(tx => ({ transactionId: tx.id, allocatedAmount: tx.quantity })),
                                 id: 'preview',
                                 startDate: Math.min(...selectedTxs.map(tx => tx.date))
@@ -523,49 +519,6 @@ export default function Transactions() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Type</Label>
-                            <Select value={newPositionType} onValueChange={(val) => setNewPositionType(val as 'PRIMARY' | 'SHADOW')}>
-                                <SelectTrigger className="w-full h-11 rounded-xl font-bold border-border/50">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="PRIMARY">🎯 Strategic (Primary)</SelectItem>
-                                    <SelectItem value="SHADOW">👀 Analysis (Shadow)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p className="text-[10px] text-muted-foreground px-1 leading-relaxed">
-                                {newPositionType === 'PRIMARY' 
-                                    ? "Counted towards global portfolio metrics. Best for real trades." 
-                                    : "Educational or experimental group. Not counted in total profit."}
-                            </p>
-                        </div>
-
-                        {/* Conflict Warning */}
-                        {newPositionType === 'PRIMARY' && (() => {
-                            const selectedTxs = allTransactions?.filter(tx => selectedIds.has(tx.id)) || []
-                            const transactionsWithPrimary = selectedTxs.filter(tx => {
-                                const associatedPrimary = positions?.filter(p => p.type === 'PRIMARY')
-                                    .some(p => p.entries.some(e => e.transactionId === tx.id))
-                                return associatedPrimary
-                            })
-                            
-                            if (transactionsWithPrimary.length > 0) {
-                                return (
-                                    <div className="flex gap-2 p-3 bg-amber-500/5 text-amber-600 dark:text-amber-400 border border-amber-500/10 rounded-xl">
-                                        <AlertCircle className="h-5 w-5 shrink-0" />
-                                        <div className="space-y-1">
-                                            <p className="text-[11px] font-bold leading-none">Duplicate Account Detection</p>
-                                            <p className="text-[10px] leading-relaxed">
-                                                {transactionsWithPrimary.length} of the selected trades are already in another <b>Strategic (Primary)</b> position. 
-                                                Including them here will cause double-counting in your total PnL.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )
-                            }
-                            return null
-                        })()}
                     </div>
                     <div className="flex justify-end gap-3 pt-2">
                         <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11 flex-1">

@@ -293,7 +293,7 @@ export default function PositionDetails() {
             `## Position Overview`,
             `- Name: ${name}`,
             `- Symbol: ${position.symbol}`,
-            `- Type: ${position.type} / ${positionType}`,
+            `- Direction: ${positionType}`,
             `- Status: ${position.status}`,
             `- Opened: ${startStr}`,
             `- Closed: ${endStr}`,
@@ -344,12 +344,6 @@ export default function PositionDetails() {
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
-                                        {position.type === 'SHADOW' && (
-                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
-                                                <Eye className="h-3 w-3" />
-                                                SHADOW ANALYSIS
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">

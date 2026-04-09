@@ -15,7 +15,7 @@ describe('usePositionStore', () => {
         const posId = await createPosition({
             symbol: 'SOL/USDT',
             strategyName: 'Solana Swing',
-            type: 'PRIMARY',
+
             startDate: Date.now()
         });
 
@@ -39,7 +39,7 @@ describe('usePositionStore', () => {
             fee: 0
         });
 
-        const posId = await createPosition({ symbol: 'SOL/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'SOL/USDT', startDate: Date.now() });
 
         await addTransactionToPosition(posId, { transactionId: txId, allocatedAmount: 5 });
 
@@ -58,7 +58,7 @@ describe('usePositionStore', () => {
         const { addTransaction } = useTransactionStore.getState();
 
         const txId = await addTransaction({ date: Date.now(), symbol: 'SOL/USDT', type: 'BUY', price: 150, quantity: 10, amount: 1500, fee: 0 });
-        const posId = await createPosition({ symbol: 'SOL/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'SOL/USDT', startDate: Date.now() });
 
         await addTransactionToPosition(posId, { transactionId: txId, allocatedAmount: 10 });
         await removeTransactionFromPosition(posId, txId);
@@ -75,7 +75,7 @@ describe('usePositionStore', () => {
         const { addTransaction } = useTransactionStore.getState();
 
         const txId = await addTransaction({ date: Date.now(), symbol: 'SOL/USDT', type: 'BUY', price: 150, quantity: 10, amount: 1500, fee: 0 });
-        const posId = await createPosition({ symbol: 'SOL/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'SOL/USDT', startDate: Date.now() });
 
         await addTransactionToPosition(posId, { transactionId: txId, allocatedAmount: 10 });
         await deletePosition(posId);
@@ -86,7 +86,7 @@ describe('usePositionStore', () => {
 
     it('closes and opens a position', async () => {
         const { createPosition, closePosition, openPosition } = usePositionStore.getState();
-        const posId = await createPosition({ symbol: 'SOL/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'SOL/USDT', startDate: Date.now() });
 
         await closePosition(posId);
         let pos = await db.positions.get(posId);

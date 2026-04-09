@@ -28,7 +28,6 @@ export interface Position {
     id: string;
     symbol: string;
     strategyName?: string;
-    type: 'PRIMARY' | 'SHADOW';
     status: "OPEN" | "CLOSED";
     entries: PositionEntry[];
     journal?: PositionJournal;
