@@ -16,6 +16,13 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
     Popover,
     PopoverContent,
     PopoverTrigger,
@@ -50,7 +57,7 @@ export default function PositionDetails() {
     const [isCopied, setIsCopied] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
     const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
-    const [linkTimeFilter, setLinkTimeFilter] = useState<'7d' | '1m' | '6m' | 'all'>('all')
+    const [linkTimeFilter, setLinkTimeFilter] = useState<'1M' | '3M' | '6M' | '1Y' | 'ALL'>('ALL')
     const [linkAddMode, setLinkAddMode] = useState<'list' | 'choice' | 'manual' | 'ai'>('list')
     const { assignPositionToFund, unassignPosition } = useFundStore()
     const { setMobileHeader } = useMobileHeader()
@@ -171,11 +178,12 @@ export default function PositionDetails() {
     }, [position, allTransactions])
 
     const filteredAvailableTxs = useMemo(() => {
-        if (linkTimeFilter === 'all') return availableTxs
+        if (linkTimeFilter === 'ALL') return availableTxs
         const cutoff = {
-            '7d': now - 7 * 24 * 60 * 60 * 1000,
-            '1m': now - 30 * 24 * 60 * 60 * 1000,
-            '6m': now - 180 * 24 * 60 * 60 * 1000,
+            '1M': now - 30 * 24 * 60 * 60 * 1000,
+            '3M': now - 90 * 24 * 60 * 60 * 1000,
+            '6M': now - 180 * 24 * 60 * 60 * 1000,
+            '1Y': now - 365 * 24 * 60 * 60 * 1000,
         }[linkTimeFilter]
         return availableTxs.filter(tx => tx.date >= cutoff)
     }, [availableTxs, linkTimeFilter, now])
@@ -656,7 +664,7 @@ export default function PositionDetails() {
                             type="button"
                             onClick={() => {
                                 setSelectedTxIds(new Set())
-                                setLinkTimeFilter('all')
+                                setLinkTimeFilter('ALL')
                                 setLinkAddMode('list')
                                 setIsLinkDialogOpen(true)
                             }}
@@ -681,11 +689,28 @@ export default function PositionDetails() {
                         setLinkAddMode('list')
                     }
                 }}>
-                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] max-h-[80vh] flex flex-col">
+                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col">
                         <DialogHeader>
-                            <DialogTitle>
-                                {linkAddMode === 'manual' ? 'Record Transaction' : linkAddMode === 'ai' ? 'AI-Assisted Import' : 'Link Trades'}
-                            </DialogTitle>
+                            <div className="flex items-center justify-between">
+                                <DialogTitle>
+                                    {linkAddMode === 'manual' ? 'Record Transaction' : linkAddMode === 'ai' ? 'AI-Assisted Import' : 'Link Trades'}
+                                </DialogTitle>
+                                {linkAddMode === 'list' && availableTxs.length > 0 && (
+                                    <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '1M' | '3M' | '6M' | '1Y' | 'ALL')}>
+                                        <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
+                                            <Calendar className="h-3 w-3 opacity-50" />
+                                            <SelectValue placeholder="Range" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="1M">Last 1 Month</SelectItem>
+                                            <SelectItem value="3M">Last 3 Months</SelectItem>
+                                            <SelectItem value="6M">Last 6 Months</SelectItem>
+                                            <SelectItem value="1Y">Last 1 Year</SelectItem>
+                                            <SelectItem value="ALL">All Time</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
                             {linkAddMode === 'list' && (
                                 <p className="text-sm text-muted-foreground">
                                     Select trades to link to this position.
@@ -694,60 +719,46 @@ export default function PositionDetails() {
                         </DialogHeader>
 
                         {linkAddMode === 'choice' ? (
-                            <div className="grid grid-cols-1 gap-3 py-4">
-                                <Button
-                                    variant="outline"
-                                    className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
-                                    onClick={() => setLinkAddMode('manual')}
-                                >
-                                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <Keyboard className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <span className="font-semibold text-sm">Manual Entry</span>
-                                        <span className="text-xs text-muted-foreground">Type trade details manually</span>
-                                    </div>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
-                                    onClick={() => setLinkAddMode('ai')}
-                                >
-                                    <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                                        <Sparkles className="h-5 w-5 text-amber-500" />
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <span className="font-semibold text-sm">AI-Assisted Import</span>
-                                        <span className="text-xs text-muted-foreground">Use a prompt to let AI parse your screenshot</span>
-                                    </div>
-                                </Button>
+                            <div className="flex-1 flex flex-col justify-center">
+                                <div className="grid grid-cols-1 gap-3">
+                                    <Button
+                                        variant="outline"
+                                        className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                                        onClick={() => setLinkAddMode('manual')}
+                                    >
+                                        <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                            <Keyboard className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <span className="font-semibold text-sm">Manual Entry</span>
+                                            <span className="text-xs text-muted-foreground">Type trade details manually</span>
+                                        </div>
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
+                                        onClick={() => setLinkAddMode('ai')}
+                                    >
+                                        <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                                            <Sparkles className="h-5 w-5 text-amber-500" />
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <span className="font-semibold text-sm">AI-Assisted Import</span>
+                                            <span className="text-xs text-muted-foreground">Use a prompt to let AI parse your screenshot</span>
+                                        </div>
+                                    </Button>
+                                </div>
                             </div>
                         ) : linkAddMode === 'ai' ? (
-                            <AiImportFlow onSuccess={() => { setLinkAddMode('list') }} />
+                            <div className="flex-1 overflow-y-auto">
+                                <AiImportFlow onSuccess={() => { setLinkAddMode('list') }} />
+                            </div>
                         ) : linkAddMode === 'manual' ? (
-                            <TransactionForm onSuccess={() => { setLinkAddMode('list') }} />
+                            <div className="flex-1 overflow-y-auto">
+                                <TransactionForm onSuccess={() => { setLinkAddMode('list') }} />
+                            </div>
                         ) : (
                             <>
-                                {/* Time filter tabs */}
-                                {availableTxs.length > 0 && (
-                                    <div className="flex gap-1 p-1 bg-muted/30 rounded-lg border border-border/50">
-                                        {([['7d', '7D'], ['1m', '1M'], ['6m', '6M'], ['all', 'All']] as const).map(([key, label]) => (
-                                            <button
-                                                key={key}
-                                                type="button"
-                                                onClick={() => setLinkTimeFilter(key)}
-                                                className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all ${
-                                                    linkTimeFilter === key
-                                                        ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50'
-                                                        : 'text-muted-foreground hover:text-foreground'
-                                                }`}
-                                            >
-                                                {label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
                                 {/* Transaction list or empty state */}
                                 <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
                                     {filteredAvailableTxs.length > 0 ? (
@@ -782,24 +793,26 @@ export default function PositionDetails() {
                                             )
                                         })
                                     ) : (
-                                        <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
-                                            <p className="text-sm text-muted-foreground mb-4">
-                                                {availableTxs.length > 0
-                                                    ? 'No trades in this time range.'
-                                                    : `No unlinked trades for ${position.symbol}.`
-                                                }
-                                            </p>
-                                            {availableTxs.length === 0 && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="gap-1.5"
-                                                    onClick={() => setLinkAddMode('choice')}
-                                                >
-                                                    <Plus className="h-3.5 w-3.5" />
-                                                    Add Transaction
-                                                </Button>
-                                            )}
+                                        <div className="flex flex-col items-center justify-center h-full">
+                                            <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
+                                                <p className="text-sm text-muted-foreground mb-4">
+                                                    {availableTxs.length > 0
+                                                        ? 'No trades in this time range.'
+                                                        : `No unlinked trades for ${position.symbol}.`
+                                                    }
+                                                </p>
+                                                {availableTxs.length === 0 && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="gap-1.5"
+                                                        onClick={() => setLinkAddMode('choice')}
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                        Add Transaction
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
