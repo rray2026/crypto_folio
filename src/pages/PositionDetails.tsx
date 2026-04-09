@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical, Plus } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical, Plus, Keyboard, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -23,7 +23,9 @@ import {
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { useState, useEffect, useCallback } from "react"
+import { TransactionForm } from "@/components/transactions/TransactionForm"
+import { AiImportFlow } from "@/components/transactions/AiImportFlow"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
@@ -47,6 +49,9 @@ export default function PositionDetails() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+    const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
+    const [linkTimeFilter, setLinkTimeFilter] = useState<'7d' | '1m' | '6m' | 'all'>('all')
+    const [linkAddMode, setLinkAddMode] = useState<'list' | 'choice' | 'manual' | 'ai'>('list')
     const { assignPositionToFund, unassignPosition } = useFundStore()
     const { setMobileHeader } = useMobileHeader()
 
@@ -158,15 +163,48 @@ export default function PositionDetails() {
 
     const now = useState(() => Date.now())[0]
 
+    // Available transactions matching symbol (safe to compute before guard — returns [] if no position)
+    const availableTxs = useMemo(() => {
+        if (!position || !allTransactions) return []
+        const linkedIds = new Set(position.entries.map(e => e.transactionId))
+        return allTransactions.filter(tx => tx.symbol === position.symbol && !linkedIds.has(tx.id)).sort((a, b) => b.date - a.date)
+    }, [position, allTransactions])
+
+    const filteredAvailableTxs = useMemo(() => {
+        if (linkTimeFilter === 'all') return availableTxs
+        const cutoff = {
+            '7d': now - 7 * 24 * 60 * 60 * 1000,
+            '1m': now - 30 * 24 * 60 * 60 * 1000,
+            '6m': now - 180 * 24 * 60 * 60 * 1000,
+        }[linkTimeFilter]
+        return availableTxs.filter(tx => tx.date >= cutoff)
+    }, [availableTxs, linkTimeFilter, now])
+
+    const toggleSelectTx = useCallback((txId: string) => {
+        setSelectedTxIds(prev => {
+            const next = new Set(prev)
+            if (next.has(txId)) next.delete(txId)
+            else next.add(txId)
+            return next
+        })
+    }, [])
+
+    const handleBulkLink = useCallback(async () => {
+        if (!id || selectedTxIds.size === 0) return
+        for (const txId of selectedTxIds) {
+            const tx = availableTxs.find(t => t.id === txId)
+            if (tx) await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: tx.quantity })
+        }
+        setSelectedTxIds(new Set())
+        setIsLinkDialogOpen(false)
+    }, [id, selectedTxIds, availableTxs, addTransactionToPosition])
+
     if (position === undefined) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
     if (position === null) return <div className="p-8 text-center text-foreground">Position not found.</div>
 
     // Find all transactions that are linked to this position
     const linkedTxIds = new Set(position.entries.map(e => e.transactionId))
     const linkedTxs = allTransactions?.filter(tx => linkedTxIds.has(tx.id)) || []
-
-    // Available transactions matching symbol that can be linked
-    const availableTxs = allTransactions?.filter(tx => tx.symbol === position.symbol && !linkedTxIds.has(tx.id)).sort((a, b) => b.date - a.date) || []
 
     // Handlers
     const handleRemove = async (txId: string) => {
@@ -185,7 +223,6 @@ export default function PositionDetails() {
         await addTransactionToPosition(id, { transactionId: txId, allocatedAmount: val });
         setEditingAllocTxId(null);
     }
-
 
     const handleRefresh = async () => {
         if (position?.symbol) {
@@ -615,67 +652,172 @@ export default function PositionDetails() {
                         })}
 
                         {/* Link More / empty state */}
-                        {availableTxs.length > 0 ? (
-                            <button
-                                type="button"
-                                onClick={() => setIsLinkDialogOpen(true)}
-                                className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
-                            >
-                                <Plus className="h-4 w-4" />
-                                Link More
-                            </button>
-                        ) : linkedTxs.length === 0 ? (
-                            <div className="border border-dashed border-border/50 rounded-xl p-6 text-center">
-                                <p className="text-sm text-muted-foreground mb-3">No trades for {position.symbol} yet.</p>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-1.5"
-                                    onClick={() => navigate("/transactions")}
-                                >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    Add Transaction
-                                </Button>
-                            </div>
-                        ) : null}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedTxIds(new Set())
+                                setLinkTimeFilter('all')
+                                setLinkAddMode('list')
+                                setIsLinkDialogOpen(true)
+                            }}
+                            className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
+                        >
+                            <Plus className="h-4 w-4" />
+                            {linkedTxs.length === 0 ? 'Link Trades' : 'Link More'}
+                        </button>
                     </div>
                 </div>
 
                 {/* Link More Dialog */}
-                <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+                <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
+                    if (!open && (linkAddMode === 'manual' || linkAddMode === 'ai')) {
+                        // Go back to list instead of closing
+                        setLinkAddMode('list')
+                        return
+                    }
+                    setIsLinkDialogOpen(open)
+                    if (!open) {
+                        setSelectedTxIds(new Set())
+                        setLinkAddMode('list')
+                    }
+                }}>
                     <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] max-h-[80vh] flex flex-col">
                         <DialogHeader>
-                            <DialogTitle>Link Trades</DialogTitle>
-                            <p className="text-sm text-muted-foreground">
-                                Tap a trade to link it to this position.
-                            </p>
+                            <DialogTitle>
+                                {linkAddMode === 'manual' ? 'Record Transaction' : linkAddMode === 'ai' ? 'AI-Assisted Import' : 'Link Trades'}
+                            </DialogTitle>
+                            {linkAddMode === 'list' && (
+                                <p className="text-sm text-muted-foreground">
+                                    Select trades to link to this position.
+                                </p>
+                            )}
                         </DialogHeader>
-                        <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
-                            {availableTxs.map(tx => (
-                                <button
-                                    key={tx.id}
-                                    type="button"
-                                    onClick={async () => {
-                                        if (!id) return
-                                        await addTransactionToPosition(id, { transactionId: tx.id, allocatedAmount: tx.quantity })
-                                    }}
-                                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-primary/5 hover:border-primary/30 transition-colors text-left"
+
+                        {linkAddMode === 'choice' ? (
+                            <div className="grid grid-cols-1 gap-3 py-4">
+                                <Button
+                                    variant="outline"
+                                    className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                                    onClick={() => setLinkAddMode('manual')}
                                 >
-                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border shrink-0 ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
-                                        {tx.type}
+                                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                        <Keyboard className="h-5 w-5 text-primary" />
                                     </div>
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <p className="font-mono text-xs font-medium truncate">
-                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                        </p>
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-semibold text-sm">Manual Entry</span>
+                                        <span className="text-xs text-muted-foreground">Type trade details manually</span>
                                     </div>
-                                    <LinkIcon className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-                                </button>
-                            ))}
-                        </div>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
+                                    onClick={() => setLinkAddMode('ai')}
+                                >
+                                    <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                                        <Sparkles className="h-5 w-5 text-amber-500" />
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-semibold text-sm">AI-Assisted Import</span>
+                                        <span className="text-xs text-muted-foreground">Use a prompt to let AI parse your screenshot</span>
+                                    </div>
+                                </Button>
+                            </div>
+                        ) : linkAddMode === 'ai' ? (
+                            <AiImportFlow onSuccess={() => { setLinkAddMode('list') }} />
+                        ) : linkAddMode === 'manual' ? (
+                            <TransactionForm onSuccess={() => { setLinkAddMode('list') }} />
+                        ) : (
+                            <>
+                                {/* Time filter tabs */}
+                                {availableTxs.length > 0 && (
+                                    <div className="flex gap-1 p-1 bg-muted/30 rounded-lg border border-border/50">
+                                        {([['7d', '7D'], ['1m', '1M'], ['6m', '6M'], ['all', 'All']] as const).map(([key, label]) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => setLinkTimeFilter(key)}
+                                                className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all ${
+                                                    linkTimeFilter === key
+                                                        ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Transaction list or empty state */}
+                                <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
+                                    {filteredAvailableTxs.length > 0 ? (
+                                        filteredAvailableTxs.map(tx => {
+                                            const isSelected = selectedTxIds.has(tx.id)
+                                            return (
+                                                <button
+                                                    key={tx.id}
+                                                    type="button"
+                                                    onClick={() => toggleSelectTx(tx.id)}
+                                                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                                                        isSelected
+                                                            ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20'
+                                                            : 'border-border/50 hover:bg-muted/30'
+                                                    }`}
+                                                >
+                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border shrink-0 ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                                        {tx.type}
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0 flex-1">
+                                                        <p className="font-mono text-xs font-medium truncate">
+                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {tx.quantity}
+                                                        </p>
+                                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
+                                                        </p>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <Check className="h-4 w-4 text-primary shrink-0" />
+                                                    )}
+                                                </button>
+                                            )
+                                        })
+                                    ) : (
+                                        <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
+                                            <p className="text-sm text-muted-foreground mb-4">
+                                                {availableTxs.length > 0
+                                                    ? 'No trades in this time range.'
+                                                    : `No unlinked trades for ${position.symbol}.`
+                                                }
+                                            </p>
+                                            {availableTxs.length === 0 && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-1.5"
+                                                    onClick={() => setLinkAddMode('choice')}
+                                                >
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                    Add Transaction
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Confirm footer */}
+                                {selectedTxIds.size > 0 && (
+                                    <div className="pt-3 border-t border-border/40">
+                                        <Button
+                                            className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                                            onClick={handleBulkLink}
+                                        >
+                                            <LinkIcon className="h-4 w-4" />
+                                            Link {selectedTxIds.size} {selectedTxIds.size === 1 ? 'Trade' : 'Trades'}
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>
