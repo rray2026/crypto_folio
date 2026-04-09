@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -22,6 +22,13 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { FundForm } from "@/components/funds/FundForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 
@@ -36,6 +43,7 @@ export default function FundDetails() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
     const [selectedPosIds, setSelectedPosIds] = useState<Set<string>>(new Set())
+    const [linkTimeFilter, setLinkTimeFilter] = useState<'7D' | '1M' | '6M' | 'ALL'>('ALL')
     const { setMobileHeader } = useMobileHeader()
 
     const fund = useLiveQuery(() => id ? db.funds.get(id) : undefined, [id])
@@ -109,6 +117,22 @@ export default function FundDetails() {
         setSelectedPosIds(new Set())
         setIsLinkDialogOpen(false)
     }, [id, selectedPosIds, assignPositionToFund])
+
+    const now = useState(() => Date.now())[0]
+
+    const filteredUnassigned = useMemo(() => {
+        const list = allPositions?.filter(p => !p.fundId) ?? []
+        if (linkTimeFilter === 'ALL') return list
+        const cutoff = {
+            '7D': now - 7 * 24 * 60 * 60 * 1000,
+            '1M': now - 30 * 24 * 60 * 60 * 1000,
+            '6M': now - 180 * 24 * 60 * 60 * 1000,
+        }[linkTimeFilter]
+        return list.filter(pos => {
+            const m = getPosMetrics(pos)
+            return (m.derivedStartDate || pos.startDate) >= cutoff
+        })
+    }, [allPositions, linkTimeFilter, now, getPosMetrics])
 
     if (!fund) {
         return (
@@ -337,6 +361,7 @@ export default function FundDetails() {
                         type="button"
                         onClick={() => {
                             setSelectedPosIds(new Set())
+                            setLinkTimeFilter('ALL')
                             setIsLinkDialogOpen(true)
                         }}
                         className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
@@ -354,20 +379,35 @@ export default function FundDetails() {
             }}>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col [&>button.absolute]:hidden">
                     <DialogHeader>
-                        <DialogTitle>Link Positions</DialogTitle>
+                        <div className="flex items-center justify-between">
+                            <DialogTitle>Link Positions</DialogTitle>
+                            <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '7D' | '1M' | '6M' | 'ALL')}>
+                                <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
+                                    <Calendar className="h-3 w-3 opacity-50" />
+                                    <SelectValue placeholder="Range" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="7D">Last 7 Days</SelectItem>
+                                    <SelectItem value="1M">Last 1 Month</SelectItem>
+                                    <SelectItem value="6M">Last 6 Months</SelectItem>
+                                    <SelectItem value="ALL">All Time</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                             Select unassigned positions to add to this fund.
                         </p>
                     </DialogHeader>
 
                     <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
-                        {unassignedPositions.length > 0 ? (
-                            unassignedPositions
+                        {filteredUnassigned.length > 0 ? (
+                            filteredUnassigned
                                 .map(pos => ({ pos, metrics: getPosMetrics(pos) }))
                                 .sort(comparePositionsByMetrics)
                                 .map(({ pos, metrics }) => {
                                     const isSelected = selectedPosIds.has(pos.id)
                                     const isLong = metrics.positionType === 'LONG'
+                                    const posCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
                                     return (
                                         <button
                                             key={pos.id}
@@ -400,7 +440,8 @@ export default function FundDetails() {
                                                 </div>
                                                 {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
                                             </div>
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                                            {/* Metrics row */}
+                                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
                                                 <span className="font-mono text-muted-foreground">{pos.symbol}</span>
                                                 <span className="text-muted-foreground/40">•</span>
                                                 <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
@@ -408,6 +449,26 @@ export default function FundDetails() {
                                                 <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                                     PnL {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
                                                 </span>
+                                                <span className={`font-mono ${metrics.roi >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                    ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
+                                                </span>
+                                            </div>
+                                            {/* Price info */}
+                                            {metrics.avgBuyPrice > 0 && (
+                                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
+                                                    <span>Avg Buy <span className="text-foreground/70">{posCurrencySymbol}{metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
+                                                    {metrics.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">{posCurrencySymbol}{metrics.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
+                                                    {metrics.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{metrics.totalRemaining.toLocaleString()}</span></span>}
+                                                </div>
+                                            )}
+                                            {/* Dates */}
+                                            <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" />
+                                                    {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                                </span>
+                                                <span className="text-muted-foreground/40">→</span>
+                                                <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
                                             </div>
                                         </button>
                                     )
@@ -416,11 +477,15 @@ export default function FundDetails() {
                             <div className="flex flex-col items-center justify-center h-full">
                                 <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
                                     <p className="text-sm text-muted-foreground">
-                                        No unassigned positions available.
+                                        {unassignedPositions.length > 0
+                                            ? 'No positions in this time range.'
+                                            : 'No unassigned positions available.'}
                                     </p>
-                                    <p className="text-xs text-muted-foreground/60 mt-1">
-                                        Create a position first, or unlink one from another fund.
-                                    </p>
+                                    {unassignedPositions.length === 0 && (
+                                        <p className="text-xs text-muted-foreground/60 mt-1">
+                                            Create a position first, or unlink one from another fund.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )}
