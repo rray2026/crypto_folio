@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { ArrowLeft, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, RotateCcw, Minus, Plus } from "lucide-react"
+import { ArrowLeft, RotateCcw, Minus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
@@ -175,7 +175,7 @@ export default function TradingSimulator() {
     const deltaRoi = hasSimTrade ? sub(simMetrics.roi, currentMetrics.roi) : 0
 
     return (
-        <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-5 md:space-y-6 min-h-full">
+        <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-4 min-h-full">
             {/* Desktop header */}
             <div className="hidden md:flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -191,24 +191,6 @@ export default function TradingSimulator() {
                     <RotateCcw className="h-3.5 w-3.5" />
                     Reset
                 </Button>
-            </div>
-
-            {/* Position Info Bar */}
-            <div className="flex items-center gap-3 text-sm">
-                <span className="font-mono font-bold text-muted-foreground">{position.symbol}</span>
-                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                    currentMetrics.positionType === "LONG"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
-                        : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
-                }`}>
-                    {currentMetrics.positionType === "LONG" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                    {currentMetrics.positionType}
-                </span>
-                {currentMetrics.currentPrice > 0 && (
-                    <span className="ml-auto font-mono text-primary font-medium">
-                        {currencySymbol}{formatNum(currentMetrics.currentPrice)}
-                    </span>
-                )}
             </div>
 
             {/* Metrics Grid — same layout as PositionDetails */}
@@ -282,55 +264,50 @@ export default function TradingSimulator() {
                 </CardContent>
             </Card>
 
-            {/* Virtual Trade Controls */}
+            {/* Virtual Trade Controls — compact */}
             <Card className="border-border/50 shadow-sm">
-                <CardContent className="p-4 sm:p-5 space-y-5">
-                    {/* Side Toggle */}
-                    <div className="space-y-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">Direction</span>
-                        <div className="flex p-1 bg-muted/30 rounded-xl border border-border/50 h-11">
-                            <button
-                                type="button"
-                                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all ${
-                                    simSide === "BUY"
-                                        ? "bg-background text-emerald-600 dark:text-emerald-400 shadow-sm"
-                                        : "text-muted-foreground/60"
-                                }`}
-                                onClick={() => setSimSide("BUY")}
-                            >
-                                <ArrowDownRight className="h-3.5 w-3.5" />
-                                BUY
-                            </button>
-                            <button
-                                type="button"
-                                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all ${
-                                    simSide === "SELL"
-                                        ? "bg-background text-red-600 dark:text-red-400 shadow-sm"
-                                        : "text-muted-foreground/60"
-                                }`}
-                                onClick={() => setSimSide("SELL")}
-                            >
-                                <ArrowUpRight className="h-3.5 w-3.5" />
-                                SELL
-                            </button>
-                        </div>
+                <CardContent className="p-4 space-y-3.5">
+                    {/* Direction toggle — no label, self-evident */}
+                    <div className="flex p-0.5 bg-muted/30 rounded-lg border border-border/50 h-9">
+                        <button
+                            type="button"
+                            className={`flex-1 flex items-center justify-center gap-1 rounded-md text-xs font-bold transition-all ${
+                                simSide === "BUY"
+                                    ? "bg-background text-emerald-600 dark:text-emerald-400 shadow-sm"
+                                    : "text-muted-foreground/60"
+                            }`}
+                            onClick={() => setSimSide("BUY")}
+                        >
+                            BUY
+                        </button>
+                        <button
+                            type="button"
+                            className={`flex-1 flex items-center justify-center gap-1 rounded-md text-xs font-bold transition-all ${
+                                simSide === "SELL"
+                                    ? "bg-background text-red-600 dark:text-red-400 shadow-sm"
+                                    : "text-muted-foreground/60"
+                            }`}
+                            onClick={() => setSimSide("SELL")}
+                        >
+                            SELL
+                        </button>
                     </div>
 
-                    {/* Price Slider */}
-                    <div className="space-y-3">
+                    {/* Price */}
+                    <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">Price</span>
                             <span className="font-mono text-sm font-bold">
                                 {currencySymbol}{formatNum(simPrice)}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                             <button
                                 type="button"
-                                className="shrink-0 h-8 w-8 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
+                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
                                 onClick={() => setSimPrice(prev => Math.max(priceBounds.min, sub(prev ?? refPrice, priceBounds.step)))}
                             >
-                                <Minus className="h-3.5 w-3.5" />
+                                <Minus className="h-3 w-3" />
                             </button>
                             <Slider
                                 value={[simPrice]}
@@ -342,45 +319,40 @@ export default function TradingSimulator() {
                             />
                             <button
                                 type="button"
-                                className="shrink-0 h-8 w-8 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
+                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
                                 onClick={() => setSimPrice(prev => Math.min(priceBounds.max, add(prev ?? refPrice, priceBounds.step)))}
                             >
-                                <Plus className="h-3.5 w-3.5" />
+                                <Plus className="h-3 w-3" />
                             </button>
                         </div>
-                        {/* Price presets */}
-                        <div className="flex gap-1.5 flex-wrap">
-                            {refPrice > 0 && (
-                                <>
-                                    {[-20, -10, -5, 0, 5, 10, 20].map(pct => {
-                                        const val = mul(refPrice, add(1, div(pct, 100)))
-                                        const isActive = Math.abs(simPrice - val) < priceBounds.step * 0.5
-                                        return (
-                                            <button
-                                                key={pct}
-                                                type="button"
-                                                className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
-                                                    isActive
-                                                        ? "bg-primary text-primary-foreground border-primary"
-                                                        : pct === 0
-                                                            ? "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
-                                                            : pct > 0
-                                                                ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                                                : "bg-red-500/5 border-red-200/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
-                                                }`}
-                                                onClick={() => setSimPrice(val)}
-                                            >
-                                                {pct > 0 ? "+" : ""}{pct}%
-                                            </button>
-                                        )
-                                    })}
-                                </>
-                            )}
+                        <div className="flex gap-1 flex-wrap">
+                            {refPrice > 0 && [-20, -10, -5, 0, 5, 10, 20].map(pct => {
+                                const val = mul(refPrice, add(1, div(pct, 100)))
+                                const isActive = Math.abs(simPrice - val) < priceBounds.step * 0.5
+                                return (
+                                    <button
+                                        key={pct}
+                                        type="button"
+                                        className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold border transition-all ${
+                                            isActive
+                                                ? "bg-primary text-primary-foreground border-primary"
+                                                : pct === 0
+                                                    ? "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
+                                                    : pct > 0
+                                                        ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                                        : "bg-red-500/5 border-red-200/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                        }`}
+                                        onClick={() => setSimPrice(val)}
+                                    >
+                                        {pct > 0 ? "+" : ""}{pct}%
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
 
-                    {/* Quantity Slider */}
-                    <div className="space-y-3">
+                    {/* Quantity */}
+                    <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">Quantity</span>
                             <div className="flex items-baseline gap-1">
@@ -388,13 +360,13 @@ export default function TradingSimulator() {
                                 <span className="text-[10px] text-muted-foreground uppercase">{baseAsset}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                             <button
                                 type="button"
-                                className="shrink-0 h-8 w-8 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
+                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
                                 onClick={() => setSimQty(prev => Math.max(0, sub(prev, qtyBounds.step)))}
                             >
-                                <Minus className="h-3.5 w-3.5" />
+                                <Minus className="h-3 w-3" />
                             </button>
                             <Slider
                                 value={[simQty]}
@@ -406,15 +378,14 @@ export default function TradingSimulator() {
                             />
                             <button
                                 type="button"
-                                className="shrink-0 h-8 w-8 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
+                                className="shrink-0 h-7 w-7 rounded-full border border-border/50 flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
                                 onClick={() => setSimQty(prev => Math.min(qtyBounds.max, add(prev, qtyBounds.step)))}
                             >
-                                <Plus className="h-3.5 w-3.5" />
+                                <Plus className="h-3 w-3" />
                             </button>
                         </div>
-                        {/* Quantity presets based on current holding */}
                         {Math.abs(currentMetrics.totalRemaining) > 0 && (
-                            <div className="flex gap-1.5 flex-wrap">
+                            <div className="flex gap-1 flex-wrap">
                                 {[10, 25, 50, 75, 100].map(pct => {
                                     const val = mul(Math.abs(currentMetrics.totalRemaining), div(pct, 100))
                                     const isActive = simQty > 0 && Math.abs(simQty - val) < qtyBounds.step * 0.5
@@ -422,7 +393,7 @@ export default function TradingSimulator() {
                                         <button
                                             key={pct}
                                             type="button"
-                                            className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
+                                            className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold border transition-all ${
                                                 isActive
                                                     ? "bg-primary text-primary-foreground border-primary"
                                                     : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
@@ -439,15 +410,15 @@ export default function TradingSimulator() {
 
                     {/* Trade summary */}
                     {hasSimTrade && (
-                        <div className={`flex items-center justify-between p-3 rounded-xl border ${
+                        <div className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
                             simSide === "BUY"
                                 ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30"
                                 : "bg-red-500/5 border-red-200/30 dark:border-red-800/30"
                         }`}>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-muted-foreground">
                                 {simSide} {formatNum(simQty, 0, 8)} {baseAsset} @ {currencySymbol}{formatNum(simPrice)}
                             </span>
-                            <span className={`font-mono text-sm font-bold ${simSide === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                            <span className={`font-mono font-bold ${simSide === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                                 {currencySymbol}{formatNum(simTotal)}
                             </span>
                         </div>
