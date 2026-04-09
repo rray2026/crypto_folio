@@ -169,6 +169,12 @@ export default function TradingSimulator() {
     const simTotal = mul(simPrice, simQty)
     const hasSimTrade = simQty > 0
 
+    const totalFee = linkedTxs.reduce((sum, tx) => {
+        const allocated = position.entries.find(e => e.transactionId === tx.id)?.allocatedAmount || 0
+        const ratio = tx.quantity > 0 ? allocated / tx.quantity : 0
+        return sum + (tx.fee || 0) * ratio
+    }, 0)
+
     // Pre-compute deltas for display
     const deltaRealizedPnL = hasSimTrade ? sub(simMetrics.realizedPnL, currentMetrics.realizedPnL) : 0
     const deltaUnrealizedPnL = hasSimTrade ? sub(simMetrics.unrealizedPnL, currentMetrics.unrealizedPnL) : 0
@@ -238,6 +244,16 @@ export default function TradingSimulator() {
                             </div>
                             <span className="text-base sm:text-xl font-bold font-mono">
                                 {simMetrics.avgSellPrice > 0 ? `${currencySymbol}${simMetrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
+                            </span>
+                        </div>
+
+                        {/* Total Fee */}
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Total Fee</span>
+                            </div>
+                            <span className="text-base sm:text-xl font-bold font-mono">
+                                {totalFee > 0 ? `${currencySymbol}${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "--"}
                             </span>
                         </div>
 
@@ -448,13 +464,16 @@ export default function TradingSimulator() {
 function DeltaBadge({ delta, prefix, suffix }: { delta: number; prefix?: string; suffix?: string }) {
     if (delta === 0) return null
     const isPositive = delta > 0
+    const formatted = suffix === "%" ? delta.toFixed(2) : prefix
+        ? delta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : formatNum(delta)
     return (
         <span className={`inline-flex items-center text-[9px] font-mono font-semibold px-1 py-px rounded ${
             isPositive
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 : "bg-red-500/10 text-red-600 dark:text-red-400"
         }`}>
-            {isPositive ? "+" : ""}{prefix || ""}{suffix === "%" ? delta.toFixed(2) : formatNum(delta)}{suffix || ""}
+            {isPositive ? "+" : ""}{prefix || ""}{formatted}{suffix || ""}
         </span>
     )
 }
