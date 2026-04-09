@@ -30,6 +30,7 @@ import {
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
+import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
@@ -54,6 +55,7 @@ export default function PositionDetails() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+    const [isAddTxDialogOpen, setIsAddTxDialogOpen] = useState(false)
     const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
     const [linkTimeFilter, setLinkTimeFilter] = useState<'7D' | '1M' | '6M' | 'ALL'>('ALL')
     const { assignPositionToFund, unassignPosition } = useFundStore()
@@ -743,7 +745,7 @@ export default function PositionDetails() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="gap-1.5"
-                                                    onClick={() => { setIsLinkDialogOpen(false); navigate('/transactions') }}
+                                                    onClick={() => { setIsLinkDialogOpen(false); setIsAddTxDialogOpen(true) }}
                                                 >
                                                     <Plus className="h-3.5 w-3.5" />
                                                     Add Transaction
@@ -767,6 +769,8 @@ export default function PositionDetails() {
                                 )}
                     </DialogContent>
                 </Dialog>
+
+                <AddTransactionDialog open={isAddTxDialogOpen} onOpenChange={setIsAddTxDialogOpen} />
             </div>
         </PullToRefresh>
     )

@@ -4,12 +4,11 @@ import { TransactionCard, TransactionListHeader } from "@/components/shared/Tran
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
-import { AiImportFlow } from "@/components/transactions/AiImportFlow"
+import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
 import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, Keyboard, FolderPlus, AlertCircle, Activity, Calendar, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, Edit, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -31,19 +30,16 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 
 export default function Transactions() {
     const navigate = useNavigate()
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-    const [addMode, setAddMode] = useState<'choice' | 'manual' | 'ai'>('choice')
-    const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false)
     const [editingTxId, setEditingTxId] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isSelectionMode, setIsSelectionMode] = useState(false)
     const { setMobileHeader } = useMobileHeader()
-    const openAdd = useCallback(() => { setIsAddDialogOpen(true); setAddMode('choice') }, [])
+    const openAdd = useCallback(() => setIsAddDialogOpen(true), [])
     const openSelectMode = useCallback(() => setIsSelectionMode(true), [setIsSelectionMode])
     useEffect(() => {
         setMobileHeader({
@@ -260,92 +256,15 @@ export default function Transactions() {
                     </div>
 
                     <div className="hidden sm:flex items-center gap-2 w-full sm:w-auto">
-                        <Dialog
-                            open={isAddDialogOpen}
-                            onOpenChange={(open) => {
-                                if (!open && (addMode === 'manual' || addMode === 'ai')) {
-                                    setIsDiscardConfirmOpen(true)
-                                    return // keep dialog open, show confirm instead
-                                }
-                                setIsAddDialogOpen(open);
-                                if (open) setAddMode('choice');
-                            }}
-                        >
-                            <DialogTrigger asChild>
-                                <Button className="gap-2 shrink-0 h-9 rounded-lg shadow-sm">
-                                    <Plus className="h-4 w-4" />
-                                    Add
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6 overflow-hidden">
-                                <DialogHeader>
-                                    <DialogTitle>
-                                        {addMode === 'manual' ? 'Record Transaction' : addMode === 'ai' ? 'AI-Assisted Import' : 'Add Transaction'}
-                                    </DialogTitle>
-                                    {addMode === 'choice' && (
-                                        <DialogDescription>
-                                            Choose how you want to add your trade records.
-                                        </DialogDescription>
-                                    )}
-                                </DialogHeader>
-                                
-                                {addMode === 'choice' ? (
-                                    <div className="grid grid-cols-1 gap-3 py-4">
-                                        <Button
-                                            variant="outline"
-                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
-                                            onClick={() => setAddMode('manual')}
-                                        >
-                                            <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                                <Keyboard className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div className="flex flex-col items-center">
-                                                <span className="font-semibold text-sm">Manual Entry</span>
-                                                <span className="text-xs text-muted-foreground">Type trade details manually</span>
-                                            </div>
-                                        </Button>
-
-                                        <Button
-                                            variant="outline"
-                                            className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
-                                            onClick={() => setAddMode('ai')}
-                                        >
-                                            <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                                                <Sparkles className="h-5 w-5 text-amber-500" />
-                                            </div>
-                                            <div className="flex flex-col items-center">
-                                                <span className="font-semibold text-sm">AI-Assisted Import</span>
-                                                <span className="text-xs text-muted-foreground">Use a prompt to let AI parse your screenshot</span>
-                                            </div>
-                                        </Button>
-
-                                    </div>
-                                ) : addMode === 'ai' ? (
-                                    <AiImportFlow onSuccess={() => setIsAddDialogOpen(false)} />
-                                ) : (
-                                    <TransactionForm onSuccess={() => setIsAddDialogOpen(false)} />
-                                )}
-                            </DialogContent>
-                        </Dialog>
+                        <Button className="gap-2 shrink-0 h-9 rounded-lg shadow-sm" onClick={openAdd}>
+                            <Plus className="h-4 w-4" />
+                            Add
+                        </Button>
                     </div>
                 </div>
             </div>
 
-            {/* Discard unsaved form data confirmation */}
-            <Dialog open={isDiscardConfirmOpen} onOpenChange={setIsDiscardConfirmOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Discard Changes?</DialogTitle>
-                        <DialogDescription className="pt-2">
-                            You have unsaved data in the form. Are you sure you want to close without saving?
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-end gap-3 mt-4">
-                        <Button variant="outline" onClick={() => setIsDiscardConfirmOpen(false)}>Keep Editing</Button>
-                        <Button variant="destructive" onClick={() => { setIsDiscardConfirmOpen(false); setIsAddDialogOpen(false) }}>Discard</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <AddTransactionDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
 
             {/* Mobile Card Layout */}
             <div className="md:hidden space-y-3">
