@@ -146,7 +146,7 @@ export function TransactionCard({
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
                                         {showAsset && <span className="font-semibold text-sm">{tx.symbol}</span>}
-                                        <div className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
+                                        <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
                                             tx.type === "BUY"
                                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
                                             : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
