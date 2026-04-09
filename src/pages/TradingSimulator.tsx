@@ -167,6 +167,12 @@ export default function TradingSimulator() {
     if (!currentMetrics || !simMetrics) return <div className="p-8 text-center text-muted-foreground">Loading metrics...</div>
 
     const simTotal = mul(simPrice, simQty)
+    const hasSimTrade = simQty > 0
+
+    // Pre-compute deltas for display
+    const deltaRealizedPnL = hasSimTrade ? sub(simMetrics.realizedPnL, currentMetrics.realizedPnL) : 0
+    const deltaUnrealizedPnL = hasSimTrade ? sub(simMetrics.unrealizedPnL, currentMetrics.unrealizedPnL) : 0
+    const deltaRoi = hasSimTrade ? sub(simMetrics.roi, currentMetrics.roi) : 0
 
     return (
         <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-5 md:space-y-6 min-h-full">
@@ -204,6 +210,77 @@ export default function TradingSimulator() {
                     </span>
                 )}
             </div>
+
+            {/* Metrics Grid — same layout as PositionDetails */}
+            <Card className="overflow-hidden border-border/50 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
+                        {/* Realized PnL */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
+                            <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(simMetrics.realizedPnL)}`}>
+                                {currencySymbol}{simMetrics.realizedPnL > 0 ? "+" : ""}{simMetrics.realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            <DeltaBadge delta={deltaRealizedPnL} prefix={currencySymbol} />
+                        </div>
+
+                        {/* Unrealized PnL */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
+                            <span className={`text-base sm:text-xl font-bold font-mono ${simMetrics.totalRemaining !== 0 ? pnlColor(simMetrics.unrealizedPnL) : "text-foreground"}`}>
+                                {simMetrics.totalRemaining !== 0 ? `${currencySymbol}${simMetrics.unrealizedPnL > 0 ? "+" : ""}${simMetrics.unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "--"}
+                            </span>
+                            <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? deltaUnrealizedPnL : 0} prefix={currencySymbol} />
+                        </div>
+
+                        {/* Avg Buy Price */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">
+                                {simMetrics.avgBuyPrice > 0 ? `${currencySymbol}${simMetrics.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
+                            </span>
+                            <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgBuyPrice, currentMetrics.avgBuyPrice) : 0} prefix={currencySymbol} />
+                        </div>
+
+                        {/* Avg Sell Price */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">
+                                {simMetrics.avgSellPrice > 0 ? `${currencySymbol}${simMetrics.avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
+                            </span>
+                            <DeltaBadge delta={hasSimTrade ? sub(simMetrics.avgSellPrice, currentMetrics.avgSellPrice) : 0} prefix={currencySymbol} />
+                        </div>
+
+                        {/* ROI */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">ROI</span>
+                            <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(simMetrics.roi)}`}>
+                                {simMetrics.roi > 0 ? "+" : ""}{simMetrics.roi.toFixed(2)}%
+                            </span>
+                            <DeltaBadge delta={deltaRoi} suffix="%" />
+                        </div>
+
+                        {/* Holding */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
+                            <div className="flex items-baseline gap-1 truncate">
+                                <span className="text-base sm:text-xl font-bold font-mono">{simMetrics.totalRemaining.toLocaleString()}</span>
+                                <span className="text-[10px] text-muted-foreground uppercase">{baseAsset}</span>
+                            </div>
+                            <DeltaBadge delta={hasSimTrade ? sub(simMetrics.totalRemaining, currentMetrics.totalRemaining) : 0} suffix={` ${baseAsset}`} />
+                        </div>
+
+                        {/* Avg Cost (Breakeven) */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">
+                                {(simMetrics.breakevenPrice > 0 && simMetrics.totalRemaining !== 0) ? `${currencySymbol}${simMetrics.breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : "--"}
+                            </span>
+                            <DeltaBadge delta={hasSimTrade && simMetrics.totalRemaining !== 0 ? sub(simMetrics.breakevenPrice, currentMetrics.breakevenPrice) : 0} prefix={currencySymbol} />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Virtual Trade Controls */}
             <Card className="border-border/50 shadow-sm">
@@ -361,7 +438,7 @@ export default function TradingSimulator() {
                     </div>
 
                     {/* Trade summary */}
-                    {simQty > 0 && (
+                    {hasSimTrade && (
                         <div className={`flex items-center justify-between p-3 rounded-xl border ${
                             simSide === "BUY"
                                 ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30"
@@ -377,133 +454,22 @@ export default function TradingSimulator() {
                     )}
                 </CardContent>
             </Card>
-
-            {/* Metrics Comparison */}
-            <Card className="overflow-hidden border-border/50 shadow-sm">
-                <CardContent className="p-4 sm:p-5">
-                    <div className="grid grid-cols-1 gap-0 divide-y divide-border/40">
-                        <MetricRow
-                            label="Holdings"
-                            before={`${formatNum(currentMetrics.totalRemaining, 0, 8)} ${baseAsset}`}
-                            after={`${formatNum(simMetrics.totalRemaining, 0, 8)} ${baseAsset}`}
-                            changed={simQty > 0}
-                        />
-                        <MetricRow
-                            label="Avg Buy"
-                            before={currentMetrics.avgBuyPrice > 0 ? `${currencySymbol}${formatNum(currentMetrics.avgBuyPrice)}` : "--"}
-                            after={simMetrics.avgBuyPrice > 0 ? `${currencySymbol}${formatNum(simMetrics.avgBuyPrice)}` : "--"}
-                            changed={simQty > 0 && currentMetrics.avgBuyPrice !== simMetrics.avgBuyPrice}
-                        />
-                        <MetricRow
-                            label="Avg Sell"
-                            before={currentMetrics.avgSellPrice > 0 ? `${currencySymbol}${formatNum(currentMetrics.avgSellPrice)}` : "--"}
-                            after={simMetrics.avgSellPrice > 0 ? `${currencySymbol}${formatNum(simMetrics.avgSellPrice)}` : "--"}
-                            changed={simQty > 0 && currentMetrics.avgSellPrice !== simMetrics.avgSellPrice}
-                        />
-                        <MetricRow
-                            label="Breakeven"
-                            before={currentMetrics.breakevenPrice > 0 && currentMetrics.totalRemaining !== 0 ? `${currencySymbol}${formatNum(currentMetrics.breakevenPrice)}` : "--"}
-                            after={simMetrics.breakevenPrice > 0 && simMetrics.totalRemaining !== 0 ? `${currencySymbol}${formatNum(simMetrics.breakevenPrice)}` : "--"}
-                            changed={simQty > 0 && currentMetrics.breakevenPrice !== simMetrics.breakevenPrice}
-                        />
-                        <MetricRow
-                            label="Realized PnL"
-                            before={`${currencySymbol}${currentMetrics.realizedPnL > 0 ? "+" : ""}${formatNum(currentMetrics.realizedPnL)}`}
-                            after={`${currencySymbol}${simMetrics.realizedPnL > 0 ? "+" : ""}${formatNum(simMetrics.realizedPnL)}`}
-                            beforeColor={pnlColor(currentMetrics.realizedPnL)}
-                            afterColor={pnlColor(simMetrics.realizedPnL)}
-                            changed={simQty > 0 && currentMetrics.realizedPnL !== simMetrics.realizedPnL}
-                            delta={simQty > 0 ? sub(simMetrics.realizedPnL, currentMetrics.realizedPnL) : 0}
-                            currencySymbol={currencySymbol}
-                        />
-                        <MetricRow
-                            label="Unrealized PnL"
-                            before={currentMetrics.totalRemaining !== 0 ? `${currencySymbol}${currentMetrics.unrealizedPnL > 0 ? "+" : ""}${formatNum(currentMetrics.unrealizedPnL)}` : "--"}
-                            after={simMetrics.totalRemaining !== 0 ? `${currencySymbol}${simMetrics.unrealizedPnL > 0 ? "+" : ""}${formatNum(simMetrics.unrealizedPnL)}` : "--"}
-                            beforeColor={currentMetrics.totalRemaining !== 0 ? pnlColor(currentMetrics.unrealizedPnL) : undefined}
-                            afterColor={simMetrics.totalRemaining !== 0 ? pnlColor(simMetrics.unrealizedPnL) : undefined}
-                            changed={simQty > 0}
-                            delta={simQty > 0 && simMetrics.totalRemaining !== 0 ? sub(simMetrics.unrealizedPnL, currentMetrics.unrealizedPnL) : 0}
-                            currencySymbol={currencySymbol}
-                        />
-                        <MetricRow
-                            label="Total PnL"
-                            before={`${currencySymbol}${currentMetrics.totalPnL > 0 ? "+" : ""}${formatNum(currentMetrics.totalPnL)}`}
-                            after={`${currencySymbol}${simMetrics.totalPnL > 0 ? "+" : ""}${formatNum(simMetrics.totalPnL)}`}
-                            beforeColor={pnlColor(currentMetrics.totalPnL)}
-                            afterColor={pnlColor(simMetrics.totalPnL)}
-                            changed={simQty > 0 && currentMetrics.totalPnL !== simMetrics.totalPnL}
-                            delta={simQty > 0 ? sub(simMetrics.totalPnL, currentMetrics.totalPnL) : 0}
-                            currencySymbol={currencySymbol}
-                        />
-                        <MetricRow
-                            label="ROI"
-                            before={`${currentMetrics.roi > 0 ? "+" : ""}${currentMetrics.roi.toFixed(2)}%`}
-                            after={`${simMetrics.roi > 0 ? "+" : ""}${simMetrics.roi.toFixed(2)}%`}
-                            beforeColor={pnlColor(currentMetrics.roi)}
-                            afterColor={pnlColor(simMetrics.roi)}
-                            changed={simQty > 0 && currentMetrics.roi !== simMetrics.roi}
-                            delta={simQty > 0 ? sub(simMetrics.roi, currentMetrics.roi) : 0}
-                            deltaUnit="%"
-                        />
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     )
 }
 
-// --- MetricRow ---
+// --- DeltaBadge: compact inline badge showing +/- change ---
 
-function MetricRow({
-    label,
-    before,
-    after,
-    beforeColor,
-    afterColor,
-    changed,
-    delta,
-    currencySymbol,
-    deltaUnit,
-}: {
-    label: string
-    before: string
-    after: string
-    beforeColor?: string
-    afterColor?: string
-    changed: boolean
-    delta?: number
-    currencySymbol?: string
-    deltaUnit?: string
-}) {
+function DeltaBadge({ delta, prefix, suffix }: { delta: number; prefix?: string; suffix?: string }) {
+    if (delta === 0) return null
+    const isPositive = delta > 0
     return (
-        <div className="flex items-center justify-between py-3 gap-3">
-            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider shrink-0 w-24 sm:w-28">{label}</span>
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 justify-end flex-1">
-                {/* Before value */}
-                <span className={`font-mono text-xs sm:text-sm ${changed ? "text-muted-foreground/50 line-through" : (beforeColor || "font-bold")}`}>
-                    {before}
-                </span>
-                {/* Arrow + After value */}
-                {changed && (
-                    <>
-                        <span className="text-muted-foreground/40 text-xs">→</span>
-                        <span className={`font-mono text-xs sm:text-sm font-bold ${afterColor || ""}`}>
-                            {after}
-                        </span>
-                    </>
-                )}
-                {/* Delta badge */}
-                {changed && delta !== undefined && delta !== 0 && (
-                    <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md ${
-                        delta > 0
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "bg-red-500/10 text-red-600 dark:text-red-400"
-                    }`}>
-                        {delta > 0 ? "+" : ""}{deltaUnit ? delta.toFixed(2) : `${currencySymbol || ""}${formatNum(delta)}`}{deltaUnit || ""}
-                    </span>
-                )}
-            </div>
-        </div>
+        <span className={`mt-1 inline-flex items-center self-start text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md ${
+            isPositive
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "bg-red-500/10 text-red-600 dark:text-red-400"
+        }`}>
+            {isPositive ? "+" : ""}{prefix || ""}{suffix === "%" ? delta.toFixed(2) : formatNum(delta)}{suffix || ""}
+        </span>
     )
 }
