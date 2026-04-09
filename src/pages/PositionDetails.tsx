@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -109,6 +109,13 @@ export default function PositionDetails() {
                         >
                             <Bot className="h-4 w-4 text-muted-foreground" />
                             Ask AI
+                        </button>
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMobileMenuOpen(false); navigate(`/positions/${id}/simulator`); }}
+                        >
+                            <FlaskConical className="h-4 w-4 text-muted-foreground" />
+                            Simulate Trade
                         </button>
                         <button
                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
@@ -408,6 +415,10 @@ export default function PositionDetails() {
                                 <PositionEditForm position={position} onSuccess={() => setIsEditDialogOpen(false)} />
                             </DialogContent>
                         </Dialog>
+
+                        <Button variant="outline" size="icon" className="shrink-0" onClick={() => navigate(`/positions/${id}/simulator`)} title="Simulate Trade">
+                            <FlaskConical className="h-4 w-4" />
+                        </Button>
 
                         <Popover open={isSharePopoverOpen} onOpenChange={setIsSharePopoverOpen}>
                             <PopoverTrigger asChild>
