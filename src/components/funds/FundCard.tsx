@@ -29,7 +29,7 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
                         <h3 className="text-sm font-semibold tracking-tight line-clamp-1 text-foreground" title={fund.name}>
                             {fund.name}
                         </h3>
-                        <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                        <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${
                             isActive
                                 ? 'bg-primary/10 text-primary border-primary/20'
                                 : 'bg-muted text-muted-foreground border-border'
