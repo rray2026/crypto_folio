@@ -5,7 +5,7 @@ import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical, Plus, Keyboard, Sparkles } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -30,8 +30,6 @@ import {
 import { PositionEditForm } from "@/components/positions/PositionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { TransactionForm } from "@/components/transactions/TransactionForm"
-import { AiImportFlow } from "@/components/transactions/AiImportFlow"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
@@ -58,7 +56,6 @@ export default function PositionDetails() {
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
     const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
     const [linkTimeFilter, setLinkTimeFilter] = useState<'7D' | '1M' | '6M' | 'ALL'>('ALL')
-    const [linkAddMode, setLinkAddMode] = useState<'list' | 'choice' | 'manual' | 'ai'>('list')
     const { assignPositionToFund, unassignPosition } = useFundStore()
     const { setMobileHeader } = useMobileHeader()
 
@@ -664,7 +661,6 @@ export default function PositionDetails() {
                             onClick={() => {
                                 setSelectedTxIds(new Set())
                                 setLinkTimeFilter('ALL')
-                                setLinkAddMode('list')
                                 setIsLinkDialogOpen(true)
                             }}
                             className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
@@ -677,86 +673,30 @@ export default function PositionDetails() {
 
                 {/* Link More Dialog */}
                 <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
-                    if (!open && (linkAddMode === 'manual' || linkAddMode === 'ai')) {
-                        // Go back to list instead of closing
-                        setLinkAddMode('list')
-                        return
-                    }
                     setIsLinkDialogOpen(open)
-                    if (!open) {
-                        setSelectedTxIds(new Set())
-                        setLinkAddMode('list')
-                    }
+                    if (!open) setSelectedTxIds(new Set())
                 }}>
                     <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col [&>button.absolute]:hidden">
                         <DialogHeader>
                             <div className="flex items-center justify-between">
-                                <DialogTitle>
-                                    {linkAddMode === 'manual' ? 'Record Transaction' : linkAddMode === 'ai' ? 'AI-Assisted Import' : 'Link Trades'}
-                                </DialogTitle>
-                                {linkAddMode === 'list' && (
-                                    <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '7D' | '1M' | '6M' | 'ALL')}>
-                                        <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
-                                            <Calendar className="h-3 w-3 opacity-50" />
-                                            <SelectValue placeholder="Range" />
-                                        </SelectTrigger>
-                                        <SelectContent className="rounded-xl">
-                                            <SelectItem value="7D">Last 7 Days</SelectItem>
-                                            <SelectItem value="1M">Last 1 Month</SelectItem>
-                                            <SelectItem value="6M">Last 6 Months</SelectItem>
-                                            <SelectItem value="ALL">All Time</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                )}
+                                <DialogTitle>Link Trades</DialogTitle>
+                                <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '7D' | '1M' | '6M' | 'ALL')}>
+                                    <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
+                                        <Calendar className="h-3 w-3 opacity-50" />
+                                        <SelectValue placeholder="Range" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl">
+                                        <SelectItem value="7D">Last 7 Days</SelectItem>
+                                        <SelectItem value="1M">Last 1 Month</SelectItem>
+                                        <SelectItem value="6M">Last 6 Months</SelectItem>
+                                        <SelectItem value="ALL">All Time</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                            {linkAddMode === 'list' && (
-                                <p className="text-sm text-muted-foreground">
-                                    Select trades to link to this position.
-                                </p>
-                            )}
+                            <p className="text-sm text-muted-foreground">
+                                Select trades to link to this position.
+                            </p>
                         </DialogHeader>
-
-                        {linkAddMode === 'choice' ? (
-                            <div className="flex-1 flex flex-col justify-center">
-                                <div className="grid grid-cols-1 gap-3">
-                                    <Button
-                                        variant="outline"
-                                        className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
-                                        onClick={() => setLinkAddMode('manual')}
-                                    >
-                                        <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                            <Keyboard className="h-5 w-5 text-primary" />
-                                        </div>
-                                        <div className="flex flex-col items-center">
-                                            <span className="font-semibold text-sm">Manual Entry</span>
-                                            <span className="text-xs text-muted-foreground">Type trade details manually</span>
-                                        </div>
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
-                                        onClick={() => setLinkAddMode('ai')}
-                                    >
-                                        <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                                            <Sparkles className="h-5 w-5 text-amber-500" />
-                                        </div>
-                                        <div className="flex flex-col items-center">
-                                            <span className="font-semibold text-sm">AI-Assisted Import</span>
-                                            <span className="text-xs text-muted-foreground">Use a prompt to let AI parse your screenshot</span>
-                                        </div>
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : linkAddMode === 'ai' ? (
-                            <div className="flex-1 overflow-y-auto">
-                                <AiImportFlow onSuccess={() => { setLinkAddMode('list') }} />
-                            </div>
-                        ) : linkAddMode === 'manual' ? (
-                            <div className="flex-1 overflow-y-auto">
-                                <TransactionForm onSuccess={() => { setLinkAddMode('list') }} />
-                            </div>
-                        ) : (
-                            <>
                                 {/* Transaction list or empty state */}
                                 <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
                                     {filteredAvailableTxs.length > 0 ? (
@@ -803,7 +743,7 @@ export default function PositionDetails() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="gap-1.5"
-                                                    onClick={() => setLinkAddMode('choice')}
+                                                    onClick={() => { setIsLinkDialogOpen(false); navigate('/transactions') }}
                                                 >
                                                     <Plus className="h-3.5 w-3.5" />
                                                     Add Transaction
@@ -825,8 +765,6 @@ export default function PositionDetails() {
                                         </Button>
                                     </div>
                                 )}
-                            </>
-                        )}
                     </DialogContent>
                 </Dialog>
             </div>
