@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import type { Transaction } from "@/lib/types"
+import { badge, txBadgeColor, value, valueBold, dateText } from "@/lib/styles"
 
 interface TransactionRowProps {
     tx: Transaction;
@@ -58,25 +59,21 @@ export function TransactionRow({
         >
             <div className="flex flex-col md:block">
                 {showAsset && <div className="font-semibold text-sm tracking-tight truncate">{tx.symbol}</div>}
-                <div className="text-[10px] md:text-[11px] font-mono text-muted-foreground/80 truncate">
+                <div className={`${dateText} truncate`}>
                     {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
                 </div>
             </div>
 
             <div className="flex justify-center md:justify-start">
-                <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
-                    tx.type === "BUY"
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
-                    : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
-                }`}>
+                <div className={badge({ color: txBadgeColor(tx.type) })}>
                     {tx.type}
                 </div>
             </div>
 
-            <div className="hidden md:block text-right font-mono font-medium text-sm text-foreground/80">{currencySymbol}{tx.price.toLocaleString()}</div>
-            <div className="hidden md:block text-right font-mono font-medium text-sm text-foreground/80">{tx.quantity.toLocaleString()}</div>
+            <div className={`hidden md:block text-right ${value} font-medium text-foreground/80`}>{currencySymbol}{tx.price.toLocaleString()}</div>
+            <div className={`hidden md:block text-right ${value} font-medium text-foreground/80`}>{tx.quantity.toLocaleString()}</div>
 
-            <div className="text-right font-mono font-semibold text-sm text-primary/90">
+            <div className={`text-right ${valueBold} text-primary/90`}>
                 {currencySymbol}{tx.amount.toLocaleString()}
                 {!showAsset && <div className="md:hidden text-[10px] text-muted-foreground/60 font-normal">Fee: {currencySymbol}{tx.fee.toLocaleString()}</div>}
             </div>

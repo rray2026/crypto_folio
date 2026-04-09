@@ -35,6 +35,7 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
+import { badge, txBadgeColor, pnlColor, sectionHeader, label, dialogItem } from "@/lib/styles"
 
 export default function PositionDetails() {
     const { id } = useParams<{ id: string }>()
@@ -531,23 +532,23 @@ export default function PositionDetails() {
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
                             {/* Realized PnL */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${realizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : realizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                <span className={`${label} sm:text-xs mb-1`}>Realized PnL</span>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(realizedPnL)}`}>
                                     {currencySymbol}{realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
 
                             {/* Unrealized PnL */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${unrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : unrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                <span className={`${label} sm:text-xs mb-1`}>Unrealized PnL</span>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(unrealizedPnL)}`}>
                                     {totalRemaining !== 0 ? `${currencySymbol}${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 
                             {/* Avg Buy Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Avg Buy</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {avgBuyPrice > 0 ? `${currencySymbol}${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
@@ -555,7 +556,7 @@ export default function PositionDetails() {
 
                             {/* Avg Sell Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Avg Sell</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {avgSellPrice > 0 ? `${currencySymbol}${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
@@ -563,7 +564,7 @@ export default function PositionDetails() {
 
                             {/* Total Fee */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Fee</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Total Fee</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {totalFee > 0 ? `${currencySymbol}${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
@@ -571,15 +572,15 @@ export default function PositionDetails() {
 
                             {/* ROI */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">ROI</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${roi > 0 ? 'text-emerald-500 dark:text-emerald-400' : roi < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                <span className={`${label} sm:text-xs mb-1`}>ROI</span>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(roi)}`}>
                                     {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
                                 </span>
                             </div>
 
                             {/* Holding */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Holding</span>
                                 <div className="flex items-baseline gap-1 truncate">
                                     <span className="text-base sm:text-xl font-bold font-mono">{totalRemaining.toLocaleString()}</span>
                                     <span className="text-[10px] text-muted-foreground uppercase">{position.symbol.split('/')[0]}</span>
@@ -588,7 +589,7 @@ export default function PositionDetails() {
 
                             {/* Avg. Cost (Breakeven) */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
+                                <span className={`${label} sm:text-xs mb-1`} title="Breakeven price considering realized PnL">Avg Cost</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {(breakevenPrice > 0 && totalRemaining !== 0) ? `${currencySymbol}${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
@@ -599,7 +600,7 @@ export default function PositionDetails() {
 
                 {/* Linked Trades */}
                 <div className="space-y-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 px-1">
+                    <span className={sectionHeader}>
                         Linked Trades ({linkedTxs.length})
                     </span>
                     <div className="space-y-3">
@@ -617,7 +618,7 @@ export default function PositionDetails() {
                                         onClick={() => navigate(`/transactions/${tx.id}`)}
                                     >
                                         <div className="flex gap-3 md:gap-4 items-center min-w-0">
-                                            <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                            <div className={badge({ color: txBadgeColor(tx.type) })}>
                                                 {tx.type}
                                             </div>
                                             <div className="flex flex-col min-w-0">
@@ -731,13 +732,9 @@ export default function PositionDetails() {
                                                     key={tx.id}
                                                     type="button"
                                                     onClick={() => toggleSelectTx(tx.id)}
-                                                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
-                                                        isSelected
-                                                            ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20'
-                                                            : 'border-border/50 hover:bg-muted/30'
-                                                    }`}
+                                                    className={`${dialogItem(isSelected)} flex items-center gap-3`}
                                                 >
-                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border shrink-0 ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                                    <div className={`${badge({ color: txBadgeColor(tx.type) })} shrink-0`}>
                                                         {tx.type}
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1">
