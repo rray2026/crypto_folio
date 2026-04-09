@@ -54,41 +54,46 @@ function getQtyBounds(holding: number) {
 // --- 3-Thumb Range Slider ---
 
 function RangeSlider({
-    low, value, high, min, max, step,
-    onLowChange, onValueChange, onHighChange,
+    low, value, high,
+    sliderMin, sliderMax, step,
+    onDrag,
+    onCommit,
 }: {
     low: number; value: number; high: number
-    min: number; max: number; step: number
-    onLowChange: (v: number) => void
-    onValueChange: (v: number) => void
-    onHighChange: (v: number) => void
+    sliderMin: number; sliderMax: number; step: number
+    onDrag: (value: number) => void
+    onCommit: (low: number, value: number, high: number) => void
 }) {
-    const handleChange = useCallback((vals: number[]) => {
-        const [newLow, newVal, newHigh] = vals
-        onLowChange(newLow)
-        onValueChange(newVal)
-        onHighChange(newHigh)
-    }, [onLowChange, onValueChange, onHighChange])
+    // Internal draft state keeps slider range stable during drag
+    const [draft, setDraft] = useState<number[] | null>(null)
+    const vals = draft ?? [low, value, high]
 
     return (
         <SliderPrimitive.Root
-            value={[low, value, high]}
-            min={min}
-            max={max}
+            value={vals}
+            min={sliderMin}
+            max={sliderMax}
             step={step}
             minStepsBetweenThumbs={0}
-            onValueChange={handleChange}
+            onValueChange={(v) => {
+                setDraft(v)
+                onDrag(v[1])
+            }}
+            onValueCommit={(v) => {
+                setDraft(null)
+                onCommit(v[0], v[1], v[2])
+            }}
             className="relative flex w-full touch-none select-none items-center"
         >
             <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
                 <SliderPrimitive.Range className="absolute h-full bg-primary/40" />
             </SliderPrimitive.Track>
-            {/* Low bound thumb - smaller, muted */}
-            <SliderPrimitive.Thumb className="block h-3.5 w-3.5 rounded-full border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-            {/* Value thumb - main, larger */}
+            {/* Low bound thumb - rectangular */}
+            <SliderPrimitive.Thumb className="block h-4 w-2 rounded-sm border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            {/* Value thumb - round, larger */}
             <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-            {/* High bound thumb - smaller, muted */}
-            <SliderPrimitive.Thumb className="block h-3.5 w-3.5 rounded-full border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            {/* High bound thumb - rectangular */}
+            <SliderPrimitive.Thumb className="block h-4 w-2 rounded-sm border border-muted-foreground/30 bg-muted shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
         </SliderPrimitive.Root>
     )
 }
@@ -216,15 +221,62 @@ export default function TradingSimulator() {
 
     const simPrice = simPriceRaw ?? refPrice
 
-    // Default bounds from reference values
+    // Default bounds & step from reference values
     const defaultPriceBounds = useMemo(() => getPriceBounds(refPrice), [refPrice])
     const defaultQtyBounds = useMemo(() => getQtyBounds(pendingMetrics?.totalRemaining ?? 0), [pendingMetrics?.totalRemaining])
 
-    // Effective bounds: user-adjustable via outer thumbs
+    // Committed bounds (updated on release)
     const effPriceLow = priceLow ?? defaultPriceBounds.min
     const effPriceHigh = priceHigh ?? defaultPriceBounds.max
     const effQtyLow = qtyLow ?? defaultQtyBounds.min
     const effQtyHigh = qtyHigh ?? defaultQtyBounds.max
+
+    // Slider range with 15% buffer for expansion room
+    const priceBuffer = Math.max((effPriceHigh - effPriceLow) * 0.15, defaultPriceBounds.step * 10)
+    const priceSliderMin = Math.max(0, effPriceLow - priceBuffer)
+    const priceSliderMax = effPriceHigh + priceBuffer
+
+    const qtyBuffer = Math.max((effQtyHigh - effQtyLow) * 0.15, defaultQtyBounds.step * 10)
+    const qtySliderMin = Math.max(0, effQtyLow - qtyBuffer)
+    const qtySliderMax = effQtyHigh + qtyBuffer
+
+    // Price slider handlers
+    const handlePriceDrag = useCallback((v: number) => { setSimPrice(v) }, [])
+    const handlePriceCommit = useCallback((newLow: number, newVal: number, newHigh: number) => {
+        setPriceLow(newLow)
+        setSimPrice(newVal)
+        setPriceHigh(newHigh)
+    }, [])
+
+    // Qty slider handlers
+    const handleQtyDrag = useCallback((v: number) => { setSimQty(v) }, [])
+    const handleQtyCommit = useCallback((newLow: number, newVal: number, newHigh: number) => {
+        setQtyLow(newLow)
+        setSimQty(newVal)
+        setQtyHigh(newHigh)
+    }, [])
+
+    // Set price with auto-expand bounds
+    const handleSetSimPrice = useCallback((v: number) => {
+        setSimPrice(v)
+        setPriceLow(prev => {
+            const eff = prev ?? defaultPriceBounds.min
+            return v < eff ? v : prev
+        })
+        setPriceHigh(prev => {
+            const eff = prev ?? defaultPriceBounds.max
+            return v > eff ? v : prev
+        })
+    }, [defaultPriceBounds.min, defaultPriceBounds.max])
+
+    // Set qty with auto-expand bounds
+    const handleSetSimQty = useCallback((v: number) => {
+        setSimQty(v)
+        setQtyHigh(prev => {
+            const eff = prev ?? defaultQtyBounds.max
+            return v > eff ? v : prev
+        })
+    }, [defaultQtyBounds.max])
 
     // Full metrics: pending trades + current draft
     const simMetrics = useMemo(() => {
@@ -456,7 +508,7 @@ export default function TradingSimulator() {
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">Price</span>
                             <TappableValue
                                 value={simPrice}
-                                onCommit={v => setSimPrice(v)}
+                                onCommit={handleSetSimPrice}
                                 prefix={currencySymbol}
                             />
                         </div>
@@ -464,12 +516,11 @@ export default function TradingSimulator() {
                             low={effPriceLow}
                             value={simPrice}
                             high={effPriceHigh}
-                            min={defaultPriceBounds.min}
-                            max={defaultPriceBounds.max}
+                            sliderMin={priceSliderMin}
+                            sliderMax={priceSliderMax}
                             step={defaultPriceBounds.step}
-                            onLowChange={setPriceLow}
-                            onValueChange={v => setSimPrice(v)}
-                            onHighChange={setPriceHigh}
+                            onDrag={handlePriceDrag}
+                            onCommit={handlePriceCommit}
                         />
                         <div className="flex gap-1 flex-wrap">
                             {refPrice > 0 && [-20, -10, -5, 0, 5, 10, 20].map(pct => {
@@ -488,7 +539,7 @@ export default function TradingSimulator() {
                                                         ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
                                                         : "bg-red-500/5 border-red-200/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
                                         }`}
-                                        onClick={() => setSimPrice(val)}
+                                        onClick={() => handleSetSimPrice(val)}
                                     >
                                         {pct > 0 ? "+" : ""}{pct}%
                                     </button>
@@ -504,7 +555,7 @@ export default function TradingSimulator() {
                             <div className="flex items-baseline gap-1">
                                 <TappableValue
                                     value={simQty}
-                                    onCommit={v => setSimQty(v)}
+                                    onCommit={handleSetSimQty}
                                     minFrac={0}
                                     maxFrac={8}
                                 />
@@ -515,12 +566,11 @@ export default function TradingSimulator() {
                             low={effQtyLow}
                             value={simQty}
                             high={effQtyHigh}
-                            min={defaultQtyBounds.min}
-                            max={defaultQtyBounds.max}
+                            sliderMin={qtySliderMin}
+                            sliderMax={qtySliderMax}
                             step={defaultQtyBounds.step}
-                            onLowChange={setQtyLow}
-                            onValueChange={v => setSimQty(v)}
-                            onHighChange={setQtyHigh}
+                            onDrag={handleQtyDrag}
+                            onCommit={handleQtyCommit}
                         />
                         {pendingMetrics && Math.abs(pendingMetrics.totalRemaining) > 0 && (
                             <div className="flex gap-1 flex-wrap">
@@ -536,7 +586,7 @@ export default function TradingSimulator() {
                                                     ? "bg-primary text-primary-foreground border-primary"
                                                     : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
                                             }`}
-                                            onClick={() => setSimQty(val)}
+                                            onClick={() => handleSetSimQty(val)}
                                         >
                                             {pct}%
                                         </button>
