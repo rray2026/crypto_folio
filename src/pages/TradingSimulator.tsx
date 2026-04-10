@@ -460,7 +460,7 @@ export default function TradingSimulator() {
                             type="button"
                             className={`flex-1 flex items-center justify-center gap-1 rounded-md text-xs font-bold transition-all ${
                                 simSide === "BUY"
-                                    ? "bg-background text-emerald-600 dark:text-emerald-400 shadow-sm"
+                                    ? "bg-background text-foreground shadow-sm"
                                     : "text-muted-foreground/60"
                             }`}
                             onClick={() => setSimSide("BUY")}
@@ -471,7 +471,7 @@ export default function TradingSimulator() {
                             type="button"
                             className={`flex-1 flex items-center justify-center gap-1 rounded-md text-xs font-bold transition-all ${
                                 simSide === "SELL"
-                                    ? "bg-background text-rose-600 dark:text-rose-400 shadow-sm"
+                                    ? "bg-background text-foreground shadow-sm"
                                     : "text-muted-foreground/60"
                             }`}
                             onClick={() => setSimSide("SELL")}
@@ -526,9 +526,7 @@ export default function TradingSimulator() {
                                                 ? "bg-primary text-primary-foreground border-primary"
                                                 : pct === 0
                                                     ? "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
-                                                    : pct > 0
-                                                        ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                                        : "bg-rose-500/5 border-rose-200/30 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                                                    : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
                                         }`}
                                         onClick={() => handleSetSimPrice(val)}
                                     >
@@ -598,17 +596,13 @@ export default function TradingSimulator() {
                         <button
                             type="button"
                             onClick={addTrade}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors active:scale-[0.99] ${
-                                simSide === "BUY"
-                                    ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 hover:bg-emerald-500/10"
-                                    : "bg-rose-500/5 border-rose-200/30 dark:border-rose-800/30 hover:bg-rose-500/10"
-                            }`}
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 text-xs font-medium transition-colors active:scale-[0.99]"
                         >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <PlusCircle className="h-3.5 w-3.5" />
                                 <span>{simSide} {formatNum(simQty, 0, 8)} {baseAsset} @ {currencySymbol}{formatNum(simPrice)}</span>
                             </div>
-                            <span className={`font-mono font-bold ${simSide === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                            <span className="font-mono font-bold">
                                 {currencySymbol}{formatNum(simTotal)}
                             </span>
                         </button>
@@ -626,18 +620,14 @@ export default function TradingSimulator() {
                         {pendingTrades.map((t, i) => (
                             <div
                                 key={t.id}
-                                className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
-                                    t.side === "BUY"
-                                        ? "bg-emerald-500/5 border-emerald-200/20 dark:border-emerald-800/20"
-                                        : "bg-rose-500/5 border-rose-200/20 dark:border-rose-800/20"
-                                }`}
+                                className="flex items-center justify-between px-3 py-2 rounded-lg border border-border/50 bg-muted/20 text-xs"
                             >
                                 <div className="flex items-center gap-2 min-w-0">
                                     <span className="text-muted-foreground/50 font-mono w-4 text-center shrink-0">#{i + 1}</span>
                                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                                         t.side === "BUY"
-                                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                            : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                            ? "bg-muted text-emerald-600/70 dark:text-emerald-400/70"
+                                            : "bg-muted text-rose-600/70 dark:text-rose-400/70"
                                     }`}>
                                         {t.side}
                                     </span>

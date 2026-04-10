@@ -14,10 +14,10 @@ export const badge = cva(
     {
         variants: {
             color: {
-                buy:    "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40",
-                sell:   "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40",
-                long:   "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40",
-                short:  "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40",
+                buy:    "bg-muted text-emerald-600/70 dark:text-emerald-400/70 border-border",
+                sell:   "bg-muted text-rose-600/70 dark:text-rose-400/70 border-border",
+                long:   "bg-muted text-emerald-600/70 dark:text-emerald-400/70 border-border",
+                short:  "bg-muted text-rose-600/70 dark:text-rose-400/70 border-border",
                 active: "bg-primary/10 text-primary border-primary/20",
                 closed: "bg-muted text-muted-foreground border-border",
                 fund:   "bg-primary/10 text-primary border-primary/20",

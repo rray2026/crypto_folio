@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Light mode — cool-tinted white with teal primary */
+    /* Light mode — neutral slate primary, data speaks through emerald/rose */
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
 
@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 262 83% 58%;
+    --primary: 220 14% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 214 20% 93%;
@@ -23,19 +23,19 @@
     --muted: 214 20% 93%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 262 83% 95%;
-    --accent-foreground: 262 83% 45%;
+    --accent: 220 14% 95%;
+    --accent-foreground: 220 14% 35%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 32% 89%;
     --input: 214 32% 89%;
-    --ring: 262 83% 58%;
+    --ring: 220 14% 40%;
 
     --radius: 0.625rem;
 
-    --chart-1: 262 83% 58%;
+    --chart-1: 220 14% 40%;
     --chart-2: 221 83% 53%;
     --chart-3: 142 71% 45%;
     --chart-4: 38 92% 55%;
@@ -43,7 +43,7 @@
   }
 
   .dark {
-    /* Dark mode — deep navy with teal primary */
+    /* Dark mode — neutral slate primary, data speaks through emerald/rose */
     --background: 222 14% 7%;
     --foreground: 213 31% 91%;
 
@@ -53,7 +53,7 @@
     --popover: 222 14% 10%;
     --popover-foreground: 213 31% 91%;
 
-    --primary: 262 83% 68%;
+    --primary: 215 20% 65%;
     --primary-foreground: 222 14% 7%;
 
     --secondary: 222 14% 15%;
@@ -63,16 +63,16 @@
     --muted-foreground: 215 16% 55%;
 
     --accent: 222 14% 15%;
-    --accent-foreground: 262 83% 72%;
+    --accent-foreground: 215 20% 70%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 222 14% 17%;
     --input: 222 14% 15%;
-    --ring: 262 83% 68%;
+    --ring: 215 20% 65%;
 
-    --chart-1: 262 83% 68%;
+    --chart-1: 215 20% 65%;
     --chart-2: 221 83% 63%;
     --chart-3: 142 71% 48%;
     --chart-4: 38 92% 58%;
