@@ -9,7 +9,7 @@ import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings } from "luci
 
 function freshnessColor(timestamp: number): string {
     const age = Math.floor((Date.now() - timestamp) / 1000);
-    if (age < 60) return 'bg-emerald-500';
+    if (age < 60) return 'bg-primary';
     if (age < 300) return 'bg-amber-400';
     return 'bg-muted-foreground/30';
 }
