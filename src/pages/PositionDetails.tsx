@@ -361,7 +361,7 @@ export default function PositionDetails() {
                                     {/* Status Badge */}
                                     <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         position.status === 'OPEN'
-                                        ? 'bg-primary/10 text-primary border-primary/20'
+                                        ? 'text-primary border-primary/20'
                                         : 'bg-muted text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
