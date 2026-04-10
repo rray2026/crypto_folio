@@ -42,8 +42,54 @@
     --chart-5: 0 72% 51%;
   }
 
+  /* ---- Theme color overrides ---- */
+  /* Blue is the default — no override needed */
+
+  :root[data-theme-color="indigo"] {
+    --primary: 235 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 235 60% 55%;
+    --chart-1: 235 60% 55%;
+  }
+  :root[data-theme-color="violet"] {
+    --primary: 262 55% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 262 55% 55%;
+    --chart-1: 262 55% 55%;
+  }
+  :root[data-theme-color="rose"] {
+    --primary: 347 65% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 347 65% 55%;
+    --chart-1: 347 65% 55%;
+  }
+  :root[data-theme-color="amber"] {
+    --primary: 35 92% 50%;
+    --primary-foreground: 35 10% 10%;
+    --ring: 35 92% 50%;
+    --chart-1: 35 92% 50%;
+  }
+  :root[data-theme-color="teal"] {
+    --primary: 172 60% 38%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 172 60% 38%;
+    --chart-1: 172 60% 38%;
+  }
+  :root[data-theme-color="emerald"] {
+    --primary: 158 55% 40%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 158 55% 40%;
+    --chart-1: 158 55% 40%;
+  }
+  :root[data-theme-color="slate"] {
+    --primary: 220 14% 40%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 220 14% 40%;
+    --chart-1: 220 14% 40%;
+  }
+
   .dark {
-    /* Dark mode — neutral slate primary, data speaks through emerald/rose */
+    /* Dark mode — steel blue default */
     --background: 222 14% 7%;
     --foreground: 213 31% 91%;
 
@@ -77,6 +123,49 @@
     --chart-3: 142 71% 48%;
     --chart-4: 38 92% 58%;
     --chart-5: 0 72% 58%;
+  }
+
+  .dark[data-theme-color="indigo"] {
+    --primary: 235 50% 70%;
+    --primary-foreground: 235 60% 10%;
+    --ring: 235 50% 70%;
+    --chart-1: 235 50% 70%;
+  }
+  .dark[data-theme-color="violet"] {
+    --primary: 262 45% 72%;
+    --primary-foreground: 262 55% 10%;
+    --ring: 262 45% 72%;
+    --chart-1: 262 45% 72%;
+  }
+  .dark[data-theme-color="rose"] {
+    --primary: 347 55% 68%;
+    --primary-foreground: 347 65% 10%;
+    --ring: 347 55% 68%;
+    --chart-1: 347 55% 68%;
+  }
+  .dark[data-theme-color="amber"] {
+    --primary: 35 82% 58%;
+    --primary-foreground: 35 92% 8%;
+    --ring: 35 82% 58%;
+    --chart-1: 35 82% 58%;
+  }
+  .dark[data-theme-color="teal"] {
+    --primary: 172 50% 55%;
+    --primary-foreground: 172 60% 7%;
+    --ring: 172 50% 55%;
+    --chart-1: 172 50% 55%;
+  }
+  .dark[data-theme-color="emerald"] {
+    --primary: 158 45% 55%;
+    --primary-foreground: 158 55% 7%;
+    --ring: 158 45% 55%;
+    --chart-1: 158 45% 55%;
+  }
+  .dark[data-theme-color="slate"] {
+    --primary: 215 20% 65%;
+    --primary-foreground: 222 14% 7%;
+    --ring: 215 20% 65%;
+    --chart-1: 215 20% 65%;
   }
 }
 
