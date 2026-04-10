@@ -14,10 +14,10 @@ export const badge = cva(
     {
         variants: {
             color: {
-                buy:    "bg-emerald-500/8 text-emerald-600/80 dark:text-emerald-400/80 border-emerald-500/15",
-                sell:   "bg-rose-500/8 text-rose-600/80 dark:text-rose-400/80 border-rose-500/15",
-                long:   "bg-emerald-500/8 text-emerald-600/80 dark:text-emerald-400/80 border-emerald-500/15",
-                short:  "bg-rose-500/8 text-rose-600/80 dark:text-rose-400/80 border-rose-500/15",
+                buy:    "bg-pnl-up/8 text-pnl-up/80 border-pnl-up/15",
+                sell:   "bg-pnl-down/8 text-pnl-down/80 border-pnl-down/15",
+                long:   "bg-pnl-up/8 text-pnl-up/80 border-pnl-up/15",
+                short:  "bg-pnl-down/8 text-pnl-down/80 border-pnl-down/15",
                 active: "text-primary border-primary/20",
                 closed: "text-muted-foreground border-border",
                 fund:   "text-primary border-primary/20",
@@ -48,8 +48,8 @@ export function statusBadgeColor(status: "OPEN" | "CLOSED" | "ACTIVE"): BadgeCol
 // ---------------------------------------------------------------------------
 
 export function pnlColor(value: number): string {
-    if (value > 0) return "text-emerald-500 dark:text-emerald-400"
-    if (value < 0) return "text-rose-500 dark:text-rose-400"
+    if (value > 0) return "text-pnl-up"
+    if (value < 0) return "text-pnl-down"
     return "text-foreground"
 }
 

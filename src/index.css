@@ -40,6 +40,9 @@
     --chart-3: 142 71% 45%;
     --chart-4: 38 92% 55%;
     --chart-5: 0 72% 51%;
+
+    --pnl-up: 145 45% 33%;
+    --pnl-down: 0 55% 46%;
   }
 
   /* ---- Theme color overrides ---- */
@@ -123,6 +126,9 @@
     --chart-3: 142 71% 48%;
     --chart-4: 38 92% 58%;
     --chart-5: 0 72% 58%;
+
+    --pnl-up: 150 38% 56%;
+    --pnl-down: 2 48% 63%;
   }
 
   .dark[data-theme-color="indigo"] {

@@ -28,8 +28,8 @@ function formatNum(n: number, minFrac = 2, maxFrac = 6): string {
 }
 
 function pnlColor(v: number): string {
-    if (v > 0) return "text-emerald-500 dark:text-emerald-400"
-    if (v < 0) return "text-rose-500 dark:text-rose-400"
+    if (v > 0) return "text-pnl-up"
+    if (v < 0) return "text-pnl-down"
     return "text-foreground"
 }
 
@@ -491,7 +491,7 @@ export default function TradingSimulator() {
                                     prefix={currencySymbol}
                                 />
                                 {simPrice !== refPrice && refPrice > 0 && (
-                                    <span className={`text-[10px] font-mono font-semibold ${simPrice > refPrice ? "text-emerald-500" : "text-rose-500"}`}>
+                                    <span className={`text-[10px] font-mono font-semibold ${simPrice > refPrice ? "text-pnl-up" : "text-pnl-down"}`}>
                                         {simPrice > refPrice ? "+" : ""}{((simPrice - refPrice) / refPrice * 100).toFixed(1)}%
                                     </span>
                                 )}
@@ -527,8 +527,8 @@ export default function TradingSimulator() {
                                                 : pct === 0
                                                     ? "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
                                                     : pct > 0
-                                                        ? "bg-emerald-500/5 border-emerald-500/10 text-emerald-600/60 dark:text-emerald-400/60 hover:bg-emerald-500/10"
-                                                        : "bg-rose-500/5 border-rose-500/10 text-rose-600/60 dark:text-rose-400/60 hover:bg-rose-500/10"
+                                                        ? "bg-pnl-up/5 border-pnl-up/10 text-pnl-up/60 hover:bg-pnl-up/10"
+                                                        : "bg-pnl-down/5 border-pnl-down/10 text-pnl-down/60 hover:bg-pnl-down/10"
                                         }`}
                                         onClick={() => handleSetSimPrice(val)}
                                     >
@@ -624,16 +624,16 @@ export default function TradingSimulator() {
                                 key={t.id}
                                 className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
                                     t.side === "BUY"
-                                        ? "bg-emerald-500/5 border-emerald-500/10"
-                                        : "bg-rose-500/5 border-rose-500/10"
+                                        ? "bg-pnl-up/5 border-pnl-up/10"
+                                        : "bg-pnl-down/5 border-pnl-down/10"
                                 }`}
                             >
                                 <div className="flex items-center gap-2 min-w-0">
                                     <span className="text-muted-foreground/50 font-mono w-4 text-center shrink-0">#{i + 1}</span>
                                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                                         t.side === "BUY"
-                                            ? "bg-emerald-500/10 text-emerald-600/80 dark:text-emerald-400/80"
-                                            : "bg-rose-500/10 text-rose-600/80 dark:text-rose-400/80"
+                                            ? "bg-pnl-up/10 text-pnl-up/80"
+                                            : "bg-pnl-down/10 text-pnl-down/80"
                                     }`}>
                                         {t.side}
                                     </span>
@@ -673,8 +673,8 @@ function DeltaBadge({ delta, prefix, suffix }: { delta: number; prefix?: string;
     return (
         <span className={`inline-flex items-center text-[9px] font-mono font-semibold px-1 py-px rounded ${
             isPositive
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                ? "bg-pnl-up/10 text-pnl-up"
+                : "bg-pnl-down/10 text-pnl-down"
         }`}>
             {isPositive ? "+" : ""}{prefix || ""}{formatted}{suffix || ""}
         </span>
