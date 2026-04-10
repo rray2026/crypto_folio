@@ -5,10 +5,8 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { SwipeActions } from "@/components/shared/SwipeActions"
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
-import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
+import { Plus, Trash2, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -286,68 +284,21 @@ export default function Transactions() {
                         </Button>
                     </div>
                 ) : (
-                    transactions.map((tx) => {
-                        const sym = getCurrencySymbolForPair(tx.symbol, pairConfigs);
-                        return (
-                            <SwipeActions
-                                key={tx.id}
-                                disabled={isSelectionMode}
-                                actions={[
-                                    { icon: <Edit className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => setEditingTxId(tx.id) },
-                                    { icon: <Trash2 className="h-4 w-4" />, bg: "bg-red-500", onAction: () => confirmSingleDelete(tx.id, { stopPropagation: () => {} } as React.MouseEvent) },
-                                ]}
-                            >
-                                <div
-                                    onClick={() => { if (isSelectionMode) { toggleSelection(tx.id); } else { navigate(`/transactions/${tx.id}`); } }}
-                                    className={`p-3.5 border transition-all duration-200 cursor-pointer select-none ${
-                                        selectedIds.has(tx.id)
-                                        ? 'bg-primary/10 border-primary shadow-sm'
-                                        : 'bg-card border-border hover:border-primary/40 shadow-sm'
-                                    }`}
-                                >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-lg tracking-tight">{tx.symbol}</span>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                                tx.type === "BUY"
-                                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                                : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                            }`}>
-                                                {tx.type}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-y-2.5 text-xs">
-                                        <div className="flex justify-between items-center pr-4">
-                                            <span className="text-muted-foreground font-medium">Price</span>
-                                            <span className="font-mono font-bold">{sym}{tx.price.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-muted-foreground font-medium">Qty</span>
-                                            <span className="font-mono font-bold">{tx.quantity.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pr-4">
-                                            <span className="text-muted-foreground font-medium">Value</span>
-                                            <span className="font-mono font-black text-primary/90">{sym}{tx.amount.toLocaleString()}</span>
-                                        </div>
-                                        {tx.fee > 0 && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground font-medium">Fee</span>
-                                                <span className="font-mono text-muted-foreground font-bold">{sym}{tx.fee.toLocaleString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-3 pt-2.5 border-t border-border/20 flex justify-end">
-                                        <span className="text-[10px] text-muted-foreground/60 font-mono tracking-tighter">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                        </span>
-                                    </div>
-                                </div>
-                            </SwipeActions>
-                        );
-                    })
+                    transactions.map((tx) => (
+                        <TransactionCard
+                            key={tx.id}
+                            tx={tx}
+                            currencySymbol={getCurrencySymbolForPair(tx.symbol, pairConfigs)}
+                            isSelected={selectedIds.has(tx.id)}
+                            isSelectionMode={isSelectionMode}
+                            onToggleSelection={toggleSelection}
+                            onViewDetail={(id) => navigate(`/transactions/${id}`)}
+                            onEdit={(id) => setEditingTxId(id)}
+                            onDelete={confirmSingleDelete}
+                            isEditing={editingTxId === tx.id}
+                            setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
+                        />
+                    ))
                 )}
 
                 {/* Edit dialog for mobile swipe action */}
