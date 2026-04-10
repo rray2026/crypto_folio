@@ -739,7 +739,7 @@ export default function PositionDetails() {
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1">
                                                         <p className="font-mono text-xs font-medium truncate">
-                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {isPartial ? <><span className="text-primary">{remaining}</span><span className="text-muted-foreground">/{tx.quantity}</span></> : tx.quantity}
+                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {isPartial ? <><span className="text-foreground font-semibold">{remaining}</span><span className="text-muted-foreground">/{tx.quantity}</span></> : tx.quantity}
                                                         </p>
                                                         <p className="text-[10px] text-muted-foreground mt-0.5">
                                                             {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}

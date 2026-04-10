@@ -95,7 +95,7 @@ export function TransactionCard({
                 </div>
                 <div className={`text-right ${value} font-medium text-foreground/80`}>{currencySymbol}{tx.price.toLocaleString()}</div>
                 <div className={`text-right ${value} font-medium text-foreground/80`}>{tx.quantity.toLocaleString()}</div>
-                <div className={`text-right ${valueBold} text-primary/90`}>{currencySymbol}{tx.amount.toLocaleString()}</div>
+                <div className={`text-right ${valueBold}`}>{currencySymbol}{tx.amount.toLocaleString()}</div>
                 <div className={`text-right font-mono font-medium text-xs text-muted-foreground/60 ${!showAsset ? "mr-4" : ""}`}>{currencySymbol}{tx.fee.toLocaleString()}</div>
 
                 <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
@@ -164,7 +164,7 @@ export function TransactionCard({
                                 </div>
                                 <div className="flex flex-col">
                                     <span className={label}>Total</span>
-                                    <span className={`${valueBold} text-primary/90`}>{currencySymbol}{tx.amount.toLocaleString()}</span>
+                                    <span className={`${valueBold}`}>{currencySymbol}{tx.amount.toLocaleString()}</span>
                                 </div>
                                 <div className="flex flex-col text-right">
                                     <span className={label}>Fee</span>

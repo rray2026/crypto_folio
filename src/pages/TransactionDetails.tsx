@@ -175,7 +175,7 @@ export default function TransactionDetails() {
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Total Value</span>
-                                <p className="text-xl md:text-2xl font-mono font-black text-primary">{currencySymbol}{transaction.amount.toLocaleString()}</p>
+                                <p className="text-xl md:text-2xl font-mono font-black">{currencySymbol}{transaction.amount.toLocaleString()}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Fee Paid</span>
@@ -237,7 +237,7 @@ export default function TransactionDetails() {
                                     <button 
                                         key={pos.id}
                                         onClick={() => navigate(`/positions/${pos.id}`)}
-                                        className="w-full text-left p-4 rounded-xl border bg-card/40 hover:bg-card/80 transition-all group border-border/40 hover:border-primary/40 shadow-sm"
+                                        className="w-full text-left p-4 rounded-xl border bg-card/40 hover:bg-card/80 transition-all group border-border/40 hover:border-border shadow-sm"
                                     >
                                         <div className="flex justify-between items-start mb-1.5">
                                             <span className="font-bold text-sm truncate pr-2">
@@ -250,7 +250,7 @@ export default function TransactionDetails() {
                                         </div>
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10">
                                             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Allocated</span>
-                                            <span className="text-xs font-mono font-bold text-primary">{entry?.allocatedAmount}</span>
+                                            <span className="text-xs font-mono font-bold">{entry?.allocatedAmount}</span>
                                         </div>
                                     </button>
                                 );

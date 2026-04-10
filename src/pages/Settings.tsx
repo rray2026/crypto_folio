@@ -110,11 +110,11 @@ export default function Settings() {
                 <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
             </div>
 
-            <div className="bg-card rounded-xl border shadow-sm hover:border-primary/30 transition-all">
+            <div className="bg-card rounded-xl border shadow-sm hover:border-border transition-all">
                 <Link to="/settings/trading-pairs" className="flex items-center justify-between p-6 group">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                             Trading Pairs
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -299,11 +299,11 @@ export default function Settings() {
                 </DialogContent>
             </Dialog>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8 group hover:border-primary/30 transition-all">
+            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8 group hover:border-border transition-all">
                 <Link to="/glossary" className="flex items-center justify-between group">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                             Investment Glossary
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">

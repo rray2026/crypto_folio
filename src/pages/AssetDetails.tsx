@@ -83,7 +83,7 @@ export default function AssetDetails() {
                     <div>
                         <h1 className="hidden md:block text-3xl font-bold tracking-tight">{base} <span className="text-muted-foreground text-xl">/ {quote}</span></h1>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-2xl font-mono font-bold text-primary">
+                            <span className="text-2xl font-mono font-bold text-foreground">
                                 {Number(currentPrice) > 0 ? `${currencySymbol}${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
                             </span>
                             <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-0.5 rounded font-bold tracking-tighter">Live Price</span>

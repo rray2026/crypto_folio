@@ -121,7 +121,7 @@ export function SymbolSelector({ value, onChange }: SymbolSelectorProps) {
             onClick={() => onChange(asset)}
             className={`px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${
               value === asset
-              ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+              ? "bg-primary text-primary-foreground border-primary shadow-sm"
               : "bg-muted/30 text-muted-foreground border-border/50 hover:border-primary/50 hover:bg-muted/50"
             }`}
           >

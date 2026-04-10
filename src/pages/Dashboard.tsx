@@ -84,7 +84,7 @@ export default function Dashboard() {
                             return (
                                 <button
                                     key={pair}
-                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 group cursor-pointer text-left"
+                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-md transition-all duration-200 group cursor-pointer text-left"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ export default function Dashboard() {
                                         {priceData && (
                                             <span className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-1000 ${freshnessColor(priceData.timestamp)}`} />
                                         )}
-                                        <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                                        <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-foreground transition-colors shrink-0" />
                                     </div>
                                 </button>
                             )

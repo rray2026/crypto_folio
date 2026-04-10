@@ -21,7 +21,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
             <div
                 className={`h-full flex flex-col relative overflow-hidden rounded-xl ${cardBorder} transition-all duration-200
                     bg-card hover:bg-card
-                    hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5
+                    hover:border-border hover:shadow-lg
                     hover:-translate-y-0.5
                 `}
             >
