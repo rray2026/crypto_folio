@@ -29,7 +29,7 @@ function formatNum(n: number, minFrac = 2, maxFrac = 6): string {
 
 function pnlColor(v: number): string {
     if (v > 0) return "text-emerald-500 dark:text-emerald-400"
-    if (v < 0) return "text-red-500 dark:text-red-400"
+    if (v < 0) return "text-rose-500 dark:text-rose-400"
     return "text-foreground"
 }
 
@@ -471,7 +471,7 @@ export default function TradingSimulator() {
                             type="button"
                             className={`flex-1 flex items-center justify-center gap-1 rounded-md text-xs font-bold transition-all ${
                                 simSide === "SELL"
-                                    ? "bg-background text-red-600 dark:text-red-400 shadow-sm"
+                                    ? "bg-background text-rose-600 dark:text-rose-400 shadow-sm"
                                     : "text-muted-foreground/60"
                             }`}
                             onClick={() => setSimSide("SELL")}
@@ -491,7 +491,7 @@ export default function TradingSimulator() {
                                     prefix={currencySymbol}
                                 />
                                 {simPrice !== refPrice && refPrice > 0 && (
-                                    <span className={`text-[10px] font-mono font-semibold ${simPrice > refPrice ? "text-emerald-500" : "text-red-500"}`}>
+                                    <span className={`text-[10px] font-mono font-semibold ${simPrice > refPrice ? "text-emerald-500" : "text-rose-500"}`}>
                                         {simPrice > refPrice ? "+" : ""}{((simPrice - refPrice) / refPrice * 100).toFixed(1)}%
                                     </span>
                                 )}
@@ -528,7 +528,7 @@ export default function TradingSimulator() {
                                                     ? "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
                                                     : pct > 0
                                                         ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                                        : "bg-red-500/5 border-red-200/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                                        : "bg-rose-500/5 border-rose-200/30 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
                                         }`}
                                         onClick={() => handleSetSimPrice(val)}
                                     >
@@ -601,14 +601,14 @@ export default function TradingSimulator() {
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors active:scale-[0.99] ${
                                 simSide === "BUY"
                                     ? "bg-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30 hover:bg-emerald-500/10"
-                                    : "bg-red-500/5 border-red-200/30 dark:border-red-800/30 hover:bg-red-500/10"
+                                    : "bg-rose-500/5 border-rose-200/30 dark:border-rose-800/30 hover:bg-rose-500/10"
                             }`}
                         >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <PlusCircle className="h-3.5 w-3.5" />
                                 <span>{simSide} {formatNum(simQty, 0, 8)} {baseAsset} @ {currencySymbol}{formatNum(simPrice)}</span>
                             </div>
-                            <span className={`font-mono font-bold ${simSide === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                            <span className={`font-mono font-bold ${simSide === "BUY" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                                 {currencySymbol}{formatNum(simTotal)}
                             </span>
                         </button>
@@ -629,7 +629,7 @@ export default function TradingSimulator() {
                                 className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
                                     t.side === "BUY"
                                         ? "bg-emerald-500/5 border-emerald-200/20 dark:border-emerald-800/20"
-                                        : "bg-red-500/5 border-red-200/20 dark:border-red-800/20"
+                                        : "bg-rose-500/5 border-rose-200/20 dark:border-rose-800/20"
                                 }`}
                             >
                                 <div className="flex items-center gap-2 min-w-0">
@@ -637,7 +637,7 @@ export default function TradingSimulator() {
                                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                                         t.side === "BUY"
                                             ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                            : "bg-red-500/15 text-red-600 dark:text-red-400"
+                                            : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
                                     }`}>
                                         {t.side}
                                     </span>
@@ -678,7 +678,7 @@ function DeltaBadge({ delta, prefix, suffix }: { delta: number; prefix?: string;
         <span className={`inline-flex items-center text-[9px] font-mono font-semibold px-1 py-px rounded ${
             isPositive
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "bg-red-500/10 text-red-600 dark:text-red-400"
+                : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
         }`}>
             {isPositive ? "+" : ""}{prefix || ""}{formatted}{suffix || ""}
         </span>

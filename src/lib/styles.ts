@@ -15,12 +15,12 @@ export const badge = cva(
         variants: {
             color: {
                 buy:    "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40",
-                sell:   "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40",
+                sell:   "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40",
                 long:   "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40",
-                short:  "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40",
+                short:  "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40",
                 active: "bg-primary/10 text-primary border-primary/20",
                 closed: "bg-muted text-muted-foreground border-border",
-                fund:   "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200/50 dark:border-violet-800/40",
+                fund:   "bg-primary/10 text-primary border-primary/20",
             },
         },
     }
@@ -49,7 +49,7 @@ export function statusBadgeColor(status: "OPEN" | "CLOSED" | "ACTIVE"): BadgeCol
 
 export function pnlColor(value: number): string {
     if (value > 0) return "text-emerald-500 dark:text-emerald-400"
-    if (value < 0) return "text-red-500 dark:text-red-400"
+    if (value < 0) return "text-rose-500 dark:text-rose-400"
     return "text-foreground"
 }
 

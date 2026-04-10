@@ -352,7 +352,7 @@ export default function PositionDetails() {
                                     <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         positionType === 'LONG'
                                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
-                                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
+                                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40'
                                     }`}>
                                         {positionType === 'LONG' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {positionType}
@@ -610,7 +610,7 @@ export default function PositionDetails() {
                                 <div key={tx.id}>
                                 <SwipeActions
                                     actions={[
-                                        { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
+                                        { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => handleRemove(tx.id) },
                                     ]}
                                 >
                                     <div

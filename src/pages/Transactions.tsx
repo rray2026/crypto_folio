@@ -442,13 +442,13 @@ export default function Transactions() {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">PnL (Est.)</span>
-                                            <span className={`text-sm font-mono font-bold ${metrics.totalPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : metrics.totalPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                            <span className={`text-sm font-mono font-bold ${metrics.totalPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : metrics.totalPnL < 0 ? 'text-rose-500 dark:text-rose-400' : 'text-foreground'}`}>
                                                 {previewCurrencySymbol}{metrics.totalPnL > 0 ? '+' : ''}{metrics.totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">ROI</span>
-                                            <span className={`text-sm font-mono font-bold text-right ${metrics.roi > 0 ? 'text-emerald-500 dark:text-emerald-400' : metrics.roi < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                            <span className={`text-sm font-mono font-bold text-right ${metrics.roi > 0 ? 'text-emerald-500 dark:text-emerald-400' : metrics.roi < 0 ? 'text-rose-500 dark:text-rose-400' : 'text-foreground'}`}>
                                                 {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
                                             </span>
                                         </div>

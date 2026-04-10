@@ -143,7 +143,7 @@ export default function Positions() {
                     </div>
                     <div className="bg-card rounded-xl border border-border/40 p-4">
                         <p className="text-xs text-muted-foreground mb-1">Unrealized PnL</p>
-                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-rose-500 dark:text-rose-400' : 'text-foreground'}`}>
                             {currSymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                     </div>

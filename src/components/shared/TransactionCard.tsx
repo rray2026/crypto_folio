@@ -125,12 +125,12 @@ export function TransactionCard({
                     actions={[
                         {
                             icon: <Edit className="h-4 w-4" />,
-                            bg: "bg-blue-500",
+                            bg: "bg-primary",
                             onAction: () => { onEdit(tx.id); setIsEditing(true); },
                         },
                         {
                             icon: <Trash2 className="h-4 w-4" />,
-                            bg: "bg-red-500",
+                            bg: "bg-rose-500",
                             onAction: () => onDelete(tx.id, { stopPropagation: () => {} } as React.MouseEvent),
                         },
                     ]}

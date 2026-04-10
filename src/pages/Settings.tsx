@@ -220,7 +220,7 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center gap-2 mt-4">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
                 </div>
             </div>

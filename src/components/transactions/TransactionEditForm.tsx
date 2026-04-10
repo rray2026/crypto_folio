@@ -84,12 +84,12 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Side</Label>
                 <div className="flex p-1 bg-muted/20 rounded-xl border border-border/30 h-11 opacity-70">
                     <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-bold ${
-                        type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/40"
+                        type === "BUY" ? "bg-background text-emerald-600 shadow-sm" : "text-muted-foreground/40"
                     }`}>
                         BUY
                     </div>
                     <div className={`flex-1 flex items-center justify-center rounded-lg text-xs font-bold ${
-                        type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/40"
+                        type === "SELL" ? "bg-background text-rose-600 shadow-sm" : "text-muted-foreground/40"
                     }`}>
                         SELL
                     </div>

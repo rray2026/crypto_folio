@@ -283,7 +283,7 @@ export default function FundDetails() {
                             <SwipeActions
                                 key={pos.id}
                                 actions={[
-                                    { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => unassignPosition(pos.id) },
+                                    { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => unassignPosition(pos.id) },
                                 ]}
                             >
                                 <div

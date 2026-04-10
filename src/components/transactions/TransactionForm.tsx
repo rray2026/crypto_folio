@@ -71,7 +71,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                         type="button"
                         onClick={() => setType("BUY")}
                         className={`flex-1 rounded-lg text-xs font-bold transition-all ${
-                            type === "BUY" ? "bg-background text-green-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
+                            type === "BUY" ? "bg-background text-emerald-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
                         }`}
                     >
                         BUY
@@ -80,7 +80,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                         type="button"
                         onClick={() => setType("SELL")}
                         className={`flex-1 rounded-lg text-xs font-bold transition-all ${
-                            type === "SELL" ? "bg-background text-red-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
+                            type === "SELL" ? "bg-background text-rose-600 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
                         }`}
                     >
                         SELL

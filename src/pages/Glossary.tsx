@@ -50,7 +50,7 @@ export default function Glossary() {
         },
         {
             title: "Fundamental Concepts",
-            icon: <Layout className="h-5 w-5 text-blue-500" />,
+            icon: <Layout className="h-5 w-5 text-primary" />,
             items: [
                 {
                     term: "Asset Symbol",
