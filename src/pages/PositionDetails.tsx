@@ -351,8 +351,8 @@ export default function PositionDetails() {
                                     {/* Direction Badge */}
                                     <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         positionType === 'LONG'
-                                        ? 'bg-muted text-emerald-600/70 dark:text-emerald-400/70 border-border'
-                                        : 'bg-muted text-rose-600/70 dark:text-rose-400/70 border-border'
+                                        ? 'bg-emerald-500/8 text-emerald-600/80 dark:text-emerald-400/80 border-emerald-500/15'
+                                        : 'bg-rose-500/8 text-rose-600/80 dark:text-rose-400/80 border-rose-500/15'
                                     }`}>
                                         {positionType === 'LONG' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {positionType}

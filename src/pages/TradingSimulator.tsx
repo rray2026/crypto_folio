@@ -526,7 +526,9 @@ export default function TradingSimulator() {
                                                 ? "bg-primary text-primary-foreground border-primary"
                                                 : pct === 0
                                                     ? "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
-                                                    : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
+                                                    : pct > 0
+                                                        ? "bg-emerald-500/5 border-emerald-500/10 text-emerald-600/60 dark:text-emerald-400/60 hover:bg-emerald-500/10"
+                                                        : "bg-rose-500/5 border-rose-500/10 text-rose-600/60 dark:text-rose-400/60 hover:bg-rose-500/10"
                                         }`}
                                         onClick={() => handleSetSimPrice(val)}
                                     >
@@ -596,7 +598,7 @@ export default function TradingSimulator() {
                         <button
                             type="button"
                             onClick={addTrade}
-                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 text-xs font-medium transition-colors active:scale-[0.99]"
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-medium transition-colors active:scale-[0.99]"
                         >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <PlusCircle className="h-3.5 w-3.5" />
@@ -620,14 +622,18 @@ export default function TradingSimulator() {
                         {pendingTrades.map((t, i) => (
                             <div
                                 key={t.id}
-                                className="flex items-center justify-between px-3 py-2 rounded-lg border border-border/50 bg-muted/20 text-xs"
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
+                                    t.side === "BUY"
+                                        ? "bg-emerald-500/5 border-emerald-500/10"
+                                        : "bg-rose-500/5 border-rose-500/10"
+                                }`}
                             >
                                 <div className="flex items-center gap-2 min-w-0">
                                     <span className="text-muted-foreground/50 font-mono w-4 text-center shrink-0">#{i + 1}</span>
                                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                                         t.side === "BUY"
-                                            ? "bg-muted text-emerald-600/70 dark:text-emerald-400/70"
-                                            : "bg-muted text-rose-600/70 dark:text-rose-400/70"
+                                            ? "bg-emerald-500/10 text-emerald-600/80 dark:text-emerald-400/80"
+                                            : "bg-rose-500/10 text-rose-600/80 dark:text-rose-400/80"
                                     }`}>
                                         {t.side}
                                     </span>
