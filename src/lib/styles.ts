@@ -19,7 +19,7 @@ export const badge = cva(
                 long:   "bg-emerald-500/8 text-emerald-600/80 dark:text-emerald-400/80 border-emerald-500/15",
                 short:  "bg-rose-500/8 text-rose-600/80 dark:text-rose-400/80 border-rose-500/15",
                 active: "text-primary border-primary/20",
-                closed: "bg-muted text-muted-foreground border-border",
+                closed: "text-muted-foreground border-border",
                 fund:   "text-primary border-primary/20",
             },
         },
