@@ -372,7 +372,7 @@ export default function PositionDetails() {
                             <div className="flex items-center gap-3 mt-1.5 md:mt-2.5">
                                 <span className="text-sm md:text-lg text-muted-foreground font-mono font-bold tracking-wider">{position.symbol}</span>
                                 {position.status === 'OPEN' && currentPrice > 0 && (
-                                    <span className="text-primary font-mono font-medium text-sm md:text-lg animate-in fade-in slide-in-from-left-2">
+                                    <span className="text-foreground font-mono font-medium text-sm md:text-lg animate-in fade-in slide-in-from-left-2">
                                         {currencySymbol}{currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                     </span>
                                 )}
@@ -778,7 +778,7 @@ export default function PositionDetails() {
                                 {selectedTxIds.size > 0 && (
                                     <div className="pt-3 border-t border-border/40">
                                         <Button
-                                            className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                                            className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg"
                                             onClick={handleBulkLink}
                                         >
                                             <LinkIcon className="h-4 w-4" />

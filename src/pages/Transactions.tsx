@@ -271,8 +271,8 @@ export default function Transactions() {
                     </div>
                 ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-primary/60" />
+                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-muted-foreground" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
                         <p className="text-sm text-muted-foreground mb-5 max-w-xs">
@@ -328,8 +328,8 @@ export default function Transactions() {
                     </div>
                 ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-primary/60" />
+                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-muted-foreground" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
                         <p className="text-sm text-muted-foreground mb-5 max-w-xs">
@@ -429,7 +429,7 @@ export default function Transactions() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-muted-foreground uppercase font-bold tracking-widest">Asset</span>
-                                        <span className="font-mono font-bold text-primary">{symbol}</span>
+                                        <span className="font-mono font-bold text-foreground">{symbol}</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/30">
                                         <div className="flex flex-col">

@@ -207,7 +207,7 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center gap-4 mt-6">
-                    <Button onClick={handleExport} disabled={isProcessingBackup} variant="outline" className="gap-2 border-primary/20 hover:bg-primary/5">
+                    <Button onClick={handleExport} disabled={isProcessingBackup} variant="outline" className="gap-2">
                         <Download className="h-4 w-4" />
                         Export Backup
                     </Button>

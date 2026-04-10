@@ -88,8 +88,8 @@ export default function Dashboard() {
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                            <span className="text-[10px] font-bold text-primary">
+                                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-bold text-foreground">
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
@@ -110,8 +110,8 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center">
-                        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                            <TrendingUp className="h-8 w-8 text-primary/60" />
+                        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-6">
+                            <TrendingUp className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <h2 className="text-xl font-semibold mb-2">Welcome to Folio</h2>
                         <p className="text-sm text-muted-foreground mb-8 max-w-sm">

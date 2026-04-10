@@ -192,8 +192,8 @@ export default function Glossary() {
 
             {/* Footer Note */}
             <div className="pt-12 border-t border-border/40">
-                <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 text-center space-y-2">
-                    <p className="text-sm font-medium text-primary">Need more help?</p>
+                <div className="p-6 bg-muted/30 rounded-2xl border border-border text-center space-y-2">
+                    <p className="text-sm font-medium text-foreground">Need more help?</p>
                     <p className="text-xs text-muted-foreground max-w-md mx-auto">
                         This glossary covers the primary logic used to calculate your portfolio performance. 
                         Prices are fetched in real-time from market providers.

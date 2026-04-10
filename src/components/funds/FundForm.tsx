@@ -133,7 +133,7 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
                 <Button
                     type="submit"
                     disabled={!name.trim() || amount <= 0 || shares <= 0}
-                    className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                    className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]"
                 >
                     {initialValues ? "Save Changes" : "Create Fund"}
                 </Button>

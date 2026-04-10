@@ -224,7 +224,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                             Paste Again
                         </Button>
                         <Button
-                            className="flex-1 h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                            className="flex-1 h-11 rounded-xl font-bold gap-2 shadow-lg"
                             onClick={handleConfirm}
                         >
                             <Sparkles className="h-4 w-4" />

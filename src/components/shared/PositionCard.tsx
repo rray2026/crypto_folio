@@ -28,7 +28,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                 {/* Accent bar top */}
                 <div className={`h-0.5 w-full ${
                     isActive
-                        ? (metrics.unrealizedPnL > 0 ? 'bg-emerald-500' : metrics.unrealizedPnL < 0 ? 'bg-rose-400' : 'bg-primary')
+                        ? (metrics.unrealizedPnL > 0 ? 'bg-emerald-500' : metrics.unrealizedPnL < 0 ? 'bg-rose-400' : 'bg-muted-foreground/30')
                         : (metrics.realizedPnL > 0 ? 'bg-emerald-500/60' : metrics.realizedPnL < 0 ? 'bg-rose-400/60' : 'bg-border')
                 }`} />
 

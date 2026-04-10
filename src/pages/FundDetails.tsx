@@ -342,7 +342,7 @@ export default function FundDetails() {
                                             {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                         </span>
                                         <span className="text-muted-foreground/40">→</span>
-                                        <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
+                                        <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-foreground font-medium">Open</span>}</span>
                                     </div>
                                 </div>
                             </SwipeActions>
@@ -449,7 +449,7 @@ export default function FundDetails() {
                                                     {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                                 </span>
                                                 <span className="text-muted-foreground/40">→</span>
-                                                <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
+                                                <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-foreground font-medium">Open</span>}</span>
                                             </div>
                                         </button>
                                     )
@@ -476,7 +476,7 @@ export default function FundDetails() {
                     {selectedPosIds.size > 0 && (
                         <div className="pt-3 border-t border-border/40">
                             <Button
-                                className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                                className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg"
                                 onClick={handleBulkAssign}
                             >
                                 <LinkIcon className="h-4 w-4" />

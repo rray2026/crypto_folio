@@ -138,7 +138,7 @@ export function TransactionEditForm({ transaction, onSuccess }: { transaction: T
             </div>
 
             <div className="pt-4">
-                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]">
                     Update Transaction
                 </Button>
             </div>
