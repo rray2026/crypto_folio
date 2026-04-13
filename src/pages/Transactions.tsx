@@ -5,10 +5,8 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { SwipeActions } from "@/components/shared/SwipeActions"
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
-import { format } from "date-fns"
-import { Plus, Trash2, Edit, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
+import { Plus, Trash2, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -69,7 +67,6 @@ export default function Transactions() {
     const [createPositionError, setCreatePositionError] = useState<string | null>(null)
     const [isFetchingPreviewPrice, setIsFetchingPreviewPrice] = useState(false)
     const [newPositionName, setNewPositionName] = useState("")
-    const [newPositionType, setNewPositionType] = useState<'PRIMARY' | 'SHADOW'>('PRIMARY')
     
     const [filterSymbol, setFilterSymbol] = useState<string>("ALL")
     const [filterTimeRange, setFilterTimeRange] = useState<string>("ALL")
@@ -79,7 +76,6 @@ export default function Transactions() {
     const bulkDeleteTransactions = useTransactionStore((state) => state.bulkDeleteTransactions)
     const createPosition = usePositionStore((state) => state.createPosition)
     const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
-    const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     // Reactively fetch all transactions
@@ -192,7 +188,6 @@ export default function Transactions() {
         const positionId = await createPosition({
             symbol,
             strategyName: newPositionName || undefined,
-            type: newPositionType,
             startDate: Math.min(...selectedTxs.map(tx => tx.date))
         })
 
@@ -276,8 +271,8 @@ export default function Transactions() {
                     </div>
                 ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-primary/60" />
+                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-muted-foreground" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
                         <p className="text-sm text-muted-foreground mb-5 max-w-xs">
@@ -289,68 +284,21 @@ export default function Transactions() {
                         </Button>
                     </div>
                 ) : (
-                    transactions.map((tx) => {
-                        const sym = getCurrencySymbolForPair(tx.symbol, pairConfigs);
-                        return (
-                            <SwipeActions
-                                key={tx.id}
-                                disabled={isSelectionMode}
-                                actions={[
-                                    { icon: <Edit className="h-4 w-4" />, bg: "bg-blue-500", onAction: () => setEditingTxId(tx.id) },
-                                    { icon: <Trash2 className="h-4 w-4" />, bg: "bg-red-500", onAction: () => confirmSingleDelete(tx.id, { stopPropagation: () => {} } as React.MouseEvent) },
-                                ]}
-                            >
-                                <div
-                                    onClick={() => { if (isSelectionMode) { toggleSelection(tx.id); } else { navigate(`/transactions/${tx.id}`); } }}
-                                    className={`p-3.5 border transition-all duration-200 cursor-pointer select-none ${
-                                        selectedIds.has(tx.id)
-                                        ? 'bg-primary/10 border-primary shadow-sm'
-                                        : 'bg-card border-border hover:border-primary/40 shadow-sm'
-                                    }`}
-                                >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-lg tracking-tight">{tx.symbol}</span>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                                tx.type === "BUY"
-                                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                                : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                            }`}>
-                                                {tx.type}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-y-2.5 text-xs">
-                                        <div className="flex justify-between items-center pr-4">
-                                            <span className="text-muted-foreground font-medium">Price</span>
-                                            <span className="font-mono font-bold">{sym}{tx.price.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-muted-foreground font-medium">Qty</span>
-                                            <span className="font-mono font-bold">{tx.quantity.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pr-4">
-                                            <span className="text-muted-foreground font-medium">Value</span>
-                                            <span className="font-mono font-black text-primary/90">{sym}{tx.amount.toLocaleString()}</span>
-                                        </div>
-                                        {tx.fee > 0 && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground font-medium">Fee</span>
-                                                <span className="font-mono text-muted-foreground font-bold">{sym}{tx.fee.toLocaleString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-3 pt-2.5 border-t border-border/20 flex justify-end">
-                                        <span className="text-[10px] text-muted-foreground/60 font-mono tracking-tighter">
-                                            {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
-                                        </span>
-                                    </div>
-                                </div>
-                            </SwipeActions>
-                        );
-                    })
+                    transactions.map((tx) => (
+                        <TransactionCard
+                            key={tx.id}
+                            tx={tx}
+                            currencySymbol={getCurrencySymbolForPair(tx.symbol, pairConfigs)}
+                            isSelected={selectedIds.has(tx.id)}
+                            isSelectionMode={isSelectionMode}
+                            onToggleSelection={toggleSelection}
+                            onViewDetail={(id) => navigate(`/transactions/${id}`)}
+                            onEdit={(id) => setEditingTxId(id)}
+                            onDelete={confirmSingleDelete}
+                            isEditing={editingTxId === tx.id}
+                            setIsEditing={(isOpen) => setEditingTxId(isOpen ? tx.id : null)}
+                        />
+                    ))
                 )}
 
                 {/* Edit dialog for mobile swipe action */}
@@ -380,8 +328,8 @@ export default function Transactions() {
                     </div>
                 ) : !transactions?.length ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-primary/60" />
+                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-muted-foreground" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
                         <p className="text-sm text-muted-foreground mb-5 max-w-xs">
@@ -470,7 +418,6 @@ export default function Transactions() {
                             const virtualPos = {
                                 symbol,
                                 status: 'OPEN' as const,
-                                type: 'PRIMARY' as const,
                                 entries: selectedTxs.map(tx => ({ transactionId: tx.id, allocatedAmount: tx.quantity })),
                                 id: 'preview',
                                 startDate: Math.min(...selectedTxs.map(tx => tx.date))
@@ -482,7 +429,7 @@ export default function Transactions() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-muted-foreground uppercase font-bold tracking-widest">Asset</span>
-                                        <span className="font-mono font-bold text-primary">{symbol}</span>
+                                        <span className="font-mono font-bold text-foreground">{symbol}</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/30">
                                         <div className="flex flex-col">
@@ -495,13 +442,13 @@ export default function Transactions() {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">PnL (Est.)</span>
-                                            <span className={`text-sm font-mono font-bold ${metrics.totalPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : metrics.totalPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                            <span className={`text-sm font-mono font-bold ${metrics.totalPnL > 0 ? 'text-pnl-up' : metrics.totalPnL < 0 ? 'text-pnl-down' : 'text-foreground'}`}>
                                                 {previewCurrencySymbol}{metrics.totalPnL > 0 ? '+' : ''}{metrics.totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-muted-foreground uppercase font-semibold">ROI</span>
-                                            <span className={`text-sm font-mono font-bold text-right ${metrics.roi > 0 ? 'text-emerald-500 dark:text-emerald-400' : metrics.roi < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                            <span className={`text-sm font-mono font-bold text-right ${metrics.roi > 0 ? 'text-pnl-up' : metrics.roi < 0 ? 'text-pnl-down' : 'text-foreground'}`}>
                                                 {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
                                             </span>
                                         </div>
@@ -523,49 +470,6 @@ export default function Transactions() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Type</Label>
-                            <Select value={newPositionType} onValueChange={(val) => setNewPositionType(val as 'PRIMARY' | 'SHADOW')}>
-                                <SelectTrigger className="w-full h-11 rounded-xl font-bold border-border/50">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="PRIMARY">🎯 Strategic (Primary)</SelectItem>
-                                    <SelectItem value="SHADOW">👀 Analysis (Shadow)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p className="text-[10px] text-muted-foreground px-1 leading-relaxed">
-                                {newPositionType === 'PRIMARY' 
-                                    ? "Counted towards global portfolio metrics. Best for real trades." 
-                                    : "Educational or experimental group. Not counted in total profit."}
-                            </p>
-                        </div>
-
-                        {/* Conflict Warning */}
-                        {newPositionType === 'PRIMARY' && (() => {
-                            const selectedTxs = allTransactions?.filter(tx => selectedIds.has(tx.id)) || []
-                            const transactionsWithPrimary = selectedTxs.filter(tx => {
-                                const associatedPrimary = positions?.filter(p => p.type === 'PRIMARY')
-                                    .some(p => p.entries.some(e => e.transactionId === tx.id))
-                                return associatedPrimary
-                            })
-                            
-                            if (transactionsWithPrimary.length > 0) {
-                                return (
-                                    <div className="flex gap-2 p-3 bg-amber-500/5 text-amber-600 dark:text-amber-400 border border-amber-500/10 rounded-xl">
-                                        <AlertCircle className="h-5 w-5 shrink-0" />
-                                        <div className="space-y-1">
-                                            <p className="text-[11px] font-bold leading-none">Duplicate Account Detection</p>
-                                            <p className="text-[10px] leading-relaxed">
-                                                {transactionsWithPrimary.length} of the selected trades are already in another <b>Strategic (Primary)</b> position. 
-                                                Including them here will cause double-counting in your total PnL.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )
-                            }
-                            return null
-                        })()}
                     </div>
                     <div className="flex justify-end gap-3 pt-2">
                         <Button variant="outline" onClick={() => setIsCreatePositionDialogOpen(false)} className="rounded-xl h-11 flex-1">

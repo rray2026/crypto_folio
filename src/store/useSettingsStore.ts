@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MIGRATIONS } from '../lib/migrations';
+import { DEFAULT_THEME_COLOR } from '@/lib/themeColors';
+import type { ThemeColor } from '@/lib/themeColors';
 
 // Migrate old localStorage key from CryptoFolio era
 const OLD_SETTINGS_KEY = 'crypto-folio-settings';
@@ -12,6 +14,7 @@ if (typeof window !== 'undefined' && !localStorage.getItem(NEW_SETTINGS_KEY) && 
 
 export type DashboardTimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 export type Theme = 'dark' | 'light' | 'system';
+export type { ThemeColor } from '@/lib/themeColors';
 
 export interface PairConfig {
     pair: string;
@@ -184,9 +187,11 @@ interface SettingsState {
     prices: Record<string, { price: string; timestamp: number }>;
     dashboardTimeRange: DashboardTimeRange;
     theme: Theme;
+    themeColor: ThemeColor;
     pinnedPairs: string[];
     setDashboardTimeRange: (range: DashboardTimeRange) => void;
     setTheme: (theme: Theme) => void;
+    setThemeColor: (color: ThemeColor) => void;
     addPair: (pair: string, exchange?: string, dataProvider?: string) => void;
     removePair: (pair: string) => void;
     updatePairExchange: (pair: string, exchange: string) => void;
@@ -205,9 +210,11 @@ export const useSettingsStore = create<SettingsState>()(
             prices: {},
             dashboardTimeRange: '1Y',
             theme: 'system',
+            themeColor: DEFAULT_THEME_COLOR,
             pinnedPairs: [],
             setDashboardTimeRange: (range) => set({ dashboardTimeRange: range }),
             setTheme: (theme) => set({ theme }),
+            setThemeColor: (color) => set({ themeColor: color }),
             addPair: (pair, exchange = 'Binance', dataProvider) => set((state) => {
                 const upper = pair.toUpperCase();
                 if (state.predefinedPairs.includes(upper)) return state;

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 import { FundForm } from "@/components/funds/FundForm"
 import { SwipeActions } from "@/components/shared/SwipeActions"
+import { badge, dirBadgeColor, statusBadgeColor, pnlColor, sectionHeader, label, dialogItem } from "@/lib/styles"
 
 export default function FundDetails() {
     const { id } = useParams<{ id: string }>()
@@ -230,12 +231,12 @@ export default function FundDetails() {
             {/* NAV metrics row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                 <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Initial Amount</p>
+                    <p className={`${label} mb-1`}>Initial Amount</p>
                     <p className="text-xl font-bold font-mono">{fmtNum(fund.initialAmount)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
                 </div>
                 <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Current Value</p>
+                    <p className={`${label} mb-1`}>Current Value</p>
                     <p className="text-xl font-bold font-mono">{fmtNum(fundM.currentValue)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
                     <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
@@ -250,18 +251,18 @@ export default function FundDetails() {
                     </div>
                 </div>
                 <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">NAV / Share</p>
+                    <p className={`${label} mb-1`}>NAV / Share</p>
                     <p className="text-xl font-bold font-mono">{fundM.currentNAV.toFixed(4)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                         Initial: {fundM.initialNAV.toFixed(4)}
                     </p>
                 </div>
                 <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">NAV Change</p>
-                    <p className={`text-xl font-bold font-mono ${navUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                    <p className={`${label} mb-1`}>NAV Change</p>
+                    <p className={`text-xl font-bold font-mono ${pnlColor(navUp ? 1 : -1)}`}>
                         {navUp ? '+' : ''}{fundM.navChangePct.toFixed(2)}%
                     </p>
-                    <p className={`text-[10px] mt-0.5 font-mono ${fundM.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                    <p className={`text-[10px] mt-0.5 font-mono ${pnlColor(fundM.totalPnL)}`}>
                         {fundM.totalPnL >= 0 ? '+' : ''}{fmtNum(fundM.totalPnL)} PnL
                     </p>
                 </div>
@@ -269,7 +270,7 @@ export default function FundDetails() {
 
             {/* Linked Positions */}
             <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 px-1">
+                <span className={sectionHeader}>
                     Linked Positions ({fundPositions.length})
                 </span>
                 <div className="space-y-3">
@@ -282,32 +283,24 @@ export default function FundDetails() {
                             <SwipeActions
                                 key={pos.id}
                                 actions={[
-                                    { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => unassignPosition(pos.id) },
+                                    { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => unassignPosition(pos.id) },
                                 ]}
                             >
                                 <div
-                                    className="p-3 border bg-card hover:bg-card/80 transition-colors cursor-pointer group"
+                                    className="p-3 border border-border/50 bg-card hover:bg-card/80 transition-colors cursor-pointer group"
                                     onClick={() => navigate(`/positions/${pos.id}`)}
                                 >
                                     {/* Row 1: badges + name + actions */}
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                            <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
-                                                pos.status === 'OPEN'
-                                                ? 'bg-primary/10 text-primary border-primary/20'
-                                                : 'bg-muted text-muted-foreground border-border'
-                                            }`}>
+                                            <span className={`shrink-0 ${badge({ color: statusBadgeColor(pos.status) })}`}>
                                                 {pos.status}
                                             </span>
-                                            <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
-                                                isLong
-                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
-                                                : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
-                                            }`}>
+                                            <span className={`shrink-0 ${badge({ color: dirBadgeColor(metrics.positionType) })}`}>
                                                 {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                 {metrics.positionType}
                                             </span>
-                                            <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
+                                            <p className="font-semibold text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                         </div>
                                         {/* Desktop only: hover-reveal buttons */}
                                         <div className="hidden md:flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
@@ -325,10 +318,10 @@ export default function FundDetails() {
                                         <span className="text-muted-foreground/40">•</span>
                                         <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
                                         <span className="text-muted-foreground/40">•</span>
-                                        <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                        <span className={`font-semibold font-mono ${pnlColor(metrics.totalPnL)}`}>
                                             PnL {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
                                         </span>
-                                        <span className={`font-mono ${metrics.roi >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                        <span className={`font-mono ${pnlColor(metrics.roi)}`}>
                                             ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
                                         </span>
                                         <span className="text-muted-foreground/40">•</span>
@@ -349,7 +342,7 @@ export default function FundDetails() {
                                             {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                         </span>
                                         <span className="text-muted-foreground/40">→</span>
-                                        <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
+                                        <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-foreground font-medium">Open</span>}</span>
                                     </div>
                                 </div>
                             </SwipeActions>
@@ -413,30 +406,18 @@ export default function FundDetails() {
                                             key={pos.id}
                                             type="button"
                                             onClick={() => toggleSelectPos(pos.id)}
-                                            className={`w-full p-3 rounded-lg border transition-colors text-left ${
-                                                isSelected
-                                                    ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20'
-                                                    : 'border-border/50 hover:bg-muted/30'
-                                            }`}
+                                            className={dialogItem(isSelected)}
                                         >
                                             <div className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-1.5 min-w-0">
-                                                    <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
-                                                        pos.status === 'OPEN'
-                                                        ? 'bg-primary/10 text-primary border-primary/20'
-                                                        : 'bg-muted text-muted-foreground border-border'
-                                                    }`}>
+                                                    <span className={`shrink-0 ${badge({ color: statusBadgeColor(pos.status) })}`}>
                                                         {pos.status}
                                                     </span>
-                                                    <span className={`shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
-                                                        isLong
-                                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
-                                                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
-                                                    }`}>
+                                                    <span className={`shrink-0 ${badge({ color: dirBadgeColor(metrics.positionType) })}`}>
                                                         {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                                         {metrics.positionType}
                                                     </span>
-                                                    <p className="font-medium text-sm truncate">{pos.strategyName || pos.symbol}</p>
+                                                    <p className="font-semibold text-sm truncate">{pos.strategyName || pos.symbol}</p>
                                                 </div>
                                                 {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
                                             </div>
@@ -446,10 +427,10 @@ export default function FundDetails() {
                                                 <span className="text-muted-foreground/40">•</span>
                                                 <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
                                                 <span className="text-muted-foreground/40">•</span>
-                                                <span className={`font-semibold font-mono ${metrics.totalPnL >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                <span className={`font-semibold font-mono ${pnlColor(metrics.totalPnL)}`}>
                                                     PnL {metrics.totalPnL >= 0 ? '+' : ''}{fmtNum(metrics.totalPnL)}
                                                 </span>
-                                                <span className={`font-mono ${metrics.roi >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                <span className={`font-mono ${pnlColor(metrics.roi)}`}>
                                                     ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
                                                 </span>
                                             </div>
@@ -468,7 +449,7 @@ export default function FundDetails() {
                                                     {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
                                                 </span>
                                                 <span className="text-muted-foreground/40">→</span>
-                                                <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-primary">Open</span>}</span>
+                                                <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-foreground font-medium">Open</span>}</span>
                                             </div>
                                         </button>
                                     )
@@ -495,7 +476,7 @@ export default function FundDetails() {
                     {selectedPosIds.size > 0 && (
                         <div className="pt-3 border-t border-border/40">
                             <Button
-                                className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                                className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg"
                                 onClick={handleBulkAssign}
                             >
                                 <LinkIcon className="h-4 w-4" />

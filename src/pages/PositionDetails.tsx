@@ -35,6 +35,7 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
+import { badge, txBadgeColor, pnlColor, sectionHeader, label, dialogItem } from "@/lib/styles"
 
 export default function PositionDetails() {
     const { id } = useParams<{ id: string }>()
@@ -293,7 +294,7 @@ export default function PositionDetails() {
             `## Position Overview`,
             `- Name: ${name}`,
             `- Symbol: ${position.symbol}`,
-            `- Type: ${position.type} / ${positionType}`,
+            `- Direction: ${positionType}`,
             `- Status: ${position.status}`,
             `- Opened: ${startStr}`,
             `- Closed: ${endStr}`,
@@ -344,20 +345,14 @@ export default function PositionDetails() {
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
-                                        {position.type === 'SHADOW' && (
-                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
-                                                <Eye className="h-3 w-3" />
-                                                SHADOW ANALYSIS
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     {/* Direction Badge */}
                                     <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         positionType === 'LONG'
-                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
-                                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40'
+                                        ? 'bg-pnl-up/8 text-pnl-up/80 border-pnl-up/15'
+                                        : 'bg-pnl-down/8 text-pnl-down/80 border-pnl-down/15'
                                     }`}>
                                         {positionType === 'LONG' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {positionType}
@@ -366,8 +361,8 @@ export default function PositionDetails() {
                                     {/* Status Badge */}
                                     <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         position.status === 'OPEN'
-                                        ? 'bg-primary/10 text-primary border-primary/20'
-                                        : 'bg-muted text-muted-foreground border-border'
+                                        ? 'text-primary border-primary/20'
+                                        : 'text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
                                         {position.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
@@ -377,7 +372,7 @@ export default function PositionDetails() {
                             <div className="flex items-center gap-3 mt-1.5 md:mt-2.5">
                                 <span className="text-sm md:text-lg text-muted-foreground font-mono font-bold tracking-wider">{position.symbol}</span>
                                 {position.status === 'OPEN' && currentPrice > 0 && (
-                                    <span className="text-primary font-mono font-medium text-sm md:text-lg animate-in fade-in slide-in-from-left-2">
+                                    <span className="text-foreground font-mono font-medium text-sm md:text-lg animate-in fade-in slide-in-from-left-2">
                                         {currencySymbol}{currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                     </span>
                                 )}
@@ -537,23 +532,23 @@ export default function PositionDetails() {
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
                             {/* Realized PnL */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Realized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${realizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : realizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                <span className={`${label} sm:text-xs mb-1`}>Realized PnL</span>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(realizedPnL)}`}>
                                     {currencySymbol}{realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
 
                             {/* Unrealized PnL */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Unrealized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${unrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : unrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                <span className={`${label} sm:text-xs mb-1`}>Unrealized PnL</span>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(unrealizedPnL)}`}>
                                     {totalRemaining !== 0 ? `${currencySymbol}${unrealizedPnL > 0 ? '+' : ''}${unrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
                             </div>
 
                             {/* Avg Buy Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Buy</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Avg Buy</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {avgBuyPrice > 0 ? `${currencySymbol}${avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
@@ -561,7 +556,7 @@ export default function PositionDetails() {
 
                             {/* Avg Sell Price */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Sell</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Avg Sell</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {avgSellPrice > 0 ? `${currencySymbol}${avgSellPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
@@ -569,7 +564,7 @@ export default function PositionDetails() {
 
                             {/* Total Fee */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Fee</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Total Fee</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {totalFee > 0 ? `${currencySymbol}${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                 </span>
@@ -577,15 +572,15 @@ export default function PositionDetails() {
 
                             {/* ROI */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">ROI</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${roi > 0 ? 'text-emerald-500 dark:text-emerald-400' : roi < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                                <span className={`${label} sm:text-xs mb-1`}>ROI</span>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(roi)}`}>
                                     {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
                                 </span>
                             </div>
 
                             {/* Holding */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Holding</span>
+                                <span className={`${label} sm:text-xs mb-1`}>Holding</span>
                                 <div className="flex items-baseline gap-1 truncate">
                                     <span className="text-base sm:text-xl font-bold font-mono">{totalRemaining.toLocaleString()}</span>
                                     <span className="text-[10px] text-muted-foreground uppercase">{position.symbol.split('/')[0]}</span>
@@ -594,7 +589,7 @@ export default function PositionDetails() {
 
                             {/* Avg. Cost (Breakeven) */}
                             <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1" title="Breakeven price considering realized PnL">Avg Cost</span>
+                                <span className={`${label} sm:text-xs mb-1`} title="Breakeven price considering realized PnL">Avg Cost</span>
                                 <span className="text-base sm:text-xl font-bold font-mono">
                                     {(breakevenPrice > 0 && totalRemaining !== 0) ? `${currencySymbol}${breakevenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '--'}
                                 </span>
@@ -605,7 +600,7 @@ export default function PositionDetails() {
 
                 {/* Linked Trades */}
                 <div className="space-y-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 px-1">
+                    <span className={sectionHeader}>
                         Linked Trades ({linkedTxs.length})
                     </span>
                     <div className="space-y-3">
@@ -615,15 +610,15 @@ export default function PositionDetails() {
                                 <div key={tx.id}>
                                 <SwipeActions
                                     actions={[
-                                        { icon: <X className="h-4 w-4" />, bg: "bg-red-500", onAction: () => handleRemove(tx.id) },
+                                        { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => handleRemove(tx.id) },
                                     ]}
                                 >
                                     <div
-                                        className="flex items-center justify-between p-3 border bg-card hover:bg-card/80 transition-colors group cursor-pointer"
+                                        className="flex items-center justify-between p-3 border border-border/50 bg-card hover:bg-card/80 transition-colors group cursor-pointer"
                                         onClick={() => navigate(`/transactions/${tx.id}`)}
                                     >
                                         <div className="flex gap-3 md:gap-4 items-center min-w-0">
-                                            <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                            <div className={badge({ color: txBadgeColor(tx.type) })}>
                                                 {tx.type}
                                             </div>
                                             <div className="flex flex-col min-w-0">
@@ -737,18 +732,14 @@ export default function PositionDetails() {
                                                     key={tx.id}
                                                     type="button"
                                                     onClick={() => toggleSelectTx(tx.id)}
-                                                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
-                                                        isSelected
-                                                            ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20'
-                                                            : 'border-border/50 hover:bg-muted/30'
-                                                    }`}
+                                                    className={`${dialogItem(isSelected)} flex items-center gap-3`}
                                                 >
-                                                    <div className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border shrink-0 ${tx.type === "BUY" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40" : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"}`}>
+                                                    <div className={`${badge({ color: txBadgeColor(tx.type) })} shrink-0`}>
                                                         {tx.type}
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1">
                                                         <p className="font-mono text-xs font-medium truncate">
-                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {isPartial ? <><span className="text-primary">{remaining}</span><span className="text-muted-foreground">/{tx.quantity}</span></> : tx.quantity}
+                                                            {currencySymbol}{tx.price.toLocaleString()} <span className="text-muted-foreground mx-0.5">×</span> {isPartial ? <><span className="text-foreground font-semibold">{remaining}</span><span className="text-muted-foreground">/{tx.quantity}</span></> : tx.quantity}
                                                         </p>
                                                         <p className="text-[10px] text-muted-foreground mt-0.5">
                                                             {format(new Date(tx.date), "yyyy/MM/dd HH:mm")}
@@ -787,7 +778,7 @@ export default function PositionDetails() {
                                 {selectedTxIds.size > 0 && (
                                     <div className="pt-3 border-t border-border/40">
                                         <Button
-                                            className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                                            className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg"
                                             onClick={handleBulkLink}
                                         >
                                             <LinkIcon className="h-4 w-4" />

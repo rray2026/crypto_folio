@@ -134,7 +134,7 @@ export function comparePositionsByMetrics(
 }
 
 /**
- * Aggregates portfolio-level metrics across all PRIMARY positions, filtered by time range.
+ * Aggregates portfolio-level metrics across all positions, filtered by time range.
  * Returns the computed stats plus the resolved timeThreshold (ms) for card-level filtering.
  */
 export function getPortfolioMetrics(
@@ -157,7 +157,6 @@ export function getPortfolioMetrics(
     let closedTrades = 0;
 
     for (const pos of positions) {
-        if (pos.type === 'SHADOW') continue;
         const linkedTxIds = new Set(pos.entries.map(e => e.transactionId));
         const linkedTxs = transactions.filter(tx => linkedTxIds.has(tx.id));
         const metrics = getPositionMetrics(pos, linkedTxs, prices);

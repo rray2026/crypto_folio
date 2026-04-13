@@ -17,7 +17,7 @@ import { useEffect } from "react"
 import { useSettingsStore } from "./store/useSettingsStore"
 
 function App() {
-  const { theme } = useSettingsStore()
+  const { theme, themeColor } = useSettingsStore()
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -31,6 +31,15 @@ function App() {
 
     root.classList.add(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (themeColor && themeColor !== "blue") {
+      root.setAttribute("data-theme-color", themeColor);
+    } else {
+      root.removeAttribute("data-theme-color");
+    }
+  }, [themeColor]);
 
   return (
     <BrowserRouter>

@@ -3,6 +3,7 @@ import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { Link, useNavigate } from "react-router-dom"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import type { Theme } from "@/store/useSettingsStore"
+import { THEME_COLORS } from "@/lib/themeColors"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, TrendingUp, XCircle } from "lucide-react"
+import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, TrendingUp, XCircle, Check } from "lucide-react"
 
 import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
@@ -32,7 +33,7 @@ const DEBUG_TAP_TIMEOUT = 3000
 
 export default function Settings() {
     const navigate = useNavigate()
-    const { predefinedPairs, theme, setTheme } = useSettingsStore()
+    const { predefinedPairs, theme, setTheme, themeColor, setThemeColor } = useSettingsStore()
 
     const txCount   = useLiveQuery(() => db.transactions.count(), [])
     const posCount  = useLiveQuery(() => db.positions.count(), [])
@@ -109,11 +110,11 @@ export default function Settings() {
                 <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
             </div>
 
-            <div className="bg-card rounded-xl border shadow-sm hover:border-primary/30 transition-all">
+            <div className="bg-card rounded-xl border shadow-sm hover:border-border transition-all">
                 <Link to="/settings/trading-pairs" className="flex items-center justify-between p-6 group">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                             Trading Pairs
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -141,17 +142,54 @@ export default function Settings() {
                     </div>
                 </div>
 
-                <div className="max-w-[200px]">
-                    <Select value={theme} onValueChange={(val: Theme) => setTheme(val)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Theme" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="space-y-5">
+                    <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Mode</p>
+                        <div className="max-w-[200px]">
+                            <Select value={theme} onValueChange={(val: Theme) => setTheme(val)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Theme" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="light">Light</SelectItem>
+                                    <SelectItem value="dark">Dark</SelectItem>
+                                    <SelectItem value="system">System</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-3">Accent Color</p>
+                        <div className="flex flex-wrap gap-3">
+                            {THEME_COLORS.map(color => (
+                                <button
+                                    key={color.id}
+                                    onClick={() => setThemeColor(color.id)}
+                                    className="group flex flex-col items-center gap-1.5"
+                                    title={color.name}
+                                >
+                                    <div
+                                        className={`relative w-9 h-9 rounded-full transition-all ${
+                                            themeColor === color.id
+                                                ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110"
+                                                : "hover:scale-105 opacity-80 hover:opacity-100"
+                                        }`}
+                                        style={{ backgroundColor: color.swatch }}
+                                    >
+                                        {themeColor === color.id && (
+                                            <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-sm" />
+                                        )}
+                                    </div>
+                                    <span className={`text-[10px] transition-colors ${
+                                        themeColor === color.id ? "text-foreground font-medium" : "text-muted-foreground/60"
+                                    }`}>
+                                        {color.name}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -169,7 +207,7 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center gap-4 mt-6">
-                    <Button onClick={handleExport} disabled={isProcessingBackup} variant="outline" className="gap-2 border-primary/20 hover:bg-primary/5">
+                    <Button onClick={handleExport} disabled={isProcessingBackup} variant="outline" className="gap-2">
                         <Download className="h-4 w-4" />
                         Export Backup
                     </Button>
@@ -220,7 +258,7 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center gap-2 mt-4">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
                 </div>
             </div>
@@ -261,11 +299,11 @@ export default function Settings() {
                 </DialogContent>
             </Dialog>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8 group hover:border-primary/30 transition-all">
+            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8 group hover:border-border transition-all">
                 <Link to="/glossary" className="flex items-center justify-between group">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                             Investment Glossary
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Light mode — cool-tinted white with teal primary */
+    /* Light mode — neutral slate primary, data speaks through emerald/rose */
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
 
@@ -14,36 +14,85 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 173 58% 38%;
+    --primary: 220 55% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 93%;
+    --secondary: 214 20% 93%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 20% 93%;
+    --muted: 214 20% 93%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 173 58% 94%;
-    --accent-foreground: 173 58% 30%;
+    --accent: 220 14% 95%;
+    --accent-foreground: 220 14% 35%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 32% 89%;
     --input: 214 32% 89%;
-    --ring: 173 58% 38%;
+    --ring: 220 55% 48%;
 
     --radius: 0.625rem;
 
-    --chart-1: 173 58% 38%;
+    --chart-1: 220 55% 48%;
     --chart-2: 221 83% 53%;
     --chart-3: 142 71% 45%;
     --chart-4: 38 92% 55%;
     --chart-5: 0 72% 51%;
+
+    --pnl-up: 145 55% 42%;
+    --pnl-down: 0 65% 55%;
+  }
+
+  /* ---- Theme color overrides ---- */
+  /* Blue is the default — no override needed */
+
+  :root[data-theme-color="indigo"] {
+    --primary: 235 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 235 60% 55%;
+    --chart-1: 235 60% 55%;
+  }
+  :root[data-theme-color="violet"] {
+    --primary: 262 55% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 262 55% 55%;
+    --chart-1: 262 55% 55%;
+  }
+  :root[data-theme-color="rose"] {
+    --primary: 347 65% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 347 65% 55%;
+    --chart-1: 347 65% 55%;
+  }
+  :root[data-theme-color="amber"] {
+    --primary: 35 92% 50%;
+    --primary-foreground: 35 10% 10%;
+    --ring: 35 92% 50%;
+    --chart-1: 35 92% 50%;
+  }
+  :root[data-theme-color="teal"] {
+    --primary: 172 60% 38%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 172 60% 38%;
+    --chart-1: 172 60% 38%;
+  }
+  :root[data-theme-color="emerald"] {
+    --primary: 158 55% 40%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 158 55% 40%;
+    --chart-1: 158 55% 40%;
+  }
+  :root[data-theme-color="slate"] {
+    --primary: 220 14% 40%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 220 14% 40%;
+    --chart-1: 220 14% 40%;
   }
 
   .dark {
-    /* Dark mode — deep navy with teal primary */
+    /* Dark mode — steel blue default */
     --background: 222 14% 7%;
     --foreground: 213 31% 91%;
 
@@ -53,7 +102,7 @@
     --popover: 222 14% 10%;
     --popover-foreground: 213 31% 91%;
 
-    --primary: 173 58% 48%;
+    --primary: 215 45% 65%;
     --primary-foreground: 222 14% 7%;
 
     --secondary: 222 14% 15%;
@@ -63,20 +112,66 @@
     --muted-foreground: 215 16% 55%;
 
     --accent: 222 14% 15%;
-    --accent-foreground: 173 58% 48%;
+    --accent-foreground: 215 20% 70%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 222 14% 17%;
     --input: 222 14% 15%;
-    --ring: 173 58% 48%;
+    --ring: 215 45% 65%;
 
-    --chart-1: 173 58% 48%;
+    --chart-1: 215 45% 65%;
     --chart-2: 221 83% 63%;
     --chart-3: 142 71% 48%;
     --chart-4: 38 92% 58%;
     --chart-5: 0 72% 58%;
+
+    --pnl-up: 150 45% 62%;
+    --pnl-down: 2 55% 68%;
+  }
+
+  .dark[data-theme-color="indigo"] {
+    --primary: 235 50% 70%;
+    --primary-foreground: 235 60% 10%;
+    --ring: 235 50% 70%;
+    --chart-1: 235 50% 70%;
+  }
+  .dark[data-theme-color="violet"] {
+    --primary: 262 45% 72%;
+    --primary-foreground: 262 55% 10%;
+    --ring: 262 45% 72%;
+    --chart-1: 262 45% 72%;
+  }
+  .dark[data-theme-color="rose"] {
+    --primary: 347 55% 68%;
+    --primary-foreground: 347 65% 10%;
+    --ring: 347 55% 68%;
+    --chart-1: 347 55% 68%;
+  }
+  .dark[data-theme-color="amber"] {
+    --primary: 35 82% 58%;
+    --primary-foreground: 35 92% 8%;
+    --ring: 35 82% 58%;
+    --chart-1: 35 82% 58%;
+  }
+  .dark[data-theme-color="teal"] {
+    --primary: 172 50% 55%;
+    --primary-foreground: 172 60% 7%;
+    --ring: 172 50% 55%;
+    --chart-1: 172 50% 55%;
+  }
+  .dark[data-theme-color="emerald"] {
+    --primary: 158 45% 55%;
+    --primary-foreground: 158 55% 7%;
+    --ring: 158 45% 55%;
+    --chart-1: 158 45% 55%;
+  }
+  .dark[data-theme-color="slate"] {
+    --primary: 215 20% 65%;
+    --primary-foreground: 222 14% 7%;
+    --ring: 215 20% 65%;
+    --chart-1: 215 20% 65%;
   }
 }
 

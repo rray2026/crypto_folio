@@ -44,9 +44,9 @@ const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }
         dot:   "bg-orange-500",
     },
     NYSE: {
-        badge: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
-        card:  "border-green-500/30 hover:border-green-500/60 hover:bg-green-500/5",
-        dot:   "bg-green-500",
+        badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        card:  "border-emerald-500/30 hover:border-emerald-500/60 hover:bg-emerald-500/5",
+        dot:   "bg-emerald-500",
     },
     NASDAQ: {
         badge: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
@@ -69,9 +69,9 @@ const ENTITY_STYLES: Record<string, { badge: string; card: string; dot: string }
         dot:   "bg-rose-500",
     },
     SSE: {
-        badge: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-        card:  "border-red-500/30 hover:border-red-500/60 hover:bg-red-500/5",
-        dot:   "bg-red-500",
+        badge: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+        card:  "border-rose-500/30 hover:border-rose-500/60 hover:bg-rose-500/5",
+        dot:   "bg-rose-500",
     },
     SZSE: {
         badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
@@ -332,8 +332,8 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
 
 const MARKET_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
     'Crypto':    { bg: 'bg-yellow-500/10', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-500/20', dot: 'bg-yellow-500' },
-    'US Stocks': { bg: 'bg-green-500/10',  text: 'text-green-600 dark:text-green-400',   border: 'border-green-500/20',  dot: 'bg-green-500' },
-    'CN Stocks': { bg: 'bg-red-500/10',    text: 'text-red-600 dark:text-red-400',       border: 'border-red-500/20',    dot: 'bg-red-500' },
+    'US Stocks': { bg: 'bg-emerald-500/10',  text: 'text-emerald-600 dark:text-emerald-400',   border: 'border-emerald-500/20',  dot: 'bg-emerald-500' },
+    'CN Stocks': { bg: 'bg-rose-500/10',    text: 'text-rose-600 dark:text-rose-400',       border: 'border-rose-500/20',    dot: 'bg-rose-500' },
 }
 
 export default function TradingPairs() {
@@ -562,8 +562,8 @@ export default function TradingPairs() {
 
                 {filteredConfigs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-primary/60" />
+                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-muted-foreground" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No trading pairs yet</h3>
                         <p className="text-sm text-muted-foreground mb-5 max-w-xs">
@@ -600,7 +600,7 @@ export default function TradingPairs() {
                                     actions={[
                                         {
                                             icon: <Trash2 className="h-4 w-4" />,
-                                            bg: 'bg-red-500',
+                                            bg: 'bg-rose-500',
                                             onAction: () => removePair(pair),
                                         },
                                     ]}

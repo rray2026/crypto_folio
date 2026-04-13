@@ -47,6 +47,8 @@ export default {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
+  			'pnl-up': 'hsl(var(--pnl-up))',
+  			'pnl-down': 'hsl(var(--pnl-down))',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

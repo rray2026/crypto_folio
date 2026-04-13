@@ -78,8 +78,8 @@ describe('useFundStore', () => {
         });
 
         // Assign two positions to the fund directly via DB
-        const posId1 = await createPosition({ symbol: 'BTC/USDT', type: 'PRIMARY', startDate: Date.now() });
-        const posId2 = await createPosition({ symbol: 'ETH/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId1 = await createPosition({ symbol: 'BTC/USDT', startDate: Date.now() });
+        const posId2 = await createPosition({ symbol: 'ETH/USDT', startDate: Date.now() });
         await db.positions.update(posId1, { fundId });
         await db.positions.update(posId2, { fundId });
 
@@ -97,7 +97,7 @@ describe('useFundStore', () => {
         const fundIdA = await createFund({ name: 'Fund A', initialAmount: 1000, initialShares: 10, currency: 'USDT', status: 'ACTIVE' });
         const fundIdB = await createFund({ name: 'Fund B', initialAmount: 2000, initialShares: 20, currency: 'USDT', status: 'ACTIVE' });
 
-        const posId = await createPosition({ symbol: 'SOL/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'SOL/USDT', startDate: Date.now() });
         await db.positions.update(posId, { fundId: fundIdB });
 
         await deleteFund(fundIdA);
@@ -110,7 +110,7 @@ describe('useFundStore', () => {
         const { createPosition } = usePositionStore.getState();
 
         const fundId = await createFund({ name: 'Fund B', initialAmount: 2000, initialShares: 20, currency: 'USDT', status: 'ACTIVE' });
-        const posId = await createPosition({ symbol: 'ETH/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'ETH/USDT', startDate: Date.now() });
 
         await assignPositionToFund(posId, fundId);
 
@@ -123,7 +123,7 @@ describe('useFundStore', () => {
         const { createPosition } = usePositionStore.getState();
 
         const fundId = await createFund({ name: 'Fund C', initialAmount: 3000, initialShares: 30, currency: 'USDT', status: 'ACTIVE' });
-        const posId = await createPosition({ symbol: 'SOL/USDT', type: 'PRIMARY', startDate: Date.now() });
+        const posId = await createPosition({ symbol: 'SOL/USDT', startDate: Date.now() });
 
         await assignPositionToFund(posId, fundId);
         expect((await db.positions.get(posId))?.fundId).toBe(fundId);

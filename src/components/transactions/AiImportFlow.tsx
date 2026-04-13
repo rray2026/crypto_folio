@@ -139,7 +139,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                             className="absolute top-2 right-2 h-7 w-7"
                             onClick={handleCopy}
                         >
-                            {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                         </Button>
                     </div>
                 </div>
@@ -224,7 +224,7 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                             Paste Again
                         </Button>
                         <Button
-                            className="flex-1 h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                            className="flex-1 h-11 rounded-xl font-bold gap-2 shadow-lg"
                             onClick={handleConfirm}
                         >
                             <Sparkles className="h-4 w-4" />

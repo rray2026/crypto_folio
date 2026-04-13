@@ -9,7 +9,6 @@ import type { Position } from "@/lib/types"
 
 export function PositionEditForm({ position, onSuccess }: { position: Position, onSuccess: () => void }) {
     const updatePosition = usePositionStore(state => state.updatePosition)
-    const [type, setType] = useState<'PRIMARY' | 'SHADOW'>(position.type)
     const [strategyName, setStrategyName] = useState(position.strategyName || "")
     const [notes, setNotes] = useState(position.notes || "")
     const [startDate, setStartDate] = useState(() => {
@@ -25,7 +24,6 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
         e.preventDefault()
 
         await updatePosition(position.id, {
-            type,
             strategyName: strategyName || undefined,
             notes: notes || undefined,
             startDate: startDate ? new Date(startDate).getTime() : undefined,
@@ -50,40 +48,12 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
                 />
             </div>
 
-            <div className="space-y-3">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Type</Label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/30 rounded-xl border border-border/50">
-                    <button
-                        type="button"
-                        onClick={() => setType('PRIMARY')}
-                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                            type === 'PRIMARY' 
-                            ? 'bg-background text-primary shadow-sm ring-1 ring-border/50' 
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        PRIMARY (REAL)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setType('SHADOW')}
-                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                            type === 'SHADOW' 
-                            ? 'bg-background text-amber-600 shadow-sm ring-1 ring-border/50' 
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        SHADOW (OBSERV.)
-                    </button>
-                </div>
-            </div>
-
             <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Name</Label>
-                <Input 
-                    placeholder="e.g. Q4 BTC Accumulation" 
-                    value={strategyName} 
-                    onChange={e => setStrategyName(e.target.value)} 
+                <Input
+                    placeholder="e.g. Q4 BTC Accumulation"
+                    value={strategyName}
+                    onChange={e => setStrategyName(e.target.value)}
                     className="rounded-xl border-border/50 h-11 font-medium"
                 />
             </div>
@@ -100,16 +70,16 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
 
             <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Notes)</Label>
-                <Input 
-                    placeholder="Reflections, rules, triggers..." 
-                    value={notes} 
-                    onChange={e => setNotes(e.target.value)} 
+                <Input
+                    placeholder="Reflections, rules, triggers..."
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
                     className="rounded-xl border-border/50 h-11 font-medium"
                 />
             </div>
 
             <div className="pt-4">
-                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]">
                     Save Strategy Changes
                 </Button>
             </div>

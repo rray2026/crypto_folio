@@ -50,7 +50,7 @@ export default function Glossary() {
         },
         {
             title: "Fundamental Concepts",
-            icon: <Layout className="h-5 w-5 text-blue-500" />,
+            icon: <Layout className="h-5 w-5 text-muted-foreground" />,
             items: [
                 {
                     term: "Asset Symbol",
@@ -146,7 +146,7 @@ export default function Glossary() {
                 </Button>
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-                        <BookOpen className="h-7 w-7 text-primary" />
+                        <BookOpen className="h-7 w-7 text-muted-foreground" />
                         Investment Glossary
                     </h1>
                     <p className="text-muted-foreground mt-1">Understanding the concepts and math behind your portfolio.</p>
@@ -163,9 +163,9 @@ export default function Glossary() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {section.items.map((item, iIdx) => (
-                                <Card key={iIdx} className="bg-card/40 border-border/40 hover:border-primary/20 transition-colors shadow-sm overflow-hidden group">
+                                <Card key={iIdx} className="bg-card/40 border-border/40 hover:border-border transition-colors shadow-sm overflow-hidden group">
                                     <CardHeader className="pb-2 space-y-1">
-                                        <CardTitle className="text-base font-bold group-hover:text-primary transition-colors flex items-center justify-between">
+                                        <CardTitle className="text-base font-bold group-hover:text-foreground transition-colors flex items-center justify-between">
                                             {item.term}
                                             {item.formula && <TrendingUp className="h-3.5 w-3.5 text-muted-foreground/30" />}
                                         </CardTitle>
@@ -176,8 +176,8 @@ export default function Glossary() {
                                         </p>
                                         {item.formula && (
                                             <div className="flex items-start gap-2 p-2 bg-muted/30 rounded-lg border border-border/10">
-                                                <Info className="h-3.5 w-3.5 text-primary/50 shrink-0 mt-0.5" />
-                                                <code className="text-[11px] font-mono font-bold text-primary/80 break-words min-w-0">
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
+                                                <code className="text-[11px] font-mono font-bold text-foreground/80 break-words min-w-0">
                                                     {item.formula}
                                                 </code>
                                             </div>
@@ -192,8 +192,8 @@ export default function Glossary() {
 
             {/* Footer Note */}
             <div className="pt-12 border-t border-border/40">
-                <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 text-center space-y-2">
-                    <p className="text-sm font-medium text-primary">Need more help?</p>
+                <div className="p-6 bg-muted/30 rounded-2xl border border-border text-center space-y-2">
+                    <p className="text-sm font-medium text-foreground">Need more help?</p>
                     <p className="text-xs text-muted-foreground max-w-md mx-auto">
                         This glossary covers the primary logic used to calculate your portfolio performance. 
                         Prices are fetched in real-time from market providers.

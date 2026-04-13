@@ -25,7 +25,6 @@ describe('Core Functional Use Cases', () => {
             const posId = await createPosition({
                 symbol: 'ETH/USDT',
                 strategyName: 'Trend Follow',
-                type: 'PRIMARY',
                 startDate: Date.now()
             });
 
@@ -58,8 +57,8 @@ describe('Core Functional Use Cases', () => {
             });
 
             // 2. Create two positions
-            const posId1 = await createPosition({ symbol: 'SOL/USDT', strategyName: 'Long TermSOL', type: 'PRIMARY', startDate: Date.now() });
-            const posId2 = await createPosition({ symbol: 'SOL/USDT', strategyName: 'SwingSOL', type: 'SHADOW', startDate: Date.now() });
+            const posId1 = await createPosition({ symbol: 'SOL/USDT', strategyName: 'Long TermSOL', startDate: Date.now() });
+            const posId2 = await createPosition({ symbol: 'SOL/USDT', strategyName: 'SwingSOL', startDate: Date.now() });
 
             // 3. Allocate partially to each
             await addTransactionToPosition(posId1, { transactionId: txId, allocatedAmount: 40 });
@@ -89,7 +88,7 @@ describe('Core Functional Use Cases', () => {
     describe('Position Status Lifecycle', () => {
         it('transitions from OPEN to CLOSED updating endDate', async () => {
             const { createPosition, closePosition } = usePositionStore.getState();
-            const posId = await createPosition({ symbol: 'BTC/USDT', type: 'PRIMARY', startDate: Date.now() });
+            const posId = await createPosition({ symbol: 'BTC/USDT', startDate: Date.now() });
             
             const before = await db.positions.get(posId);
             expect(before?.status).toBe('OPEN');

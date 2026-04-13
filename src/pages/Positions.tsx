@@ -143,7 +143,7 @@ export default function Positions() {
                     </div>
                     <div className="bg-card rounded-xl border border-border/40 p-4">
                         <p className="text-xs text-muted-foreground mb-1">Unrealized PnL</p>
-                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-emerald-500 dark:text-emerald-400' : totalUnrealizedPnL < 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground'}`}>
+                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-pnl-up' : totalUnrealizedPnL < 0 ? 'text-pnl-down' : 'text-foreground'}`}>
                             {currSymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                     </div>
@@ -152,8 +152,8 @@ export default function Positions() {
 
             {!positions?.length ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center mt-6">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                        <Target className="h-7 w-7 text-primary/60" />
+                    <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                        <Target className="h-7 w-7 text-muted-foreground" />
                     </div>
                     <h3 className="text-base font-semibold mb-1">No strategies yet</h3>
                     <p className="text-sm text-muted-foreground mb-5 max-w-xs">

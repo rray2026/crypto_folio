@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/popover"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { useState } from "react"
+import { badge, txBadgeColor, statusBadgeColor } from "@/lib/styles"
 
 export default function TransactionDetails() {
     const { id } = useParams<{ id: string }>()
@@ -107,11 +108,7 @@ export default function TransactionDetails() {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                         <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">{transaction.symbol}</h1>
-                        <div className={`px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold uppercase tracking-widest border ${
-                            transaction.type === "BUY"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40"
-                            : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/40"
-                        }`}>
+                        <div className={`${badge({ color: txBadgeColor(transaction.type) })} px-2 text-[10px] md:text-xs tracking-widest`}>
                             {transaction.type}
                         </div>
                     </div>
@@ -178,7 +175,7 @@ export default function TransactionDetails() {
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Total Value</span>
-                                <p className="text-xl md:text-2xl font-mono font-black text-primary">{currencySymbol}{transaction.amount.toLocaleString()}</p>
+                                <p className="text-xl md:text-2xl font-mono font-black">{currencySymbol}{transaction.amount.toLocaleString()}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Fee Paid</span>
@@ -240,20 +237,20 @@ export default function TransactionDetails() {
                                     <button 
                                         key={pos.id}
                                         onClick={() => navigate(`/positions/${pos.id}`)}
-                                        className="w-full text-left p-4 rounded-xl border bg-card/40 hover:bg-card/80 transition-all group border-border/40 hover:border-primary/40 shadow-sm"
+                                        className="w-full text-left p-4 rounded-xl border bg-card/40 hover:bg-card/80 transition-all group border-border/40 hover:border-border shadow-sm"
                                     >
                                         <div className="flex justify-between items-start mb-1.5">
                                             <span className="font-bold text-sm truncate pr-2">
                                                 {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
                                             </span>
-                                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${pos.status === 'OPEN' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                                            <span className={badge({ color: statusBadgeColor(pos.status) })}>
                                                 <Circle className={`h-1.5 w-1.5 fill-current ${pos.status === 'OPEN' ? 'animate-pulse' : ''}`} aria-hidden="true" />
                                                 {pos.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10">
                                             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Allocated</span>
-                                            <span className="text-xs font-mono font-bold text-primary">{entry?.allocatedAmount}</span>
+                                            <span className="text-xs font-mono font-bold">{entry?.allocatedAmount}</span>
                                         </div>
                                     </button>
                                 );
