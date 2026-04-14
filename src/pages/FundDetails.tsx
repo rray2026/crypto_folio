@@ -220,7 +220,7 @@ export default function FundDetails() {
 
             {/* Single Edit dialog — triggered by desktop buttons and mobile header */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" onOpenAutoFocus={e => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle>Edit Fund</DialogTitle>
                     </DialogHeader>

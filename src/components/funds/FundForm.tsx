@@ -1,9 +1,18 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useFundStore } from "@/store/useFundStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Fund } from "@/lib/types"
+
+function focusNextInput(formRef: React.RefObject<HTMLFormElement | null>, current: EventTarget) {
+    if (!formRef.current) return
+    const inputs = Array.from(formRef.current.querySelectorAll<HTMLInputElement>('input:not([type="hidden"]):not([type="checkbox"]), textarea, [role="combobox"]'))
+    const idx = inputs.indexOf(current as HTMLInputElement)
+    if (idx >= 0 && idx < inputs.length - 1) {
+        inputs[idx + 1].focus()
+    }
+}
 
 interface FundFormProps {
     onSuccess: () => void;
@@ -12,6 +21,7 @@ interface FundFormProps {
 
 export function FundForm({ onSuccess, initialValues }: FundFormProps) {
     const { createFund, updateFund } = useFundStore()
+    const formRef = useRef<HTMLFormElement>(null)
 
     const [name, setName] = useState(initialValues?.name ?? "")
     const [description, setDescription] = useState(initialValues?.description ?? "")
@@ -48,8 +58,15 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
         onSuccess()
     }
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            focusNextInput(formRef, e.target)
+        }
+    }
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
                     Fund Name <span className="text-destructive">*</span>
@@ -58,6 +75,7 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
                     placeholder="e.g. Q1 2025 Portfolio"
                     value={name}
                     onChange={e => setName(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className="rounded-xl border-border/50 h-11 font-medium"
                     required
                 />
@@ -71,6 +89,7 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
                     placeholder="Optional notes about this fund..."
                     value={description}
                     onChange={e => setDescription(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className="rounded-xl border-border/50 h-11 text-muted-foreground font-medium"
                 />
             </div>
@@ -87,6 +106,7 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
                         placeholder="e.g. 10000"
                         value={initialAmount}
                         onChange={e => setInitialAmount(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="rounded-xl border-border/50 h-11 font-mono"
                         required
                     />
@@ -99,6 +119,7 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
                         placeholder="USDT"
                         value={currency}
                         onChange={e => setCurrency(e.target.value.toUpperCase())}
+                        onKeyDown={handleKeyDown}
                         className="rounded-xl border-border/50 h-11 font-mono uppercase"
                         maxLength={10}
                     />
@@ -116,6 +137,7 @@ export function FundForm({ onSuccess, initialValues }: FundFormProps) {
                     placeholder="100"
                     value={initialShares}
                     onChange={e => setInitialShares(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className="rounded-xl border-border/50 h-11 font-mono"
                     required
                 />

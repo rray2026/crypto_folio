@@ -76,7 +76,7 @@ export default function Funds() {
             </div>
             {/* Shared dialog (triggered from MobileHeader on mobile, button above on desktop) */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" onOpenAutoFocus={e => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle>Create New Fund</DialogTitle>
                         <DialogDescription>

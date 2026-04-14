@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { usePositionStore } from "@/store/usePositionStore"
 import { Button } from "@/components/ui/button"
@@ -7,10 +7,20 @@ import { Label } from "@/components/ui/label"
 import { SymbolSelector } from "./SymbolSelector"
 import { DateTimePicker } from "@/components/ui/DateTimePicker"
 
+function focusNextInput(formRef: React.RefObject<HTMLFormElement | null>, current: EventTarget) {
+    if (!formRef.current) return
+    const inputs = Array.from(formRef.current.querySelectorAll<HTMLInputElement>('input:not([type="hidden"]):not([type="checkbox"]), textarea, [role="combobox"]'))
+    const idx = inputs.indexOf(current as HTMLInputElement)
+    if (idx >= 0 && idx < inputs.length - 1) {
+        inputs[idx + 1].focus()
+    }
+}
+
 export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const addTransaction = useTransactionStore((state) => state.addTransaction)
     const createPosition = usePositionStore((state) => state.createPosition)
     const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
+    const formRef = useRef<HTMLFormElement>(null)
     const [symbol, setSymbol] = useState("")
     const [type, setType] = useState<"BUY" | "SELL">("BUY")
     const [price, setPrice] = useState("")
@@ -78,8 +88,17 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
         onSuccess()
     }
 
+    const isValid = symbol && price && quantity && amount
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            focusNextInput(formRef, e.target)
+        }
+    }
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-3">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Trading Pair</Label>
                 <SymbolSelector value={symbol} onChange={setSymbol} />
@@ -122,12 +141,12 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Unit Price</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
-                            <Input type="number" step="any" min="0" placeholder="0.00" value={price} onChange={e => handlePriceChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono pl-7 font-bold" required />
+                            <Input type="number" step="any" min="0" placeholder="0.00" value={price} onChange={e => handlePriceChange(e.target.value)} onKeyDown={handleKeyDown} className="rounded-xl border-border/50 h-11 font-mono pl-7 font-bold" required />
                         </div>
                     </div>
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Asset Symbol</Label>
-                        <Input type="number" step="any" min="0" placeholder="0.00" value={quantity} onChange={e => handleQuantityChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono font-bold" required />
+                        <Input type="number" step="any" min="0" placeholder="0.00" value={quantity} onChange={e => handleQuantityChange(e.target.value)} onKeyDown={handleKeyDown} className="rounded-xl border-border/50 h-11 font-mono font-bold" required />
                     </div>
                 </div>
 
@@ -136,19 +155,19 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Total Amount</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-xs">$</span>
-                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono font-bold pl-7" required />
+                            <Input type="number" step="any" min="0" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} onKeyDown={handleKeyDown} className="rounded-xl border-border/50 h-11 font-mono font-bold pl-7" required />
                         </div>
                     </div>
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Fee</Label>
-                        <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
+                        <Input type="number" step="any" min="0" placeholder="0.00" value={fee} onChange={e => setFee(e.target.value)} onKeyDown={handleKeyDown} className="rounded-xl border-border/50 h-11 font-mono text-muted-foreground font-medium" />
                     </div>
                 </div>
             </div>
 
             <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
-                <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
+                <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} onKeyDown={handleKeyDown} className="rounded-xl border-border/50 h-11 font-mono" />
             </div>
 
             <div className="space-y-3 pt-1">
@@ -167,13 +186,18 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                         placeholder="Position name (optional)"
                         value={positionName}
                         onChange={e => setPositionName(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="rounded-xl border-border/50 h-11 font-medium"
                     />
                 )}
             </div>
 
             <div className="pt-4">
-                <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]">
+                <Button
+                    type="submit"
+                    disabled={!isValid}
+                    className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]"
+                >
                     Save Transaction
                 </Button>
             </div>
