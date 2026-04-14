@@ -49,7 +49,7 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Name</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Name</Label>
                 <Input
                     placeholder="e.g. Q4 BTC Accumulation"
                     value={strategyName}
@@ -69,7 +69,7 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
             </div>
 
             <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Strategy Journal (Notes)</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Journal (Notes)</Label>
                 <Input
                     placeholder="Reflections, rules, triggers..."
                     value={notes}
@@ -80,7 +80,7 @@ export function PositionEditForm({ position, onSuccess }: { position: Position, 
 
             <div className="pt-4">
                 <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]">
-                    Save Strategy Changes
+                    Save Changes
                 </Button>
             </div>
         </form>

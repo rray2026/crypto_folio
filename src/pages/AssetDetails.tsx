@@ -92,22 +92,22 @@ export default function AssetDetails() {
                 </div>
             </div>
 
-            <Tabs defaultValue="strategies" className="w-full">
+            <Tabs defaultValue="positions" className="w-full">
                 <TabsList>
-                    <TabsTrigger value="strategies">
-                        <Activity className="h-3.5 w-3.5" /> Strategies ({positions?.length || 0})
+                    <TabsTrigger value="positions">
+                        <Activity className="h-3.5 w-3.5" /> Positions ({positions?.length || 0})
                     </TabsTrigger>
                     <TabsTrigger value="transactions">
                         <Clock className="h-3.5 w-3.5" /> Transactions ({transactions?.length || 0})
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="strategies" className="space-y-6">
+                <TabsContent value="positions" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {enrichedPositions.length === 0 ? (
                             <Card className="md:col-span-2 lg:col-span-3 border-dashed bg-muted/20">
                                 <CardContent className="h-40 flex flex-col items-center justify-center text-muted-foreground">
-                                    <p>No strategies linked to {decodedSymbol} yet.</p>
+                                    <p>No positions linked to {decodedSymbol} yet.</p>
                                 </CardContent>
                             </Card>
                         ) : (

@@ -29,7 +29,7 @@ export type Market = typeof SUPPORTED_MARKETS[number];
 
 /** Exchanges available in each market. */
 export const MARKET_EXCHANGES: Record<string, string[]> = {
-    'Crypto':    ['Binance', 'OKX', 'Bybit', 'HTX', 'Gate.io', 'MEXC'],
+    'Crypto':    ['Binance', 'Other'],
     'US Stocks': ['NYSE', 'NASDAQ'],
     'CN Stocks': ['SSE', 'SZSE'],
 };
@@ -41,7 +41,7 @@ export const MARKET_DEFAULT_EXCHANGE: Record<string, string> = {
     'CN Stocks': 'SSE',
 };
 
-export const SUPPORTED_EXCHANGES = ['Binance', 'OKX', 'Bybit', 'NYSE', 'NASDAQ', 'HTX', 'Gate.io', 'MEXC', 'SSE', 'SZSE'] as const;
+export const SUPPORTED_EXCHANGES = ['Binance', 'Other', 'NYSE', 'NASDAQ', 'SSE', 'SZSE'] as const;
 export type Exchange = typeof SUPPORTED_EXCHANGES[number];
 
 
@@ -53,31 +53,39 @@ export function inferMarket(exchange: string): string {
     return 'Crypto';
 }
 
-// Data providers — distinct from exchanges; stock exchanges all route through Yahoo Finance
-export const DATA_PROVIDERS = ['Binance', 'OKX', 'Bybit', 'HTX', 'Gate.io', 'MEXC', 'Yahoo Finance'] as const;
+/** Data providers available for a given crypto exchange. */
+export function cryptoProvidersForExchange(exchange: string): string[] {
+    return exchange === 'Binance' ? ['Binance', 'CoinGecko'] : ['CoinGecko'];
+}
+
+// Data providers
+export const DATA_PROVIDERS = ['Binance', 'CoinGecko', 'Yahoo Finance', 'Sina Finance'] as const;
 export type DataProvider = typeof DATA_PROVIDERS[number];
 
 export const DATA_PROVIDER_GROUPS: Record<string, string[]> = {
-    'Crypto':      ['Binance', 'OKX', 'Bybit', 'HTX', 'Gate.io', 'MEXC'],
-    'Stock Data':  ['Yahoo Finance'],
+    'Crypto':      ['Binance', 'CoinGecko'],
+    'US Stocks':   ['Yahoo Finance'],
+    'CN Stocks':   ['Sina Finance', 'Yahoo Finance'],
 };
 
-/** Data providers available for each market. Crypto exchanges cannot fetch stock data and vice versa. */
+/** Data providers available for each market. */
 export const MARKET_DATA_PROVIDERS: Record<string, string[]> = {
-    'Crypto':    ['Binance', 'OKX', 'Bybit', 'HTX', 'Gate.io', 'MEXC'],
+    'Crypto':    ['Binance', 'CoinGecko'],
     'US Stocks': ['Yahoo Finance'],
-    'CN Stocks': ['Yahoo Finance'],
+    'CN Stocks': ['Sina Finance', 'Yahoo Finance'],
 };
 
 /** Stock exchanges that route through Yahoo Finance for price data. */
-const YAHOO_EXCHANGES = new Set(['NYSE', 'NASDAQ', 'SSE', 'SZSE']);
+const YAHOO_EXCHANGES = new Set(['NYSE', 'NASDAQ']);
 
 /**
  * Returns the default data provider for a given trading exchange.
- * Stock exchanges map to Yahoo Finance; crypto exchanges provide their own API.
  */
 export function defaultDataProvider(exchange: string): string {
-    return YAHOO_EXCHANGES.has(exchange) ? 'Yahoo Finance' : exchange;
+    if (YAHOO_EXCHANGES.has(exchange)) return 'Yahoo Finance';
+    if (exchange === 'SSE' || exchange === 'SZSE') return 'Sina Finance';
+    if (exchange === 'Binance') return 'Binance';
+    return 'CoinGecko';
 }
 
 // Stablecoin quote currencies that are pegged to USD
@@ -121,43 +129,24 @@ export function getCurrencySymbolForPair(pair: string, pairConfigs: PairConfig[]
  */
 export async function fetchPriceFromProvider(pair: string, provider: string, exchangeHint?: string): Promise<string | null> {
     try {
-        if (provider === 'OKX') {
-            const instId = pair.replace('/', '-');
-            const res = await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${instId}`);
+        if (provider === 'CoinGecko') {
+            // Use CoinGecko free API as market-aggregated price source
+            const base = pair.split('/')[0]?.toLowerCase();
+            if (!base) return null;
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinGeckoId(base)}&vs_currencies=usd`);
             if (res.ok) {
                 const data = await res.json();
-                return data?.data?.[0]?.last ?? null;
+                const id = coinGeckoId(base);
+                return data?.[id]?.usd != null ? String(data[id].usd) : null;
             }
-        } else if (provider === 'Bybit') {
-            const symbol = pair.replace(/[^A-Z0-9]/g, '');
-            const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${symbol}`);
-            if (res.ok) {
-                const data = await res.json();
-                return data?.result?.list?.[0]?.lastPrice ?? null;
-            }
-        } else if (provider === 'HTX') {
-            const symbol = pair.replace('/', '').toLowerCase();
-            const res = await fetch(`https://api.huobi.pro/market/detail/merged?symbol=${symbol}`);
-            if (res.ok) {
-                const data = await res.json();
-                return data?.tick?.close != null ? String(data.tick.close) : null;
-            }
-        } else if (provider === 'Gate.io') {
-            const currencyPair = pair.replace('/', '_');
-            const res = await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${currencyPair}`);
-            if (res.ok) {
-                const data = await res.json();
-                return data?.[0]?.last ?? null;
-            }
-        } else if (provider === 'MEXC') {
-            const symbol = pair.replace(/[^A-Z0-9]/g, '');
-            const res = await fetch(`https://api.mexc.com/api/v3/ticker/price?symbol=${symbol}`);
+        } else if (provider === 'Sina Finance') {
+            const exchange = exchangeHint === 'SZSE' ? 'SZSE' : 'SSE';
+            const res = await fetch(`/api/cn-stock-price?symbol=${encodeURIComponent(pair)}&exchange=${exchange}`);
             if (res.ok) {
                 const data = await res.json();
                 return data?.price ?? null;
             }
         } else if (provider === 'Yahoo Finance') {
-            // Append exchange-specific suffix for CN stocks; US stocks use the symbol as-is
             const suffix = exchangeHint === 'SSE' ? '.SS' : exchangeHint === 'SZSE' ? '.SZ' : '';
             const symbol = pair.includes('.') ? pair : `${pair}${suffix}`;
             const res = await fetch(`/api/stock-price?symbol=${encodeURIComponent(symbol)}`);
@@ -178,6 +167,21 @@ export async function fetchPriceFromProvider(pair: string, provider: string, exc
         console.error(`Failed to fetch price for ${pair} from ${provider}`, err);
     }
     return null;
+}
+
+/** Map common ticker symbols to CoinGecko coin IDs. */
+const COINGECKO_MAP: Record<string, string> = {
+    btc: 'bitcoin', eth: 'ethereum', bnb: 'binancecoin', sol: 'solana',
+    xrp: 'ripple', doge: 'dogecoin', ada: 'cardano', avax: 'avalanche-2',
+    dot: 'polkadot', matic: 'matic-network', link: 'chainlink', uni: 'uniswap',
+    atom: 'cosmos', ltc: 'litecoin', etc: 'ethereum-classic', near: 'near',
+    apt: 'aptos', sui: 'sui', arb: 'arbitrum', op: 'optimism',
+    fil: 'filecoin', icp: 'internet-computer', trx: 'tron', shib: 'shiba-inu',
+    pepe: 'pepe', wif: 'dogwifcoin', bonk: 'bonk', floki: 'floki',
+};
+
+function coinGeckoId(symbol: string): string {
+    return COINGECKO_MAP[symbol] ?? symbol;
 }
 
 interface SettingsState {

@@ -5,14 +5,14 @@
 - **Engine**: IndexedDB (native browser API)
 - **Wrapper**: [Dexie.js](https://dexie.org/) v4
 - **Database name**: `CryptoFolioDB`
-- **Current version**: 5
+- **Current version**: 7
 - **Source files**: `src/lib/db.ts`, `src/lib/migrations.ts`
 
 All data is stored entirely in the user's browser locally. There is no server-side persistence of any kind.
 
 ---
 
-## 2. Database Schema (current v5)
+## 2. Database Schema (current v7)
 
 ```typescript
 // src/lib/db.ts
@@ -30,8 +30,8 @@ db.version(2).stores({
 
 db.version(3).stores({
   transactions: 'id, date, symbol, type',
-  positions: 'id, symbol, status, fundId',  // fundId index added
-  funds: 'id, status, createdAt',           // funds table added
+  positions: 'id, symbol, status, fundId',
+  funds: 'id, status, createdAt',
 }).upgrade(MIGRATIONS[2].upgradeIdb);
 
 db.version(4).stores({
@@ -45,6 +45,19 @@ db.version(5).stores({
   positions: 'id, symbol, status, fundId',
   funds: 'id, status, createdAt',
 }).upgrade(MIGRATIONS[4].upgradeIdb);
+
+db.version(6).stores({
+  transactions: 'id, date, symbol, type',
+  positions: 'id, symbol, status, fundId',
+  funds: 'id, status, createdAt',
+}).upgrade(MIGRATIONS[5].upgradeIdb);
+
+db.version(7).stores({
+  transactions: 'id, date, symbol, type',
+  positions: 'id, symbol, status, fundId, strategyId',  // strategyId index added
+  funds: 'id, status, createdAt',
+  strategies: 'id, status, createdAt',                   // strategies table added
+}).upgrade(MIGRATIONS[6].upgradeIdb);
 ```
 
 **Index reference:**
@@ -59,9 +72,13 @@ db.version(5).stores({
 | positions | `symbol` | Query by asset |
 | positions | `status` | Filter OPEN/CLOSED |
 | positions | `fundId` | Find all positions in a fund |
+| positions | `strategyId` | Find all positions in a strategy |
 | funds | `id` | Primary key |
 | funds | `status` | Filter ACTIVE/CLOSED |
 | funds | `createdAt` | Sort by creation time |
+| strategies | `id` | Primary key |
+| strategies | `status` | Filter ACTIVE/ARCHIVED |
+| strategies | `createdAt` | Sort by creation time |
 
 > **Note**: The `stores()` parameter in Dexie only defines **indexes**, not all fields. All object fields are stored; only fields declared here can be used in `where()` queries.
 
@@ -116,6 +133,8 @@ export const MIGRATIONS: Record<number, Migration> = {
   2: { /* v2 → v3 */ },
   3: { /* v3 → v4 */ },
   4: { /* v4 → v5 */ },
+  5: { /* v5 → v6 */ },
+  6: { /* v6 → v7 */ },
 };
 ```
 
@@ -230,6 +249,44 @@ if (!state.enabledMarkets) {
 
 ---
 
+#### v5 → v6 (MIGRATIONS[5])
+
+**Changes:**
+- Position `type` field (`'PRIMARY' | 'SHADOW'`) removed. The concept is replaced by the Strategy entity.
+
+**IndexedDB upgrade logic:**
+```typescript
+// Remove the type field from all positions
+const positions = await tx.table('positions').toArray();
+await Promise.all(
+  positions.map(p => tx.table('positions').update(p.id, { type: undefined }))
+);
+```
+
+**Backup file transformation:**
+```typescript
+// Strip the type field from each position
+payload.positions = payload.positions.map(({ type, ...rest }) => rest);
+```
+
+---
+
+#### v6 → v7 (MIGRATIONS[6])
+
+**Changes:**
+- New `strategies` table (Dexie creates this automatically via the schema declaration).
+- Position gains optional `strategyId` field: no back-fill required; defaults to `undefined`.
+
+**IndexedDB upgrade logic:** No data transform needed (Dexie handles table creation).
+
+**Backup file transformation:**
+```typescript
+// Ensure the backup payload includes an empty strategies array
+payload.strategies = payload.strategies ?? [];
+```
+
+---
+
 ### 4.4 Backup migration entry point
 
 ```typescript
@@ -256,7 +313,7 @@ Key = source version means `MIGRATIONS[currentVersion]` upgrades **from** that v
 ## 5. Relationship with Zustand Stores
 
 Dexie is the **only persistent write path**:
-- Zustand stores (`useTransactionStore`, `usePositionStore`, `useFundStore`) call Dexie's `add()`, `put()`, and `delete()` to persist data.
+- Zustand stores (`useTransactionStore`, `usePositionStore`, `useFundStore`, `useStrategyStore`) call Dexie's `add()`, `put()`, and `delete()` to persist data.
 - UI components subscribe to database changes via `useLiveQuery()` (from `dexie-react-hooks`) for reactive updates.
 - Zustand state and IndexedDB are not bidirectionally synced — stores do not cache full data sets; they query on demand.
 

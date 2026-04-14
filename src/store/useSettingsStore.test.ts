@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider, inferMarket, MARKET_DATA_PROVIDERS } from './useSettingsStore';
+import { useSettingsStore, fetchPriceFromProvider, inferCurrency, getCurrencySymbol, getCurrencySymbolForPair, defaultDataProvider, inferMarket, MARKET_DATA_PROVIDERS, cryptoProvidersForExchange } from './useSettingsStore';
 import type { PairConfig } from './useSettingsStore';
 
 // Mock localStorage for Zustand persist
@@ -43,100 +43,54 @@ describe('fetchPriceFromProvider', () => {
         );
     });
 
-    it('OKX: calls correct URL with instId format (BTC-USDT)', async () => {
+    it('CoinGecko: calls correct URL and parses price', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ data: [{ last: '2000.00' }] }),
+            json: async () => ({ bitcoin: { usd: 50000 } }),
         });
-        const price = await fetchPriceFromProvider('ETH/USDT', 'OKX');
-        expect(price).toBe('2000.00');
-        expect(fetch).toHaveBeenCalledWith(
-            'https://www.okx.com/api/v5/market/ticker?instId=ETH-USDT'
-        );
-    });
-
-    it('OKX: returns null when data array is empty', async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({ data: [] }),
-        });
-        const price = await fetchPriceFromProvider('ETH/USDT', 'OKX');
-        expect(price).toBeNull();
-    });
-
-    it('Bybit: calls correct URL and parses lastPrice', async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({ result: { list: [{ lastPrice: '150.50' }] } }),
-        });
-        const price = await fetchPriceFromProvider('SOL/USDT', 'Bybit');
-        expect(price).toBe('150.50');
-        expect(fetch).toHaveBeenCalledWith(
-            'https://api.bybit.com/v5/market/tickers?category=spot&symbol=SOLUSDT'
-        );
-    });
-
-    it('Bybit: returns null when result list is empty', async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({ result: { list: [] } }),
-        });
-        const price = await fetchPriceFromProvider('SOL/USDT', 'Bybit');
-        expect(price).toBeNull();
-    });
-
-    it('HTX: calls correct URL with lowercase symbol and parses tick.close', async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({ status: 'ok', tick: { close: 50000 } }),
-        });
-        const price = await fetchPriceFromProvider('BTC/USDT', 'HTX');
+        const price = await fetchPriceFromProvider('BTC/USDT', 'CoinGecko');
         expect(price).toBe('50000');
         expect(fetch).toHaveBeenCalledWith(
-            'https://api.huobi.pro/market/detail/merged?symbol=btcusdt'
+            expect.stringContaining('api.coingecko.com')
         );
     });
 
-    it('HTX: returns null when tick.close is missing', async () => {
+    it('CoinGecko: returns null when coin not found', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ status: 'ok', tick: {} }),
+            json: async () => ({}),
         });
-        const price = await fetchPriceFromProvider('BTC/USDT', 'HTX');
+        const price = await fetchPriceFromProvider('INVALID/USDT', 'CoinGecko');
         expect(price).toBeNull();
     });
 
-    it('Gate.io: calls correct URL with underscore separator and parses last', async () => {
+    it('Sina Finance: calls cn-stock-price proxy with exchange param', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ([{ currency_pair: 'BTC_USDT', last: '50000.00' }]),
+            json: async () => ({ price: '37.80' }),
         });
-        const price = await fetchPriceFromProvider('BTC/USDT', 'Gate.io');
-        expect(price).toBe('50000.00');
-        expect(fetch).toHaveBeenCalledWith(
-            'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT'
-        );
+        const price = await fetchPriceFromProvider('600036', 'Sina Finance', 'SSE');
+        expect(price).toBe('37.80');
+        expect(fetch).toHaveBeenCalledWith('/api/cn-stock-price?symbol=600036&exchange=SSE');
     });
 
-    it('Gate.io: returns null when response array is empty', async () => {
+    it('Sina Finance: passes SZSE exchange for Shenzhen stocks', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ([]),
+            json: async () => ({ price: '15.20' }),
         });
-        const price = await fetchPriceFromProvider('BTC/USDT', 'Gate.io');
+        const price = await fetchPriceFromProvider('000001', 'Sina Finance', 'SZSE');
+        expect(price).toBe('15.20');
+        expect(fetch).toHaveBeenCalledWith('/api/cn-stock-price?symbol=000001&exchange=SZSE');
+    });
+
+    it('Sina Finance: returns null on error', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: false,
+            json: async () => ({ error: 'not found' }),
+        });
+        const price = await fetchPriceFromProvider('INVALID', 'Sina Finance', 'SSE');
         expect(price).toBeNull();
-    });
-
-    it('MEXC: calls correct URL and parses price', async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({ symbol: 'ETHUSDT', price: '2000.00' }),
-        });
-        const price = await fetchPriceFromProvider('ETH/USDT', 'MEXC');
-        expect(price).toBe('2000.00');
-        expect(fetch).toHaveBeenCalledWith(
-            'https://api.mexc.com/api/v3/ticker/price?symbol=ETHUSDT'
-        );
     });
 
     it('Yahoo Finance: appends .SS suffix for SSE exchange hint', async () => {
@@ -209,8 +163,6 @@ describe('fetchPriceFromProvider', () => {
     it('returns null when provider API returns non-ok status', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
         expect(await fetchPriceFromProvider('BTC/USDT', 'Binance')).toBeNull();
-        expect(await fetchPriceFromProvider('ETH/USDT', 'OKX')).toBeNull();
-        expect(await fetchPriceFromProvider('SOL/USDT', 'Bybit')).toBeNull();
         expect(await fetchPriceFromProvider('AAPL', 'Yahoo Finance', 'NYSE')).toBeNull();
     });
 
@@ -227,11 +179,23 @@ describe('fetchPriceFromProvider', () => {
 describe('defaultDataProvider', () => {
     it('returns Yahoo Finance for NYSE', () => expect(defaultDataProvider('NYSE')).toBe('Yahoo Finance'));
     it('returns Yahoo Finance for NASDAQ', () => expect(defaultDataProvider('NASDAQ')).toBe('Yahoo Finance'));
-    it('returns Yahoo Finance for SSE', () => expect(defaultDataProvider('SSE')).toBe('Yahoo Finance'));
-    it('returns Yahoo Finance for SZSE', () => expect(defaultDataProvider('SZSE')).toBe('Yahoo Finance'));
-    it('returns the exchange itself for Binance', () => expect(defaultDataProvider('Binance')).toBe('Binance'));
-    it('returns the exchange itself for OKX', () => expect(defaultDataProvider('OKX')).toBe('OKX'));
-    it('returns the exchange itself for HTX', () => expect(defaultDataProvider('HTX')).toBe('HTX'));
+    it('returns Sina Finance for SSE', () => expect(defaultDataProvider('SSE')).toBe('Sina Finance'));
+    it('returns Sina Finance for SZSE', () => expect(defaultDataProvider('SZSE')).toBe('Sina Finance'));
+    it('returns Binance for Binance', () => expect(defaultDataProvider('Binance')).toBe('Binance'));
+    it('returns CoinGecko for Other', () => expect(defaultDataProvider('Other')).toBe('CoinGecko'));
+    it('returns CoinGecko for unknown exchange', () => expect(defaultDataProvider('SomeExchange')).toBe('CoinGecko'));
+});
+
+// ---------------------------------------------------------------------------
+// cryptoProvidersForExchange
+// ---------------------------------------------------------------------------
+describe('cryptoProvidersForExchange', () => {
+    it('returns Binance and CoinGecko for Binance exchange', () => {
+        expect(cryptoProvidersForExchange('Binance')).toEqual(['Binance', 'CoinGecko']);
+    });
+    it('returns only CoinGecko for Other exchange', () => {
+        expect(cryptoProvidersForExchange('Other')).toEqual(['CoinGecko']);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -296,8 +260,9 @@ describe('getCurrencySymbolForPair', () => {
 // MARKET_DATA_PROVIDERS
 // ---------------------------------------------------------------------------
 describe('MARKET_DATA_PROVIDERS', () => {
-    it('Crypto market includes only crypto exchanges as data providers', () => {
+    it('Crypto market includes Binance and CoinGecko', () => {
         expect(MARKET_DATA_PROVIDERS['Crypto']).toContain('Binance');
+        expect(MARKET_DATA_PROVIDERS['Crypto']).toContain('CoinGecko');
         expect(MARKET_DATA_PROVIDERS['Crypto']).not.toContain('Yahoo Finance');
     });
 
@@ -305,8 +270,8 @@ describe('MARKET_DATA_PROVIDERS', () => {
         expect(MARKET_DATA_PROVIDERS['US Stocks']).toEqual(['Yahoo Finance']);
     });
 
-    it('CN Stocks market includes only Yahoo Finance', () => {
-        expect(MARKET_DATA_PROVIDERS['CN Stocks']).toEqual(['Yahoo Finance']);
+    it('CN Stocks market includes Sina Finance and Yahoo Finance', () => {
+        expect(MARKET_DATA_PROVIDERS['CN Stocks']).toEqual(['Sina Finance', 'Yahoo Finance']);
     });
 });
 
@@ -315,10 +280,7 @@ describe('MARKET_DATA_PROVIDERS', () => {
 // ---------------------------------------------------------------------------
 describe('inferMarket', () => {
     it('returns Crypto for Binance', () => expect(inferMarket('Binance')).toBe('Crypto'));
-    it('returns Crypto for OKX', () => expect(inferMarket('OKX')).toBe('Crypto'));
-    it('returns Crypto for HTX', () => expect(inferMarket('HTX')).toBe('Crypto'));
-    it('returns Crypto for Gate.io', () => expect(inferMarket('Gate.io')).toBe('Crypto'));
-    it('returns Crypto for MEXC', () => expect(inferMarket('MEXC')).toBe('Crypto'));
+    it('returns Crypto for Other', () => expect(inferMarket('Other')).toBe('Crypto'));
     it('returns US Stocks for NYSE', () => expect(inferMarket('NYSE')).toBe('US Stocks'));
     it('returns US Stocks for NASDAQ', () => expect(inferMarket('NASDAQ')).toBe('US Stocks'));
     it('returns CN Stocks for SSE', () => expect(inferMarket('SSE')).toBe('CN Stocks'));
@@ -373,11 +335,11 @@ describe('useSettingsStore', () => {
         expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', market: 'US Stocks', exchange: 'NASDAQ', dataProvider: 'Yahoo Finance', currency: 'USD' });
     });
 
-    it('adds SSE pair and infers CNY currency with Yahoo Finance provider', () => {
+    it('adds SSE pair and infers CNY currency with Sina Finance provider', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' });
+        expect(state.pairConfigs).toContainEqual({ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Sina Finance', currency: 'CNY' });
     });
 
     it('adds pair with NYSE exchange and infers USD currency with Yahoo Finance provider', () => {
@@ -389,9 +351,9 @@ describe('useSettingsStore', () => {
 
     it('adds pair with explicit dataProvider different from exchange default', () => {
         const { addPair } = useSettingsStore.getState();
-        addPair('BTC/USDT', 'HTX', 'Binance');
+        addPair('BTC/USDT', 'Other', 'CoinGecko');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', market: 'Crypto', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' });
+        expect(state.pairConfigs).toContainEqual({ pair: 'BTC/USDT', market: 'Crypto', exchange: 'Other', dataProvider: 'CoinGecko', currency: 'USD' });
     });
 
     it('does not add duplicate pair', () => {
@@ -482,16 +444,16 @@ describe('useSettingsStore', () => {
     it('fetchPrices uses dataProvider (not exchange) to fetch prices', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['BTC/USDT'],
-            pairConfigs: [{ pair: 'BTC/USDT', market: 'Crypto', exchange: 'HTX', dataProvider: 'Binance', currency: 'USD' }],
+            pairConfigs: [{ pair: 'BTC/USDT', market: 'Crypto', exchange: 'Other', dataProvider: 'CoinGecko', currency: 'USD' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ price: '50000.00' }),
+            json: async () => ({ bitcoin: { usd: 50000 } }),
         });
         await useSettingsStore.getState().fetchPrices(['BTC/USDT'], true, true);
-        // Should hit Binance (dataProvider), not HTX (exchange)
+        // Should hit CoinGecko (dataProvider), not exchange
         expect(fetch).toHaveBeenCalledWith(
-            expect.stringContaining('api.binance.com')
+            expect.stringContaining('api.coingecko.com')
         );
     });
 
@@ -511,17 +473,17 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().prices['AAPL']?.price).toBe('175.23');
     });
 
-    it('fetchPrices uses Yahoo Finance proxy and appends .SS for SSE pair', async () => {
+    it('fetchPrices uses Sina Finance proxy for SSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['600036'],
-            pairConfigs: [{ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }],
+            pairConfigs: [{ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Sina Finance', currency: 'CNY' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ price: '12.34' }),
+            json: async () => ({ price: '37.80' }),
         });
         await useSettingsStore.getState().fetchPrices(['600036'], true, true);
-        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
+        expect(fetch).toHaveBeenCalledWith('/api/cn-stock-price?symbol=600036&exchange=SSE');
     });
 
     it('fetchPrices does not update store when price fetch fails', async () => {
@@ -536,12 +498,12 @@ describe('useSettingsStore', () => {
 
     it('updatePairDataProvider changes only the dataProvider of the target pair', () => {
         const { addPair, updatePairDataProvider } = useSettingsStore.getState();
-        addPair('BTC/USDT', 'HTX');
-        updatePairDataProvider('BTC/USDT', 'Binance');
+        addPair('BTC/USDT', 'Binance');
+        updatePairDataProvider('BTC/USDT', 'CoinGecko');
         const state = useSettingsStore.getState();
         const config = state.pairConfigs.find(p => p.pair === 'BTC/USDT');
-        expect(config?.exchange).toBe('HTX');
-        expect(config?.dataProvider).toBe('Binance');
+        expect(config?.exchange).toBe('Binance');
+        expect(config?.dataProvider).toBe('CoinGecko');
     });
 
     it('respects cache TTL for prices', async () => {

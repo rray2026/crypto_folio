@@ -1,21 +1,22 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Transaction, Position, Fund } from './types';
+import type { Transaction, Position, Fund, Strategy } from './types';
 import { MIGRATIONS } from './migrations';
 
 /** Database name — single source of truth used for native IDB probing. */
 export const DB_NAME = 'CryptoFolioDB';
 
 /** Current schema version. Increment this when the DB schema changes. */
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
 
 // Extend Dexie to declare DB structure
 const db = new Dexie(DB_NAME) as Dexie & {
     transactions: EntityTable<Transaction, 'id'>,
     positions: EntityTable<Position, 'id'>,
     funds: EntityTable<Fund, 'id'>,
+    strategies: EntityTable<Strategy, 'id'>,
 };
 
-export type { Transaction, Position, Fund }
+export type { Transaction, Position, Fund, Strategy }
 
 // v1 — initial schema. Never modify existing version blocks.
 db.version(1).stores({
@@ -70,6 +71,16 @@ db.version(6)
         funds: 'id, status, createdAt',
     })
     .upgrade(MIGRATIONS[5].upgradeIdb);
+
+// v7 — add strategies table; add strategyId index to positions.
+db.version(7)
+    .stores({
+        transactions: 'id, date, symbol, type',
+        positions: 'id, symbol, status, fundId, strategyId',
+        funds: 'id, status, createdAt',
+        strategies: 'id, status, createdAt',
+    })
+    .upgrade(MIGRATIONS[6].upgradeIdb);
 
 // HOW TO ADD A FUTURE SCHEMA MIGRATION:
 // 1. Increment DB_VERSION above.

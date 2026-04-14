@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
-import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings } from "lucide-react"
+import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings, Layers } from "lucide-react"
 
 function freshnessColor(timestamp: number): string {
     const age = Math.floor((Date.now() - timestamp) / 1000);
@@ -62,8 +62,8 @@ export default function Dashboard() {
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
-            <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
-                <div className="hidden md:flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+            <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto min-h-full">
+                <div className="hidden md:flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
                         <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
@@ -84,12 +84,12 @@ export default function Dashboard() {
                             return (
                                 <button
                                     key={pair}
-                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-md transition-all duration-200 group cursor-pointer text-left"
+                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-200 group cursor-pointer text-left"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                            <span className="text-[10px] font-bold text-foreground">
+                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-bold text-primary">
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
@@ -109,52 +109,65 @@ export default function Dashboard() {
                         })}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center">
-                        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-6">
-                            <TrendingUp className="h-8 w-8 text-muted-foreground" />
+                    <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <TrendingUp className="h-7 w-7 text-primary/60" />
                         </div>
-                        <h2 className="text-xl font-semibold mb-2">Welcome to Folio</h2>
-                        <p className="text-sm text-muted-foreground mb-8 max-w-sm">
+                        <h3 className="text-base font-semibold mb-1">Welcome to Folio</h3>
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             A privacy-first portfolio tracker. All your data stays in this browser — nothing is sent to any server.
                         </p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg">
+                        <div className="flex flex-col gap-2.5 w-full max-w-sm">
                             <button
                                 onClick={() => navigate('/settings/trading-pairs')}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
-                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                    <Settings className="h-5 w-5 text-primary" />
+                                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                    <Settings className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Add Pairs</p>
-                                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Pin trading pairs to track prices</p>
+                                    <p className="text-sm font-semibold">Add Trading Pairs</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Configure assets and pin them to your dashboard for real-time price tracking.</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => navigate('/transactions')}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
-                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                    <ReceiptText className="h-5 w-5 text-primary" />
+                                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                    <ReceiptText className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Record Trades</p>
-                                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Log your buy and sell orders</p>
+                                    <p className="text-sm font-semibold">Record Trades</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Log your buy and sell orders — every transaction is the building block of your portfolio.</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => navigate('/positions')}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
-                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                    <LineChart className="h-5 w-5 text-primary" />
+                                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                    <LineChart className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Create Strategy</p>
-                                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Group trades to track P&L</p>
+                                    <p className="text-sm font-semibold">Create Positions</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Group related trades into positions to track combined P&L, ROI, and breakeven price.</p>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/funds')}
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                            >
+                                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                    <Layers className="h-4 w-4 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold">Create Fund</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Set up a fund with initial capital, assign positions, and track NAV over time.</p>
                                 </div>
                             </button>
                         </div>

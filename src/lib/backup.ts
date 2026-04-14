@@ -1,6 +1,6 @@
 import { db, DB_VERSION } from './db';
 import { migratePayload } from './migrations';
-import type { Transaction, Position, Fund } from './types';
+import type { Transaction, Position, Fund, Strategy } from './types';
 import { useSettingsStore, inferCurrency, defaultDataProvider, inferMarket } from '@/store/useSettingsStore';
 import type { PairConfig, DashboardTimeRange, Theme } from '@/store/useSettingsStore';
 
@@ -11,10 +11,12 @@ export interface BackupPayload {
     transactions: Transaction[];
     positions: Position[];
     funds: Fund[];
+    strategies: Strategy[];
     settings: {
         predefinedPairs: string[];
         pairConfigs?: PairConfig[];
         enabledMarkets?: string[];
+        pinnedPairs?: string[];
         dashboardTimeRange: DashboardTimeRange;
         theme: Theme;
     };
@@ -28,6 +30,7 @@ export async function exportData(): Promise<void> {
         const transactions = await db.transactions.toArray();
         const positions = await db.positions.toArray();
         const funds = await db.funds.toArray();
+        const strategies = await db.strategies.toArray();
         const settingsState = useSettingsStore.getState();
 
         const payload: BackupPayload = {
@@ -37,10 +40,12 @@ export async function exportData(): Promise<void> {
             transactions,
             positions,
             funds,
+            strategies,
             settings: {
                 predefinedPairs: settingsState.predefinedPairs,
                 pairConfigs: settingsState.pairConfigs,
                 enabledMarkets: settingsState.enabledMarkets,
+                pinnedPairs: settingsState.pinnedPairs,
                 dashboardTimeRange: settingsState.dashboardTimeRange,
                 theme: settingsState.theme,
             }
@@ -106,13 +111,15 @@ export async function importData(file: File): Promise<void> {
                     throw new Error("Malformed backup properties. Missing Transactions or Positions arrays.");
                 }
 
-                // Normalise funds (may be absent in pre-v3 backups that were already migrated)
+                // Normalise funds and strategies (may be absent in older backups)
                 if (!Array.isArray(payload.funds)) payload.funds = [];
+                if (!Array.isArray(payload.strategies)) payload.strategies = [];
 
                 // 1. Clear database
                 await db.transactions.clear();
                 await db.positions.clear();
                 await db.funds.clear();
+                await db.strategies.clear();
 
                 // 2. Hydrate database
                 if (payload.transactions.length > 0) {
@@ -123,6 +130,9 @@ export async function importData(file: File): Promise<void> {
                 }
                 if (payload.funds.length > 0) {
                     await db.funds.bulkAdd(payload.funds);
+                }
+                if (payload.strategies.length > 0) {
+                    await db.strategies.bulkAdd(payload.strategies);
                 }
 
                 // 3. Hydrate settings seamlessly if properties exist
@@ -151,6 +161,9 @@ export async function importData(file: File): Promise<void> {
                     }
                     if (payload.settings.enabledMarkets !== undefined) {
                         useSettingsStore.setState({ enabledMarkets: payload.settings.enabledMarkets });
+                    }
+                    if (payload.settings.pinnedPairs !== undefined) {
+                        useSettingsStore.setState({ pinnedPairs: payload.settings.pinnedPairs });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {
                         store.setDashboardTimeRange(payload.settings.dashboardTimeRange);

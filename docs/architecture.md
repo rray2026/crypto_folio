@@ -9,7 +9,7 @@ For detailed implementation of each module, see the files under `docs/technical/
 
 ### Privacy First
 
-**Zero backend**: the app's core functionality requires no server. All user data — transactions, positions, and settings — is stored in the browser's local IndexedDB and is never uploaded to any server.
+**Zero backend**: the app's core functionality requires no server. All user data — transactions, positions, funds, strategies, and settings — is stored in the browser's local IndexedDB and is never uploaded to any server.
 
 The only network requests are:
 - Real-time price fetching (public REST APIs from each exchange)
@@ -48,13 +48,13 @@ A single-page application built with React 19 + Vite 7, statically hosted on Clo
                        │ action calls
 ┌──────────────────────▼──────────────────────────┐
 │                  Zustand Stores                  │
-│  TransactionStore / PositionStore / FundStore    │
-│  SettingsStore (persist → localStorage)          │
+│  TransactionStore / PositionStore / FundStore /   │
+│  StrategyStore / SettingsStore (persist → lS)    │
 └──────────────────────┬──────────────────────────┘
                        │ CRUD operations
 ┌──────────────────────▼──────────────────────────┐
 │                 Dexie (IndexedDB)                │
-│      transactions / positions / funds tables     │
+│  transactions / positions / funds / strategies   │
 └─────────────────────────────────────────────────┘
 
 Reactive data flow:
@@ -86,6 +86,7 @@ store/
     ├── useTransactionStore.ts  ← Transaction CRUD (depends on db.ts)
     ├── usePositionStore.ts     ← Position CRUD (depends on db.ts)
     ├── useFundStore.ts         ← Fund CRUD (depends on db.ts)
+    ├── useStrategyStore.ts     ← Strategy CRUD (depends on db.ts)
     └── useSettingsStore.ts     ← Settings + price fetching (localStorage persist)
 
 pages/            ← Route-level pages (depend on store/ + metrics.ts)
@@ -96,14 +97,15 @@ components/       ← UI components (depend on store/ + pages/)
 
 ## 5. Key Architectural Decisions and Patterns
 
-### PRIMARY vs. SHADOW Positions (the double-counting problem)
+### Strategy as an Orthogonal Dimension
 
-**Problem:** A user may want to analyze the same transaction under multiple strategy lenses (e.g. both a "short-term trade" and a "long-term position" used the same buy). Naively summing everything would double-count assets.
+**Problem:** Users need to evaluate trading methodologies (e.g. "Grid Trading" vs "Breakout Momentum") across all their positions, independently of how capital is organized into funds.
 
 **Solution:**
-- `PRIMARY`: real trading strategies. Included in global dashboard statistics.
-- `SHADOW`: sandbox strategies. Can reuse transactions already in PRIMARY for "what-if" scenarios, but are completely ignored by global metrics.
-- `getPortfolioMetrics` only iterates positions where `type === 'PRIMARY'`.
+- `Strategy` is a separate entity that cross-cuts the Fund → Position → Transaction hierarchy.
+- A Position can belong to both a Fund (capital pool) and a Strategy (methodology) simultaneously.
+- Strategy tracks aggregate metrics: win rate, avg ROI, total P&L across all linked positions.
+- When a Position is linked to a Strategy, the Strategy's name is used as the Position's display name.
 
 ### Partial Allocation
 

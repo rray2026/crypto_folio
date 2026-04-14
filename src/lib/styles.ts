@@ -18,7 +18,7 @@ export const badge = cva(
                 sell:   "bg-pnl-down/10 text-pnl-down border-pnl-down/20",
                 long:   "bg-pnl-up/10 text-pnl-up border-pnl-up/20",
                 short:  "bg-pnl-down/10 text-pnl-down border-pnl-down/20",
-                active: "bg-primary/10 text-primary border-primary/20",
+                open:   "bg-primary/10 text-primary border-primary/20",
                 closed: "text-muted-foreground border-border",
                 fund:   "bg-primary/10 text-primary border-primary/20",
             },
@@ -40,7 +40,7 @@ export function dirBadgeColor(dir: "LONG" | "SHORT"): BadgeColor {
 
 /** Map status to badge color. */
 export function statusBadgeColor(status: "OPEN" | "CLOSED" | "ACTIVE"): BadgeColor {
-    return status === "OPEN" || status === "ACTIVE" ? "active" : "closed"
+    return status === "OPEN" || status === "ACTIVE" ? "open" : "closed"
 }
 
 // ---------------------------------------------------------------------------

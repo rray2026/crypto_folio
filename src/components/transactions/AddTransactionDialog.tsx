@@ -37,7 +37,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
     return (
         <>
             <Dialog open={open} onOpenChange={handleOpenChange}>
-                <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6 overflow-hidden">
+                <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6 max-h-[85vh] overflow-y-auto" onOpenAutoFocus={e => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle>
                             {addMode === 'manual' ? 'Record Transaction' : addMode === 'ai' ? 'AI-Assisted Import' : 'Add Transaction'}

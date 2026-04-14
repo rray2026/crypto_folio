@@ -2,13 +2,14 @@
 
 ## 1. Overview
 
-Folio uses [Zustand](https://github.com/pmndrs/zustand) v5 for global state management, organized into four stores:
+Folio uses [Zustand](https://github.com/pmndrs/zustand) v5 for global state management, organized into five stores:
 
 | Store | File | Responsibility | Persistence |
 |---|---|---|---|
 | `useTransactionStore` | `src/store/useTransactionStore.ts` | Transaction CRUD | IndexedDB (Dexie) |
 | `usePositionStore` | `src/store/usePositionStore.ts` | Position CRUD | IndexedDB (Dexie) |
 | `useFundStore` | `src/store/useFundStore.ts` | Fund management | IndexedDB (Dexie) |
+| `useStrategyStore` | `src/store/useStrategyStore.ts` | Strategy CRUD | IndexedDB (Dexie) |
 | `useSettingsStore` | `src/store/useSettingsStore.ts` | Settings, prices, theme | localStorage (Zustand persist) |
 
 **Design principles:**
@@ -162,9 +163,46 @@ await db.positions.update(positionId, { fundId: undefined });
 
 ---
 
-## 5. useSettingsStore
+## 5. useStrategyStore
 
-### 5.1 Structure and persistence
+### 5.1 Actions
+
+```typescript
+interface StrategyStore {
+  createStrategy(data: { name: string; description?: string }): Promise<string>
+  updateStrategy(id: string, updates: Partial<Strategy>): Promise<void>
+  deleteStrategy(id: string): Promise<void>
+  assignPositionToStrategy(positionId: string, strategyId: string): Promise<void>
+  unassignPositionFromStrategy(positionId: string): Promise<void>
+}
+```
+
+### 5.2 Key logic
+
+**`createStrategy`:**
+1. Generate a UUID and set `createdAt: Date.now()`, `status: 'ACTIVE'`.
+2. Call `db.strategies.add(strategy)`.
+
+**`deleteStrategy`:**
+1. Call `db.strategies.delete(id)`.
+2. Find all positions where `strategyId === id`.
+3. Batch-update those positions to set `strategyId = undefined`.
+
+**`assignPositionToStrategy`:**
+```typescript
+await db.positions.update(positionId, { strategyId });
+```
+
+**`unassignPositionFromStrategy`:**
+```typescript
+await db.positions.update(positionId, { strategyId: undefined });
+```
+
+---
+
+## 6. useSettingsStore
+
+### 6.1 Structure and persistence
 
 This is the only store using **Zustand's `persist` middleware**, storing data in `localStorage` (not IndexedDB):
 
@@ -183,7 +221,7 @@ const useSettingsStore = create(
 
 > **Note:** The localStorage key was migrated from `'crypto-folio-settings'` to `'folio-settings'`. A one-time migration at module load copies the old key to the new key if it exists.
 
-### 5.2 State structure
+### 6.2 State structure
 
 ```typescript
 interface SettingsState {
@@ -213,7 +251,7 @@ interface PairConfig {
 }
 ```
 
-### 5.3 Actions
+### 6.3 Actions
 
 ```typescript
 interface SettingsActions {
@@ -242,7 +280,7 @@ interface SettingsActions {
 }
 ```
 
-### 5.4 Price fetching logic
+### 6.4 Price fetching logic
 
 `fetchPrices` is the most complex action in the Settings Store:
 
@@ -288,7 +326,7 @@ async fetchPrices(symbols?, force = false, exactSymbolsOnly = false) {
 - PositionDetails page mount (fetches the price for that position's symbol).
 - Pull-to-refresh uses `force: true` to bypass the cache.
 
-### 5.5 localStorage migration
+### 6.5 localStorage migration
 
 When the `persist` `version` field does not match (e.g. the user last used an older app version), the `migrate` function is called:
 
@@ -309,7 +347,7 @@ migrate: (persistedState, version) => {
 
 ---
 
-## 6. Reactive Data Reads
+## 7. Reactive Data Reads
 
 Stores do not hold full data lists. Components subscribe to IndexedDB directly using `useLiveQuery()`:
 
@@ -331,7 +369,7 @@ How `useLiveQuery` works:
 
 ---
 
-## 7. Cross-Store Coordination Pattern
+## 8. Cross-Store Coordination Pattern
 
 Stores **do not call each other**. Cross-store coordination is orchestrated by the UI layer:
 

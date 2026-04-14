@@ -23,7 +23,7 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
         <Link to={`/funds/${fund.id}`} className="block group">
             <div className={`h-full flex flex-col relative overflow-hidden rounded-xl ${cardBorder} transition-all duration-200 bg-card hover:border-border hover:shadow-lg hover:-translate-y-0.5`}>
                 {/* Accent bar */}
-                <div className={`h-0.5 w-full ${navUp ? 'bg-pnl-up' : 'bg-pnl-down'}`} />
+                <div className={`h-px w-full ${navUp ? 'bg-pnl-up' : 'bg-pnl-down'}`} />
 
                 <div className={`px-4 pt-3 pb-3 ${headerDivider}`}>
                     <div className="flex justify-between items-start gap-2 mb-2">
@@ -32,7 +32,7 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
                         </h3>
                         <span className={badge({ color: statusBadgeColor(fund.status) })}>
                             <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
-                            {isActive ? 'ACTIVE' : 'CLOSED'}
+                            {isActive ? 'OPEN' : 'CLOSED'}
                         </span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 font-mono">

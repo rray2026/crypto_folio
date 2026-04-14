@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
-import { Plus, Trash2, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
+import { Plus, Trash2, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2, ArrowLeft } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -42,6 +42,11 @@ export default function Transactions() {
     useEffect(() => {
         setMobileHeader({
             title: "Transactions",
+            leftAction: (
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+            ),
             rightActions: (
                 <div className="flex items-center gap-0.5">
                     <button
@@ -61,7 +66,7 @@ export default function Transactions() {
                 </div>
             ),
         })
-    }, [setMobileHeader, openAdd, openSelectMode])
+    }, [setMobileHeader, openAdd, openSelectMode, navigate])
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [createPositionError, setCreatePositionError] = useState<string | null>(null)
@@ -209,9 +214,14 @@ export default function Transactions() {
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 md:mb-8 gap-4">
-                <div className="hidden sm:block">
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
-                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
+                <div className="hidden sm:flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
+                        <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
+                    </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3">
@@ -270,18 +280,26 @@ export default function Transactions() {
                         ))}
                     </div>
                 ) : !transactions?.length ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-muted-foreground" />
+                    <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
-                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            Record Your First Trade
-                        </Button>
+                        <button
+                            onClick={() => setIsAddDialogOpen(true)}
+                            className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left w-full max-w-sm"
+                        >
+                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                <Plus className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">Record Your First Trade</p>
+                                <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Add a buy or sell transaction manually, or import via AI assistant.</p>
+                            </div>
+                        </button>
                     </div>
                 ) : (
                     transactions.map((tx) => (
@@ -327,18 +345,26 @@ export default function Transactions() {
                         ))}
                     </div>
                 ) : !transactions?.length ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-muted-foreground" />
+                    <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
-                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            Record Your First Trade
-                        </Button>
+                        <button
+                            onClick={() => setIsAddDialogOpen(true)}
+                            className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left w-full max-w-sm"
+                        >
+                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                <Plus className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">Record Your First Trade</p>
+                                <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Add a buy or sell transaction manually, or import via AI assistant.</p>
+                            </div>
+                        </button>
                     </div>
                 ) : (
                     <div className="space-y-4 md:space-y-2">
@@ -369,7 +395,7 @@ export default function Transactions() {
                         <DialogTitle>Confirm Deletion</DialogTitle>
                         <DialogDescription className="pt-2">
                             {confirmDeleteState.type === 'bulk'
-                                ? `Are you sure you want to delete ${selectedIds.size} transaction(s)? This will cascade correctly removing them from any associated active position tracking.`
+                                ? `Are you sure you want to delete ${selectedIds.size} transaction(s)? This will cascade correctly removing them from any associated open position tracking.`
                                 : `Are you sure you want to delete this transaction? It will be removed from all associated positions.`
                             }
                         </DialogDescription>
@@ -460,13 +486,13 @@ export default function Transactions() {
 
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Name / Strategy</Label>
+                            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Name</Label>
                             <Input 
                                 id="name" 
                                 value={newPositionName} 
                                 onChange={(e) => setNewPositionName(e.target.value)}
                                 className="rounded-xl border-border/50 h-11 font-bold"
-                                placeholder="Enter strategy name (e.g. Swing Trade)"
+                                placeholder="Enter position name (e.g. Swing Trade)"
                             />
                         </div>
 

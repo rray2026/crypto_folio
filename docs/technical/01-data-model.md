@@ -39,8 +39,7 @@ interface Transaction {
 interface Position {
   id: string;                  // UUID, primary key
   symbol: string;              // Trading asset, e.g. "BTC/USDT"
-  strategyName?: string;       // Strategy label, e.g. "Grid Base"
-  type: 'PRIMARY' | 'SHADOW'; // Real trade vs. sandbox
+  strategyName?: string;       // Manual strategy label, e.g. "Grid Base"
   status: 'OPEN' | 'CLOSED';
   entries: PositionEntry[];    // Entries linking to transactions
   journal?: PositionJournal;   // Trade journal
@@ -48,6 +47,7 @@ interface Position {
   startDate: number;           // Open timestamp (Unix ms)
   endDate?: number;            // Close timestamp (set when CLOSED)
   fundId?: string;             // Optional fund association
+  strategyId?: string;         // Optional strategy association
 }
 
 interface PositionEntry {
@@ -64,10 +64,6 @@ interface PositionJournal {
 ```
 
 **Design notes:**
-
-**PRIMARY vs. SHADOW:**
-- `PRIMARY`: Real trading positions. Included in global dashboard statistics (total P&L, ROI, win rate).
-- `SHADOW`: Sandbox/shadow positions. Can reuse transactions already linked to PRIMARY positions for "what-if" analysis. SHADOW position data has zero effect on global metrics.
 
 **Partial Allocation:**
 - `PositionEntry.allocatedAmount` allows a **portion of a transaction's value** to be assigned to a given position.
@@ -104,6 +100,28 @@ interface Fund {
 
 ---
 
+### 1.4 Strategy
+
+`Strategy` is a **trading methodology** that defines how you approach the market. Positions can be linked to a Strategy to measure the method's effectiveness across multiple trades.
+
+```typescript
+interface Strategy {
+  id: string;           // UUID, primary key
+  name: string;         // e.g. "Grid Trading", "Breakout Momentum"
+  description?: string; // Free-text description of the methodology
+  createdAt: number;    // Creation timestamp (Unix ms)
+  status: 'ACTIVE' | 'ARCHIVED';
+}
+```
+
+**Design notes:**
+- A Strategy is independent from a Fund: Fund = "where is the money?" (capital pool), Strategy = "how do I trade?" (methodology).
+- A Position can belong to both a Fund and a Strategy simultaneously.
+- When a Position is linked to a Strategy, the Strategy's name is used as the Position's display name (overriding `strategyName`).
+- Deleting a Strategy clears `strategyId` on all linked Positions (positions are not deleted).
+
+---
+
 ## 2. Entity Relationships
 
 ```
@@ -114,6 +132,10 @@ Transaction ←─────────────────────�
 Position ──────────────────────────────────────→ Fund
      (fundId?: string)
                     ↑ many-to-one, optional ↑
+
+Position ──────────────────────────────────────→ Strategy
+     (strategyId?: string)
+                    ↑ many-to-one, optional ↑
 ```
 
 **Relationship summary:**
@@ -122,6 +144,7 @@ Position ───────────────────────�
 |---|---|---|---|
 | Transaction ↔ Position | many-to-many | Transaction.associatedPositionIds + Position.entries | Delete Position: clean Transaction.associatedPositionIds; Delete Transaction: clean Position.entries |
 | Position → Fund | many-to-one (optional) | Position.fundId | Delete Fund: clear fundId on all linked Positions |
+| Position → Strategy | many-to-one (optional) | Position.strategyId | Delete Strategy: clear strategyId on all linked Positions |
 
 **Why bidirectional references are necessary:**
 
@@ -155,6 +178,10 @@ From the Position side (`entries`):
 1. Delete the record from `db.funds`.
 2. Set `fundId = undefined` on all Positions where `fundId === this Fund ID`.
 
+**When deleting a Strategy:**
+1. Delete the record from `db.strategies`.
+2. Set `strategyId = undefined` on all Positions where `strategyId === this Strategy ID`.
+
 ### Consistency guarantees
 
 - All bidirectional reference updates are performed within the same Zustand action (non-transactional, but with a fixed operation order).
@@ -168,9 +195,9 @@ From the Position side (`entries`):
 | Field | Type | Constraint |
 |---|---|---|
 | `Transaction.type` | enum | `'BUY' \| 'SELL'` |
-| `Position.type` | enum | `'PRIMARY' \| 'SHADOW'` |
 | `Position.status` | enum | `'OPEN' \| 'CLOSED'` |
 | `Fund.status` | enum | `'ACTIVE' \| 'CLOSED'` |
+| `Strategy.status` | enum | `'ACTIVE' \| 'ARCHIVED'` |
 | `PositionJournal.moodScore` | number | Integer 1–5 |
 | All monetary fields | number | Computed via Decimal.js; never raw float arithmetic |
 | All timestamp fields | number | Unix millisecond timestamps |
@@ -183,8 +210,11 @@ From the Position side (`entries`):
 | Version | Change | Reason |
 |---|---|---|
 | v1 | Initial schema | — |
-| v2 | Position gains `type` field (default PRIMARY); Transaction gains `orderId` | Support shadow positions; Binance import deduplication |
+| v2 | Position gains `type` field (default PRIMARY); Transaction gains `orderId` | Shadow positions; Binance import deduplication |
 | v3 | Fund entity added; Position gains `fundId` | NAV fund feature |
 | v4 | pairConfig.dataSource renamed to dataProvider | Naming consistency |
+| v5 | pairConfig gains `market` field; settings gain `enabledMarkets` | Multi-market support |
+| v6 | Position `type` field removed | Replaced by Strategy entity |
+| v7 | Strategy entity added; Position gains `strategyId` | Trading methodology tracking |
 
 See [`02-database.md`](./02-database.md) for details on the migration system.

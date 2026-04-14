@@ -35,16 +35,25 @@ export default function Glossary() {
                 },
                 {
                     term: "Position",
-                    definition: "A trading thesis that aggregates one or more transactions under a single strategy. A position answers the question 'What is my overall view on this trade?'. It links transactions via entries, computes blended avg cost, realized/unrealized PnL, and ROI across all those trades. One position can span many partial entries and exits."
+                    definition: "A trading thesis that aggregates one or more transactions. A position answers the question 'What is my overall view on this trade?'. It links transactions via entries with allocated amounts, computes blended avg cost, realized/unrealized PnL, and ROI across all those trades. One position can span many partial entries and exits, and can optionally belong to a Fund and/or a Strategy."
                 },
                 {
                     term: "Fund",
-                    definition: "A portfolio container that groups multiple positions under a single capital pool. A fund tracks total capital deployment (Initial Amount), NAV per share, overall PnL, and each position's allocation percentage within the fund. One fund can hold many positions across different assets and strategies."
+                    definition: "A portfolio container that groups multiple positions under a single capital pool. A fund tracks total capital deployment (Initial Amount), NAV per share, overall PnL, and each position's allocation percentage within the fund. One fund can hold many positions across different assets and strategies. Funds answer the question 'How is my capital performing?'."
                 },
                 {
-                    term: "Three-Layer Hierarchy",
-                    definition: "Fund → Position → Transaction. A Fund owns Positions; each Position links Transactions. Moving up the hierarchy aggregates data: transactions roll up into position-level PnL; positions roll up into fund-level NAV. Moving down provides drill-through detail: from fund allocation → position strategy → individual trade execution.",
-                    formula: "Fund (capital pool) → Positions (strategies) → Transactions (executions)"
+                    term: "Strategy",
+                    definition: "A trading methodology or rule set that defines how you approach the market (e.g., 'Grid Trading', 'Breakout Momentum'). Strategies are linked to positions to measure execution quality and compare different approaches. A strategy tracks win rate, average ROI, and total P&L across all its linked positions. Strategies answer the question 'Is my method working?'."
+                },
+                {
+                    term: "Fund vs Strategy",
+                    definition: "A Fund represents a capital pool ('where is the money?'), while a Strategy represents a trading methodology ('how do I trade?'). A position can belong to both a Fund and a Strategy simultaneously — the Fund tracks capital allocation and NAV, while the Strategy evaluates the trading method's effectiveness.",
+                    formula: "Fund = Capital Pool (money) | Strategy = Methodology (method)"
+                },
+                {
+                    term: "Data Hierarchy",
+                    definition: "Fund → Position → Transaction, with Strategy as an orthogonal dimension. Funds own Positions; Positions link Transactions. Strategies cross-cut this hierarchy — any position can be tagged with a strategy regardless of which fund it belongs to. Moving up aggregates data: transactions → position PnL → fund NAV. Moving across compares data: strategy A win rate vs strategy B.",
+                    formula: "Fund (capital) → Positions (trades) → Transactions (executions) | Strategy (method) ↔ Positions"
                 }
             ]
         },
@@ -64,14 +73,6 @@ export default function Glossary() {
                     term: "Short Position",
                     definition: "Selling an asset with the expectation that its price will decrease. You 'sell high' and aim to 'buy back' lower."
                 },
-                {
-                    term: "Primary Strategy",
-                    definition: "Official portfolio strategies. Metrics from these positions are included in your global balance and total PnL."
-                },
-                {
-                    term: "Shadow Analysis",
-                    definition: "Sandbox or experimental strategies. Used for 'What if' scenarios or pure technical analysis without affecting your real portfolio metrics."
-                }
             ]
         },
         {
@@ -79,18 +80,18 @@ export default function Glossary() {
             icon: <Calculator className="h-5 w-5 text-emerald-500" />,
             items: [
                 {
-                    term: "Avg Entry",
+                    term: "Avg Buy",
                     definition: "The weighted average price at which the position was entered. For LONG positions, this is the average buy price across all entry transactions. For SHORT positions, it is the average sell price.",
                     formula: "Total Entry Amount / Total Entry Quantity"
                 },
                 {
-                    term: "Avg. Exit",
+                    term: "Avg Sell",
                     definition: "The weighted average price at which units were closed out of the position. For LONG positions, this is the average sell price. For SHORT positions, it is the average buy-back price.",
                     formula: "Total Exit Amount / Total Exit Quantity"
                 },
                 {
-                    term: "Avg. Cost (Breakeven)",
-                    definition: "The price at which your remaining holdings would need to be closed to break even, accounting for capital already recovered from partial exits. For LONG: cost minus recovered revenue, spread over remaining quantity. For SHORT: revenue minus buyback cost, spread over remaining short quantity.",
+                    term: "Avg Cost",
+                    definition: "Also known as Breakeven Price. The price at which your remaining holdings would need to be closed to break even, accounting for capital already recovered from partial exits. For LONG: cost minus recovered revenue, spread over remaining quantity. For SHORT: revenue minus buyback cost, spread over remaining short quantity.",
                     formula: "LONG: (Total Spent - Total Revenue) / Remaining Qty | SHORT: (Total Revenue - Total Cost) / Remaining Qty"
                 },
                 {
@@ -100,16 +101,27 @@ export default function Glossary() {
                 {
                     term: "Unrealized PnL",
                     definition: "Also known as 'Paper PnL'. The estimated profit or loss based on the current market price of an open position.",
-                    formula: "(Current Price - Avg Entry) * Current Quantity"
+                    formula: "(Current Price - Avg Buy) × Remaining Quantity"
+                },
+                {
+                    term: "Total PnL",
+                    definition: "The combined profit or loss across a position or strategy, including both realized and unrealized amounts. Displayed in position details and strategy summary pages.",
+                    formula: "Realized PnL + Unrealized PnL"
                 },
                 {
                     term: "ROI (Return on Investment)",
                     definition: "A percentage measure of the efficiency of an investment relative to its cost.",
-                    formula: "(Total PnL / Total Invested) * 100%"
+                    formula: "(Total PnL / Total Invested) × 100%"
                 },
                 {
-                    term: "Net PnL",
-                    definition: "The total profit or loss across all trades, including both realized and unrealized amounts, minus all transaction fees."
+                    term: "Win Rate",
+                    definition: "The percentage of closed positions that ended with a positive Total PnL. Displayed on the strategy details page to evaluate a trading methodology's success rate.",
+                    formula: "Profitable Closed Positions / Total Closed Positions × 100%"
+                },
+                {
+                    term: "NAV (Net Asset Value)",
+                    definition: "The total value of a fund's holdings, calculated as the sum of all linked positions' current market value plus remaining cash. NAV per share reflects the fund's performance relative to its initial capital.",
+                    formula: "NAV / Share = Current Fund Value / Total Shares"
                 }
             ]
         },
@@ -118,12 +130,16 @@ export default function Glossary() {
             icon: <ShieldCheck className="h-5 w-5 text-purple-500" />,
             items: [
                 {
-                    term: "ACTIVE (Open)",
-                    definition: "A strategy that is currently in progress. It may have an active balance or simply hasn't been manually closed yet."
+                    term: "OPEN / CLOSED",
+                    definition: "Position lifecycle states. OPEN means the position is in progress and may have an active balance. CLOSED means the position has been completed — its results are finalized. You can manually toggle status regardless of remaining holdings."
                 },
                 {
-                    term: "ARCHIVED (Closed)",
-                    definition: "A strategy that has been completed or stopped. The results are finalized and historically locked."
+                    term: "ACTIVE / ARCHIVED",
+                    definition: "Strategy and Fund lifecycle states. ACTIVE means the strategy or fund is in use. ARCHIVED means it has been shelved — it remains visible for historical review but is hidden from default lists and link menus."
+                },
+                {
+                    term: "Allocated Amount",
+                    definition: "When linking a transaction to a position, the allocated amount defines how much of that transaction's quantity belongs to this position. This allows a single transaction to be split across multiple positions (e.g., a 10 BTC buy split into 6 for Position A and 4 for Position B)."
                 },
                 {
                     term: "Total Investment",
@@ -131,7 +147,7 @@ export default function Glossary() {
                 },
                 {
                     term: "Transaction Fees",
-                    definition: "Costs charged by exchanges for executing trades. These are deducted from your total balance and impact Net PnL."
+                    definition: "Costs charged by exchanges for executing trades. Fees are proportionally allocated based on the allocated amount ratio when a transaction is shared across multiple positions."
                 }
             ]
         }

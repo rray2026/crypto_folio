@@ -3,9 +3,10 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useFundStore } from "@/store/useFundStore"
+import { useStrategyStore } from "@/store/useStrategyStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical, Plus } from "lucide-react"
+import { ArrowLeft, Trash2, Link as LinkIcon, AlertCircle, Edit, Play, Square, Calendar, Clock, TrendingUp, TrendingDown, Circle, Eye, Layers, Lightbulb, ExternalLink, Share2, Bot, Copy, Check, X, EllipsisVertical, FlaskConical, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -60,12 +61,21 @@ export default function PositionDetails() {
     const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set())
     const [linkTimeFilter, setLinkTimeFilter] = useState<'7D' | '1M' | '6M' | 'ALL'>('ALL')
     const { assignPositionToFund, unassignPosition } = useFundStore()
+    const { assignPositionToStrategy, unassignPositionFromStrategy } = useStrategyStore()
     const { setMobileHeader } = useMobileHeader()
 
     const position = useLiveQuery(() => id ? db.positions.get(id) : undefined, [id])
     const allTransactions = useLiveQuery(() => db.transactions.toArray())
     const allPositions = useLiveQuery(() => db.positions.toArray())
     const allFunds = useLiveQuery(() => db.funds.toArray())
+    const allStrategies = useLiveQuery(() => db.strategies.toArray())
+
+    // Resolve display name: linked strategy name > manual strategyName > symbol fallback
+    const positionDisplayName = position
+        ? (position.strategyId && allStrategies?.find(s => s.id === position.strategyId)?.name)
+          || position.strategyName
+          || position.symbol.split('/')[0]
+        : ''
 
     // Compute total allocated quantity per transaction across all positions
     const getTxAllocated = useCallback((txId: string, excludePositionId?: string) => {
@@ -87,14 +97,14 @@ export default function PositionDetails() {
     }, [id, position, closePosition, openPosition])
 
     const handleDeletePosition = useCallback(async () => {
-        if (!id || !window.confirm("Are you sure you want to delete this position strategy? All transaction links will be removed.")) return;
+        if (!id || !window.confirm("Are you sure you want to delete this position? All transaction links will be removed.")) return;
         await deletePosition(id);
         navigate('/positions');
     }, [id, deletePosition, navigate])
 
     useEffect(() => {
         const title = position
-            ? (position.strategyName || position.symbol.split('/')[0])
+            ? positionDisplayName
             : "Position"
         setMobileHeader({
             title,
@@ -160,7 +170,7 @@ export default function PositionDetails() {
                 </Popover>
             ),
         })
-    }, [position, navigate, setMobileHeader, isMobileMenuOpen, toggleStatus, handleDeletePosition])
+    }, [position, navigate, setMobileHeader, isMobileMenuOpen, toggleStatus, handleDeletePosition, id, positionDisplayName])
 
     // Initial price fetch when position loads or symbol changes
     useEffect(() => {
@@ -278,7 +288,7 @@ export default function PositionDetails() {
     }, 0);
 
     const generateAiPrompt = () => {
-        const name = position.strategyName || `${position.symbol.split('/')[0]} Position`
+        const name = positionDisplayName || `${position.symbol.split('/')[0]} Strategy`
         const startStr = derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'
         const endStr = derivedEndDate ? format(new Date(derivedEndDate), "yyyy/MM/dd") : (position.status === 'OPEN' ? 'Still Open' : 'Unknown')
         const durationDays = differenceInDays(derivedEndDate || now, derivedStartDate || now)
@@ -344,7 +354,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
+                                        <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{positionDisplayName || `${position.symbol.split('/')[0]} Strategy`}</h1>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
@@ -365,7 +375,7 @@ export default function PositionDetails() {
                                         : 'text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
-                                        {position.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
+                                        {position.status === 'OPEN' ? 'OPEN' : 'CLOSED'}
                                     </span>
                                 </div>
                             </div>
@@ -438,6 +448,64 @@ export default function PositionDetails() {
                                                     >
                                                         <LinkIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                                         <span className="truncate">{f.name}</span>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
+                                {/* Strategy assignment inline */}
+                                {position.strategyId ? (() => {
+                                    const linkedStrategy = allStrategies?.find(s => s.id === position.strategyId)
+                                    return (
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <button className="flex items-center gap-1 md:gap-1.5 bg-primary/5 rounded-md px-1.5 md:px-2 py-1 border border-primary/20 text-primary hover:bg-primary/10 transition-colors cursor-pointer font-sans">
+                                                    <Lightbulb className="h-3 w-3 md:h-4 md:w-4" />
+                                                    <span className="font-medium">{linkedStrategy?.name ?? 'Unknown Strategy'}</span>
+                                                </button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-48 p-2" align="start">
+                                                <button
+                                                    onClick={() => navigate(`/strategies/${position.strategyId}`)}
+                                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                                                >
+                                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                                    View Strategy
+                                                </button>
+                                                <button
+                                                    onClick={() => id && unassignPositionFromStrategy(id)}
+                                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-destructive/10 text-destructive transition-colors text-left"
+                                                >
+                                                    <X className="h-3.5 w-3.5 shrink-0" />
+                                                    Unlink
+                                                </button>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )
+                                })() : (
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-dashed border-border/50 hover:border-primary/50 transition-colors cursor-pointer font-sans">
+                                                <Lightbulb className="h-3 w-3 md:h-4 md:w-4" />
+                                                <span>Link Strategy</span>
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-56 p-2" align="start">
+                                            {!allStrategies || allStrategies.filter(s => s.status === 'ACTIVE').length === 0 ? (
+                                                <p className="text-xs text-muted-foreground flex items-center gap-2 px-2 py-1.5">
+                                                    <AlertCircle className="h-3.5 w-3.5" />
+                                                    No active strategies.
+                                                </p>
+                                            ) : (
+                                                allStrategies.filter(s => s.status === 'ACTIVE').map(s => (
+                                                    <button
+                                                        key={s.id}
+                                                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                                                        onClick={() => id && assignPositionToStrategy(id, s.id)}
+                                                    >
+                                                        <LinkIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                                        <span className="truncate">{s.name}</span>
                                                     </button>
                                                 ))
                                             )}

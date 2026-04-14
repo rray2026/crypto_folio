@@ -1,14 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { format } from "date-fns"
-import { ArrowLeft, Trash2, Edit, Calendar, Clock, Wallet, Activity, Hash, Link as LinkIcon, Circle, EllipsisVertical } from "lucide-react"
+import { ArrowLeft, Trash2, Edit, Calendar, Clock, Hash, Target, Circle, EllipsisVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Dialog,
     DialogContent,
@@ -22,8 +22,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
-import { useState } from "react"
-import { badge, txBadgeColor, statusBadgeColor } from "@/lib/styles"
+import { badge, txBadgeColor, label, pnlColor, sectionHeader } from "@/lib/styles"
 
 export default function TransactionDetails() {
     const { id } = useParams<{ id: string }>()
@@ -36,6 +35,7 @@ export default function TransactionDetails() {
 
     const transaction = useLiveQuery(() => id ? db.transactions.get(id) : undefined, [id])
     const allPositions = useLiveQuery(() => db.positions.toArray())
+    const allStrategies = useLiveQuery(() => db.strategies.toArray())
 
     useEffect(() => {
         setMobileHeader({
@@ -92,6 +92,15 @@ export default function TransactionDetails() {
     const { pairConfigs } = useSettingsStore.getState()
     const currencySymbol = getCurrencySymbolForPair(transaction.symbol, pairConfigs)
 
+    // Resolve position display name
+    const getPositionDisplayName = (pos: typeof linkedPositions[0]) => {
+        if (pos.strategyId) {
+            const strategy = allStrategies?.find(s => s.id === pos.strategyId)
+            if (strategy) return strategy.name
+        }
+        return pos.strategyName || pos.symbol.split('/')[0]
+    }
+
     const executeDelete = async () => {
         if (!id) return
         await deleteTransaction(id)
@@ -99,38 +108,169 @@ export default function TransactionDetails() {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
-            {/* Header (desktop only — mobile uses MobileHeader) */}
-            <div className="hidden md:flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-xl md:text-3xl font-bold tracking-tight truncate">{transaction.symbol}</h1>
-                        <div className={`${badge({ color: txBadgeColor(transaction.type) })} px-2 text-[10px] md:text-xs tracking-widest`}>
-                            {transaction.type}
-                        </div>
-                    </div>
-                    <p className="text-muted-foreground text-xs md:text-sm mt-1">Transaction Details</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => setIsEditDialogOpen(true)}>
-                        <Edit className="h-4 w-4" />
-                        <span className="hidden sm:inline">Edit</span>
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">
+                    <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 self-start mt-1" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <Button variant="destructive" size="sm" className="gap-2 h-9" onClick={() => setIsDeleteConfirmOpen(true)}>
+                    <div className="flex-1 w-full min-w-0">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div className="space-y-1">
+                                <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{transaction.symbol}</h1>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                {/* Type Badge */}
+                                <span className={`${badge({ color: txBadgeColor(transaction.type) })} px-2 text-[10px] md:text-xs tracking-widest`}>
+                                    {transaction.type}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Info chips */}
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1.5 md:mt-2.5">
+                            <span className="text-sm md:text-lg text-muted-foreground font-mono font-bold tracking-wider">
+                                {currencySymbol}{transaction.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                                <span className="text-muted-foreground/50 mx-1">×</span>
+                                {transaction.quantity.toLocaleString()}
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3 text-xs md:text-sm text-muted-foreground font-mono">
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                                <span>{format(new Date(transaction.date), "yyyy/MM/dd")}</span>
+                            </div>
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <Clock className="h-3 w-3 md:h-4 md:w-4" />
+                                <span>{format(new Date(transaction.date), "HH:mm:ss")}</span>
+                            </div>
+                            {(transaction.orderId || transaction.id) && (
+                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                    <Hash className="h-3 w-3 md:h-4 md:w-4" />
+                                    <span className="truncate max-w-[120px] md:max-w-[200px]" title={transaction.orderId ?? transaction.id}>
+                                        {transaction.orderId ?? transaction.id.slice(0, 8)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Notes */}
+                        {transaction.notes && (
+                            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-lg border border-border/50 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
+                                <span className="font-semibold text-foreground/80 mr-2">Notes:</span>
+                                {transaction.notes}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Desktop action buttons */}
+                <div className="hidden md:flex items-center gap-2 self-start">
+                    <Button variant="outline" size="icon" className="shrink-0" onClick={() => setIsEditDialogOpen(true)}>
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={() => setIsDeleteConfirmOpen(true)}>
                         <Trash2 className="h-4 w-4" />
-                        <span className="hidden sm:inline">Delete</span>
                     </Button>
                 </div>
             </div>
+
+            {/* Metrics Card */}
+            <Card className="overflow-hidden border-border/50 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 sm:gap-y-6 gap-x-4">
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Price</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">
+                                {currencySymbol}{transaction.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                            </span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Quantity</span>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-base sm:text-xl font-bold font-mono">{transaction.quantity.toLocaleString()}</span>
+                                <span className="text-[10px] text-muted-foreground uppercase">{transaction.symbol.split('/')[0]}</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Total Value</span>
+                            <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(transaction.type === 'BUY' ? -1 : 1)}`}>
+                                {currencySymbol}{transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Fee</span>
+                            <span className="text-base sm:text-xl font-bold font-mono text-muted-foreground">
+                                {transaction.fee > 0 ? `${currencySymbol}${transaction.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                            </span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Linked Positions */}
+            <div className="space-y-1.5">
+                <span className={sectionHeader}>
+                    Linked Positions ({linkedPositions.length})
+                </span>
+                <div className="space-y-3">
+                    {linkedPositions.length === 0 ? (
+                        <div className="p-6 rounded-xl border border-dashed border-border/50 text-center">
+                            <p className="text-sm text-muted-foreground">Not linked to any positions.</p>
+                        </div>
+                    ) : (
+                        linkedPositions.map(pos => {
+                            const entry = pos.entries.find(e => e.transactionId === transaction.id)
+                            return (
+                                <div
+                                    key={pos.id}
+                                    className="flex items-center justify-between p-3 border border-border/50 rounded-xl bg-card hover:bg-card/80 transition-colors cursor-pointer group"
+                                    onClick={() => navigate(`/positions/${pos.id}`)}
+                                >
+                                    <div className="flex gap-3 md:gap-4 items-center min-w-0">
+                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                            <Target className="h-3.5 w-3.5 text-primary" />
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <p className="text-sm font-semibold truncate">{getPositionDisplayName(pos)}</p>
+                                            <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                                                <span>{pos.symbol}</span>
+                                                <span className="opacity-50">·</span>
+                                                <span className={pos.status === 'OPEN' ? 'text-primary font-semibold' : ''}>{pos.status}</span>
+                                                {entry && (
+                                                    <>
+                                                        <span className="opacity-50">·</span>
+                                                        <span className="bg-primary/5 text-primary px-1 rounded-sm font-semibold">Allocated: {entry.allocatedAmount}</span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                                        <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                                            pos.status === 'OPEN'
+                                            ? 'bg-primary/10 text-primary border-primary/20'
+                                            : 'text-muted-foreground border-border'
+                                        }`}>
+                                            <Circle className={`h-1.5 w-1.5 fill-current ${pos.status === 'OPEN' ? 'animate-pulse' : ''}`} />
+                                            {pos.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            </div>
+
+            {/* Delete Confirm Dialog */}
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>Delete Transaction</DialogTitle>
+                        <DialogTitle className="text-destructive">Delete Transaction?</DialogTitle>
                         <DialogDescription className="pt-2">
-                            Are you sure you want to delete this transaction? It will be removed from all associated positions.
+                            This will permanently delete this transaction and remove it from all linked positions. This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 mt-4">
@@ -140,7 +280,7 @@ export default function TransactionDetails() {
                 </DialogContent>
             </Dialog>
 
-            {/* Single Edit dialog — shared between desktop and mobile menu */}
+            {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px]">
                     <DialogHeader>
@@ -149,116 +289,6 @@ export default function TransactionDetails() {
                     <TransactionEditForm transaction={transaction} onSuccess={() => setIsEditDialogOpen(false)} />
                 </DialogContent>
             </Dialog>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Main Information */}
-                <Card className="md:col-span-2 bg-card/40 border-border/40 overflow-hidden">
-                    <CardHeader className="border-b border-border/40 bg-muted/20 pb-4">
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                            <Activity className="h-4 w-4" />
-                            Execution Details
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <div className="grid grid-cols-2 gap-y-8">
-                            <div className="space-y-1.5">
-                                <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight flex items-center gap-1.5">
-                                    <Wallet className="h-3 w-3" /> Execution Price
-                                </span>
-                                <p className="text-xl md:text-2xl font-mono font-black">{currencySymbol}{transaction.price.toLocaleString()}</p>
-                            </div>
-                            <div className="space-y-1.5">
-                                <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight flex items-center gap-1.5">
-                                    <Activity className="h-3 w-3" /> Quantity
-                                </span>
-                                <p className="text-xl md:text-2xl font-mono font-black">{transaction.quantity.toLocaleString()}</p>
-                            </div>
-                            <div className="space-y-1.5">
-                                <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Total Value</span>
-                                <p className="text-xl md:text-2xl font-mono font-black">{currencySymbol}{transaction.amount.toLocaleString()}</p>
-                            </div>
-                            <div className="space-y-1.5">
-                                <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">Fee Paid</span>
-                                <p className="text-xl md:text-2xl font-mono font-black text-muted-foreground">{currencySymbol}{transaction.fee.toLocaleString()}</p>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 pt-8 border-t border-border/40 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-muted/50">
-                                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Execution Date</p>
-                                    <p className="text-sm font-medium">{format(new Date(transaction.date), "yyyy/MM/dd")}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-muted/50">
-                                    <Clock className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Execution Time</p>
-                                    <p className="text-sm font-medium">{format(new Date(transaction.date), "HH:mm:ss")}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-3 sm:col-span-2">
-                                <div className="p-2 rounded-lg bg-muted/50">
-                                    <Hash className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
-                                        {transaction.orderId ? "Order ID" : "Transaction ID"}
-                                    </p>
-                                    <p className="text-xs font-mono break-all text-muted-foreground select-all">
-                                        {transaction.orderId ?? transaction.id}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Linked Positions */}
-                <div className="space-y-6">
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2 px-1">
-                        <LinkIcon className="h-4 w-4" />
-                        Linked Strategies
-                    </h2>
-                    {linkedPositions.length === 0 ? (
-                        <div className="p-6 rounded-xl border border-dashed text-center space-y-2">
-                            <p className="text-sm text-muted-foreground">Not linked to any positions.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {linkedPositions.map(pos => {
-                                const entry = pos.entries.find(e => e.transactionId === transaction.id);
-                                return (
-                                    <button 
-                                        key={pos.id}
-                                        onClick={() => navigate(`/positions/${pos.id}`)}
-                                        className="w-full text-left p-4 rounded-xl border bg-card/40 hover:bg-card/80 transition-all group border-border/40 hover:border-border shadow-sm"
-                                    >
-                                        <div className="flex justify-between items-start mb-1.5">
-                                            <span className="font-bold text-sm truncate pr-2">
-                                                {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
-                                            </span>
-                                            <span className={badge({ color: statusBadgeColor(pos.status) })}>
-                                                <Circle className={`h-1.5 w-1.5 fill-current ${pos.status === 'OPEN' ? 'animate-pulse' : ''}`} aria-hidden="true" />
-                                                {pos.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10">
-                                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Allocated</span>
-                                            <span className="text-xs font-mono font-bold">{entry?.allocatedAmount}</span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </div>
         </div>
     )
 }

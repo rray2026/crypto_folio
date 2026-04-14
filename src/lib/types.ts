@@ -34,7 +34,8 @@ export interface Position {
     notes?: string;
     startDate: number; // Unix timestamp
     endDate?: number; // Unix timestamp
-    fundId?: string; // optional: which Fund this position belongs to
+    fundId?: string;       // optional: which Fund this position belongs to
+    strategyId?: string;   // optional: which Strategy this position executes
 }
 
 export interface PositionMetrics {
@@ -62,4 +63,12 @@ export interface Fund {
     currency: string;        // default "USDT"
     createdAt: number;       // Unix timestamp ms
     status: 'ACTIVE' | 'CLOSED';
+}
+
+export interface Strategy {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt: number;       // Unix timestamp ms
+    status: 'ACTIVE' | 'ARCHIVED';
 }

@@ -22,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, TrendingUp, XCircle, Check } from "lucide-react"
+import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, XCircle, Check } from "lucide-react"
 
 import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
@@ -33,13 +33,22 @@ const DEBUG_TAP_TIMEOUT = 3000
 
 export default function Settings() {
     const navigate = useNavigate()
-    const { predefinedPairs, theme, setTheme, themeColor, setThemeColor } = useSettingsStore()
+    const { theme, setTheme, themeColor, setThemeColor } = useSettingsStore()
 
     const txCount   = useLiveQuery(() => db.transactions.count(), [])
     const posCount  = useLiveQuery(() => db.positions.count(), [])
     const fundCount = useLiveQuery(() => db.funds.count(), [])
     const { setMobileHeader } = useMobileHeader()
-    useEffect(() => { setMobileHeader({ title: "Settings" }) }, [setMobileHeader])
+    useEffect(() => {
+        setMobileHeader({
+            title: "Settings",
+            leftAction: (
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+            ),
+        })
+    }, [setMobileHeader, navigate])
 
     // Debug mode Easter egg: tap version text N times to enter debug page
     const tapCountRef = useRef(0)
@@ -105,31 +114,17 @@ export default function Settings() {
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
-            <div className="hidden md:block">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
+            <div className="hidden md:flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
+                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
+                </div>
             </div>
 
-            <div className="bg-card rounded-xl border shadow-sm hover:border-border transition-all">
-                <Link to="/settings/trading-pairs" className="flex items-center justify-between p-6 group">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                            Trading Pairs
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {predefinedPairs.length} {predefinedPairs.length === 1 ? 'pair' : 'pairs'} configured · quick-select options for transactions
-                        </p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform shrink-0">
-                        <ArrowLeft className="h-5 w-5 rotate-180" />
-                    </Button>
-                </Link>
-            </div>
-
-
-
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
+            <div className="bg-card p-6 rounded-xl border shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
