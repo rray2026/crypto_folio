@@ -39,7 +39,7 @@ export default function TransactionDetails() {
 
     useEffect(() => {
         setMobileHeader({
-            title: transaction ? `${transaction.symbol} · ${transaction.type}` : "Transaction",
+            title: transaction ? `${transaction.symbol}` : "Transaction",
             leftAction: (
                 <button
                     onClick={() => navigate(-1)}
@@ -116,15 +116,13 @@ export default function TransactionDetails() {
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div className="flex-1 w-full min-w-0">
-                        <div className="hidden md:flex items-center gap-3">
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{transaction.symbol}</h1>
-                            <span className={`${badge({ color: txBadgeColor(transaction.type) })} px-2 text-[10px] md:text-xs tracking-widest`}>
-                                {transaction.type}
-                            </span>
-                        </div>
+                        <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{transaction.symbol}</h1>
 
                         {/* Info chips */}
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3 text-xs md:text-sm text-muted-foreground font-mono">
+                            <span className={`${badge({ color: txBadgeColor(transaction.type) })} px-2 text-[10px] md:text-xs tracking-widest`}>
+                                {transaction.type}
+                            </span>
                             <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
                                 <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                 <span>{format(new Date(transaction.date), "yyyy/MM/dd")}</span>
