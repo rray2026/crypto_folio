@@ -39,7 +39,7 @@ export default function TransactionDetails() {
 
     useEffect(() => {
         setMobileHeader({
-            title: transaction ? `${transaction.symbol}` : "Transaction",
+            title: transaction ? `${transaction.symbol} · ${transaction.type}` : "Transaction",
             leftAction: (
                 <button
                     onClick={() => navigate(-1)}
