@@ -27,11 +27,7 @@ import {
 import { SwipeActions } from "@/components/shared/SwipeActions"
 import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, Activity } from "lucide-react"
 
-const ENTITY_STYLE = {
-    badge: "bg-primary/10 text-primary border-primary/20",
-    card:  "border-primary/30 hover:border-primary/60 hover:bg-primary/5",
-    dot:   "bg-primary",
-}
+const MUTED_BADGE = "bg-muted/40 text-muted-foreground border-border/50"
 
 interface SelectionDialogProps {
     open: boolean
@@ -67,13 +63,14 @@ function SelectionDialog({ open, pair, current, title, groups, onSelect, onClose
                                             key={item}
                                             onClick={() => onSelect(item)}
                                             disabled={isCurrent}
-                                            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${ENTITY_STYLE.card} ${isCurrent ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
+                                            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${
+                                                isCurrent
+                                                    ? 'border-primary/30 bg-primary/5 cursor-default'
+                                                    : 'border-border/50 hover:border-border hover:bg-muted/30 cursor-pointer'
+                                            }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${ENTITY_STYLE.dot}`} />
-                                                <span className="font-semibold text-sm">{item}</span>
-                                            </div>
-                                            {isCurrent && <Check className="h-4 w-4 text-muted-foreground" />}
+                                            <span className={`font-semibold text-sm ${isCurrent ? 'text-primary' : ''}`}>{item}</span>
+                                            {isCurrent && <Check className="h-4 w-4 text-primary" />}
                                         </button>
                                     )
                                 })}
@@ -552,21 +549,21 @@ export default function TradingPairs() {
 
                                                 {/* Meta row: market, exchange, data source, currency */}
                                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MARKET_STYLE.bg} ${MARKET_STYLE.text} ${MARKET_STYLE.border}`}>
+                                                    <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                         {market}
                                                     </span>
 
                                                     <span className="text-[10px] text-border">&middot;</span>
 
                                                     {isValidatingExch ? (
-                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${ENTITY_STYLE.badge}`}>
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                             <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                             {exchange}
                                                         </span>
                                                     ) : (
                                                         <button
                                                             onClick={() => setDialogPair(pair)}
-                                                            className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${ENTITY_STYLE.badge}`}
+                                                            className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${MUTED_BADGE}`}
                                                             title="Change exchange"
                                                         >
                                                             {exchange}
@@ -577,14 +574,14 @@ export default function TradingPairs() {
                                                     <span className="text-[10px] text-border">·</span>
 
                                                     {isValidatingProv ? (
-                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${ENTITY_STYLE.badge} opacity-60`}>
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE} opacity-60`}>
                                                             <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                                             {dataProvider}
                                                         </span>
                                                     ) : (
                                                         <button
                                                             onClick={() => setDialogProviderPair(pair)}
-                                                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${ENTITY_STYLE.badge} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
+                                                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${MUTED_BADGE} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
                                                             title="Change data source"
                                                         >
                                                             {dataProvider}
@@ -594,7 +591,7 @@ export default function TradingPairs() {
 
                                                     <span className="text-[10px] text-border">·</span>
 
-                                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-muted/40 text-muted-foreground border-border/50">
+                                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                         {currency}
                                                     </span>
                                                 </div>
