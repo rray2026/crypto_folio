@@ -522,13 +522,21 @@ export default function TradingPairs() {
                             <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No trading pairs yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             Add a trading pair to start tracking real-time prices across exchanges.
                         </p>
-                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setAddModalOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            Add Your First Pair
-                        </Button>
+                        <button
+                            onClick={() => setAddModalOpen(true)}
+                            className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left w-full max-w-sm"
+                        >
+                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                <Plus className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">Add Your First Pair</p>
+                                <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Choose a market, data source, and symbol to start tracking prices.</p>
+                            </div>
+                        </button>
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">

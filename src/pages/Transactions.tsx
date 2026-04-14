@@ -285,13 +285,21 @@ export default function Transactions() {
                             <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
-                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            Record Your First Trade
-                        </Button>
+                        <button
+                            onClick={() => setIsAddDialogOpen(true)}
+                            className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left w-full max-w-sm"
+                        >
+                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                <Plus className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">Record Your First Trade</p>
+                                <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Add a buy or sell transaction manually, or import via AI assistant.</p>
+                            </div>
+                        </button>
                     </div>
                 ) : (
                     transactions.map((tx) => (
@@ -342,13 +350,21 @@ export default function Transactions() {
                             <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
-                        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            Record Your First Trade
-                        </Button>
+                        <button
+                            onClick={() => setIsAddDialogOpen(true)}
+                            className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left w-full max-w-sm"
+                        >
+                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                                <Plus className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">Record Your First Trade</p>
+                                <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Add a buy or sell transaction manually, or import via AI assistant.</p>
+                            </div>
+                        </button>
                     </div>
                 ) : (
                     <div className="space-y-4 md:space-y-2">
