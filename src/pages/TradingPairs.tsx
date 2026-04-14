@@ -271,7 +271,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     )
 }
 
-const MARKET_STYLE = { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20', dot: 'bg-primary' }
+const MARKET_STYLE = { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' }
 
 export default function TradingPairs() {
     const { setMobileHeader } = useMobileHeader()
@@ -435,13 +435,12 @@ export default function TradingPairs() {
                                     isEnabled ? 'hover:bg-muted/20' : 'opacity-50'
                                 } ${isActive ? 'bg-muted/30' : ''}`}
                             >
-                                {/* Color dot + market info — clickable to filter */}
+                                {/* Market info — clickable to filter */}
                                 <button
                                     onClick={() => isEnabled && setActiveMarket(isActive ? null : m)}
                                     disabled={!isEnabled}
                                     className="flex items-center gap-3 flex-1 min-w-0 text-left"
                                 >
-                                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${isEnabled ? MARKET_STYLE.dot : 'bg-muted-foreground/20'}`} />
                                     <div className="flex-1 min-w-0">
                                         <span className="text-sm font-semibold">{m}</span>
                                         <span className="text-xs text-muted-foreground ml-2">
