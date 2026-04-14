@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useTransactionStore } from "@/store/useTransactionStore"
+import { usePositionStore } from "@/store/usePositionStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,6 +9,8 @@ import { DateTimePicker } from "@/components/ui/DateTimePicker"
 
 export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const addTransaction = useTransactionStore((state) => state.addTransaction)
+    const createPosition = usePositionStore((state) => state.createPosition)
+    const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
     const [symbol, setSymbol] = useState("")
     const [type, setType] = useState<"BUY" | "SELL">("BUY")
     const [price, setPrice] = useState("")
@@ -16,6 +19,8 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
     const [fee, setFee] = useState("0")
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16))
     const [orderId, setOrderId] = useState("")
+    const [alsoCreatePosition, setAlsoCreatePosition] = useState(false)
+    const [positionName, setPositionName] = useState("")
 
 
     // Handlers for dynamic math
@@ -44,16 +49,32 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
         e.preventDefault()
         if (!symbol || !price || !quantity || !amount) return
 
-        await addTransaction({
-            symbol: symbol.toUpperCase(),
+        const upperSymbol = symbol.toUpperCase()
+        const parsedAmount = parseFloat(amount)
+
+        const txId = await addTransaction({
+            symbol: upperSymbol,
             type,
             price: parseFloat(price),
             quantity: parseFloat(quantity),
-            amount: parseFloat(amount),
+            amount: parsedAmount,
             fee: parseFloat(fee || "0"),
             date: new Date(date).getTime(),
             orderId: orderId.trim() || undefined,
         })
+
+        if (alsoCreatePosition) {
+            const posId = await createPosition({
+                symbol: upperSymbol,
+                strategyName: positionName || undefined,
+                startDate: new Date(date).getTime(),
+            })
+            await addTransactionToPosition(posId, {
+                transactionId: txId,
+                allocatedAmount: parsedAmount,
+            })
+        }
+
         onSuccess()
     }
 
@@ -128,6 +149,27 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Order ID</Label>
                 <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} className="rounded-xl border-border/50 h-11 font-mono" />
+            </div>
+
+            <div className="space-y-3 pt-1">
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                        type="checkbox"
+                        checked={alsoCreatePosition}
+                        onChange={e => setAlsoCreatePosition(e.target.checked)}
+                        className="h-4 w-4 rounded border-border accent-primary"
+                    />
+                    <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Also create a position</span>
+                </label>
+
+                {alsoCreatePosition && (
+                    <Input
+                        placeholder="Position name (optional)"
+                        value={positionName}
+                        onChange={e => setPositionName(e.target.value)}
+                        className="rounded-xl border-border/50 h-11 font-medium"
+                    />
+                )}
             </div>
 
             <div className="pt-4">

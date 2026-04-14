@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { PositionCard } from "@/components/shared/PositionCard"
 import { useLiveQuery } from "dexie-react-hooks"
@@ -6,8 +6,9 @@ import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair, getCurrencySymbol } from "@/store/useSettingsStore"
 import type { Position, PositionMetrics } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
+import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
 
-import { Plus, Target, ChevronDown } from "lucide-react"
+import { Plus, Target, ChevronDown, LineChart, ReceiptText } from "lucide-react"
 import { differenceInDays } from "date-fns"
 import { getPositionMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 
@@ -19,26 +20,47 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export default function Positions() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const [isAddTxDialogOpen, setIsAddTxDialogOpen] = useState(false)
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [closedExpanded, setClosedExpanded] = useState(false)
     const { setMobileHeader } = useMobileHeader()
-    const openAdd = useCallback(() => setIsAddDialogOpen(true), [])
     useEffect(() => {
         setMobileHeader({
             title: "Positions",
             rightActions: (
-                <button
-                    onClick={openAdd}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="New Position"
-                >
-                    <Plus className="h-5 w-5" />
-                </button>
+                <Popover open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                    <PopoverTrigger asChild>
+                        <button
+                            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                            aria-label="Add"
+                        >
+                            <Plus className="h-5 w-5" />
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-1" align="end">
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMenuOpen(false); setIsAddDialogOpen(true) }}
+                        >
+                            <LineChart className="h-4 w-4 text-muted-foreground" />
+                            New Position
+                        </button>
+                        <button
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            onClick={() => { setIsMenuOpen(false); setIsAddTxDialogOpen(true) }}
+                        >
+                            <ReceiptText className="h-4 w-4 text-muted-foreground" />
+                            New Transaction
+                        </button>
+                    </PopoverContent>
+                </Popover>
             ),
         })
-    }, [setMobileHeader, openAdd])
+    }, [setMobileHeader, isMenuOpen])
     const { prices, fetchPrices, pairConfigs } = useSettingsStore()
 
     const positions = useLiveQuery(() => db.positions.toArray())
@@ -116,10 +138,16 @@ export default function Positions() {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your positions and group trades.</p>
                 </div>
-                <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="h-4 w-4" />
-                    New Position
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" className="gap-2" onClick={() => setIsAddTxDialogOpen(true)}>
+                        <ReceiptText className="h-4 w-4" />
+                        New Transaction
+                    </Button>
+                    <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                        New Position
+                    </Button>
+                </div>
             </div>
 
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -193,6 +221,8 @@ export default function Positions() {
                     )}
                 </div>
             )}
+
+            <AddTransactionDialog open={isAddTxDialogOpen} onOpenChange={setIsAddTxDialogOpen} />
         </div>
     )
 }

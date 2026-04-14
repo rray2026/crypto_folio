@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { PullToRefresh } from "@/components/ui/PullToRefresh"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
-import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings, User } from "lucide-react"
+import { ArrowUpRight, TrendingUp, ReceiptText, LineChart, Settings } from "lucide-react"
 
 function freshnessColor(timestamp: number): string {
     const age = Math.floor((Date.now() - timestamp) / 1000);
@@ -17,20 +17,7 @@ function freshnessColor(timestamp: number): string {
 export default function Dashboard() {
     const navigate = useNavigate()
     const { setMobileHeader } = useMobileHeader()
-    useEffect(() => {
-        setMobileHeader({
-            title: "Dashboard",
-            rightActions: (
-                <button
-                    onClick={() => navigate("/profile")}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="Profile"
-                >
-                    <User className="h-5 w-5" />
-                </button>
-            ),
-        })
-    }, [setMobileHeader, navigate])
+    useEffect(() => { setMobileHeader({ title: "Dashboard" }) }, [setMobileHeader])
     const positions = useLiveQuery(() => db.positions.toArray())
     const { prices, fetchPrices, pairConfigs, pinnedPairs } = useSettingsStore()
 
