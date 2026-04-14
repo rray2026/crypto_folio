@@ -39,12 +39,21 @@ export default function Glossary() {
                 },
                 {
                     term: "Fund",
-                    definition: "A portfolio container that groups multiple positions under a single capital pool. A fund tracks total capital deployment (Initial Amount), NAV per share, overall PnL, and each position's allocation percentage within the fund. One fund can hold many positions across different assets and strategies."
+                    definition: "A portfolio container that groups multiple positions under a single capital pool. A fund tracks total capital deployment (Initial Amount), NAV per share, overall PnL, and each position's allocation percentage within the fund. One fund can hold many positions across different assets and strategies. Funds answer the question 'How is my capital performing?'."
                 },
                 {
-                    term: "Three-Layer Hierarchy",
-                    definition: "Fund → Position → Transaction. A Fund owns Positions; each Position links Transactions. Moving up the hierarchy aggregates data: transactions roll up into position-level PnL; positions roll up into fund-level NAV. Moving down provides drill-through detail: from fund allocation → position strategy → individual trade execution.",
-                    formula: "Fund (capital pool) → Positions (strategies) → Transactions (executions)"
+                    term: "Strategy",
+                    definition: "A trading methodology or rule set that defines how you approach the market (e.g., 'Grid Trading', 'Breakout Momentum'). Strategies are linked to positions to measure execution quality and compare different approaches. A strategy tracks win rate, average ROI, and total P&L across all its linked positions. Strategies answer the question 'Is my method working?'."
+                },
+                {
+                    term: "Fund vs Strategy",
+                    definition: "A Fund represents a capital pool ('where is the money?'), while a Strategy represents a trading methodology ('how do I trade?'). A position can belong to both a Fund and a Strategy simultaneously — the Fund tracks capital allocation and NAV, while the Strategy evaluates the trading method's effectiveness.",
+                    formula: "Fund = Capital Pool (money) | Strategy = Methodology (method)"
+                },
+                {
+                    term: "Data Hierarchy",
+                    definition: "Fund → Position → Transaction, with Strategy as an orthogonal dimension. Funds own Positions; Positions link Transactions. Strategies cross-cut this hierarchy — any position can be tagged with a strategy regardless of which fund it belongs to. Moving up aggregates data: transactions → position PnL → fund NAV. Moving across compares data: strategy A win rate vs strategy B.",
+                    formula: "Fund (capital) → Positions (trades) → Transactions (executions) | Strategy (method) ↔ Positions"
                 }
             ]
         },
@@ -64,14 +73,6 @@ export default function Glossary() {
                     term: "Short Position",
                     definition: "Selling an asset with the expectation that its price will decrease. You 'sell high' and aim to 'buy back' lower."
                 },
-                {
-                    term: "Primary Strategy",
-                    definition: "Official portfolio strategies. Metrics from these positions are included in your global balance and total PnL."
-                },
-                {
-                    term: "Shadow Analysis",
-                    definition: "Sandbox or experimental strategies. Used for 'What if' scenarios or pure technical analysis without affecting your real portfolio metrics."
-                }
             ]
         },
         {
