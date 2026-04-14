@@ -53,6 +53,7 @@ function makePayload(overrides: Partial<BackupPayload> = {}): BackupPayload {
         transactions: [],
         positions: [],
         funds: [],
+        strategies: [],
         settings: { predefinedPairs: ['BTC/USDT'], dashboardTimeRange: '1Y', theme: 'dark' },
         ...overrides,
     };

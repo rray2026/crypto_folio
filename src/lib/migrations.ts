@@ -382,7 +382,48 @@ export const MIGRATIONS: Record<number, Migration> = {
             });
         },
     },
+
+    // v6 → v7
+    6: {
+        description: 'Add strategies table; add optional strategyId to positions',
+        upgradePayload: (p): MigrationState => {
+            const v6 = p as unknown as BackupPayloadV6;
+            return {
+                ...v6,
+                version: 7,
+                strategies: (v6 as unknown as { strategies?: StrategyV7[] }).strategies ?? [],
+            } as unknown as MigrationState;
+        },
+        upgradeIdb: async () => {
+            // strategies table is created by .stores() in db.ts
+            // Position.strategyId is optional — no existing records need modification
+        },
+    },
 };
+
+// ---- v7 -------------------------------------------------------------------
+// New strategies table added. Position gains optional strategyId field.
+
+/** Strategy table as of schema v7. */
+export interface StrategyV7 {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt: number;
+    status: 'ACTIVE' | 'ARCHIVED';
+}
+
+/** Positions table as of schema v7 — adds optional strategyId. */
+export interface PositionV7 extends PositionV6 {
+    strategyId?: string;
+}
+
+/** Full backup payload shape as of v7. */
+export interface BackupPayloadV7 extends Omit<BackupPayloadV6, 'version' | 'positions'> {
+    version: 7;
+    positions: PositionV7[];
+    strategies: StrategyV7[];
+}
 
 // ---------------------------------------------------------------------------
 // Migration pipeline

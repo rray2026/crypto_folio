@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useSettingsStore } from "@/store/useSettingsStore"
-import { Settings, TrendingUp, ReceiptText, ArrowLeft } from "lucide-react"
+import { Settings, TrendingUp, ReceiptText, ArrowLeft, Lightbulb } from "lucide-react"
 import { version } from "../../package.json"
 
 declare const __BUILD_DATE__: string
@@ -52,6 +52,12 @@ export default function Profile() {
             description: `${predefinedPairs.length} ${predefinedPairs.length === 1 ? 'pair' : 'pairs'} configured`,
             href: "/settings/trading-pairs",
             icon: TrendingUp,
+        },
+        {
+            name: "Strategies",
+            description: "Define and track trading strategies",
+            href: "/strategies",
+            icon: Lightbulb,
         },
         {
             name: "Transactions",
