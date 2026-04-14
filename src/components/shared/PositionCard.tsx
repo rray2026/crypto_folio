@@ -25,6 +25,13 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                     hover:-translate-y-0.5
                 `}
             >
+                {/* Accent bar */}
+                <div className={`h-0.5 w-full ${
+                    isActive
+                        ? (metrics.unrealizedPnL > 0 ? 'bg-pnl-up' : metrics.unrealizedPnL < 0 ? 'bg-pnl-down' : 'bg-muted-foreground/30')
+                        : (metrics.realizedPnL > 0 ? 'bg-pnl-up/60' : metrics.realizedPnL < 0 ? 'bg-pnl-down/60' : 'bg-border')
+                }`} />
+
                 {/* Header */}
                 <div className={`px-4 pt-3 pb-3 ${headerDivider}`}>
                     <div className="flex justify-between items-start gap-2 mb-2">
