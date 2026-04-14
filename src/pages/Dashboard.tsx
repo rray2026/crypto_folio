@@ -118,56 +118,56 @@ export default function Dashboard() {
                             A privacy-first portfolio tracker. All your data stays in this browser — nothing is sent to any server.
                         </p>
 
-                        <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+                        <div className="flex flex-col gap-2.5 w-full max-w-sm">
                             <button
                                 onClick={() => navigate('/settings/trading-pairs')}
-                                className="flex items-center gap-3 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <Settings className="h-4 w-4 text-primary" />
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold truncate">Add Pairs</p>
-                                    <p className="text-[11px] text-muted-foreground/60 leading-tight">Track prices</p>
+                                <div>
+                                    <p className="text-sm font-semibold">Add Trading Pairs</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Configure assets and pin them to your dashboard for real-time price tracking.</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => navigate('/transactions')}
-                                className="flex items-center gap-3 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <ReceiptText className="h-4 w-4 text-primary" />
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold truncate">Record Trades</p>
-                                    <p className="text-[11px] text-muted-foreground/60 leading-tight">Log buy & sell</p>
+                                <div>
+                                    <p className="text-sm font-semibold">Record Trades</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Log your buy and sell orders — every transaction is the building block of your portfolio.</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => navigate('/positions')}
-                                className="flex items-center gap-3 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <LineChart className="h-4 w-4 text-primary" />
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold truncate">Positions</p>
-                                    <p className="text-[11px] text-muted-foreground/60 leading-tight">Group trades for P&L</p>
+                                <div>
+                                    <p className="text-sm font-semibold">Create Positions</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Group related trades into positions to track combined P&L, ROI, and breakeven price.</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => navigate('/funds')}
-                                className="flex items-center gap-3 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <Layers className="h-4 w-4 text-primary" />
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold truncate">Create Fund</p>
-                                    <p className="text-[11px] text-muted-foreground/60 leading-tight">Track NAV & returns</p>
+                                <div>
+                                    <p className="text-sm font-semibold">Create Fund</p>
+                                    <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">Set up a fund with initial capital, assign positions, and track NAV over time.</p>
                                 </div>
                             </button>
                         </div>
