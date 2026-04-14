@@ -15,6 +15,7 @@ export interface BackupPayload {
         predefinedPairs: string[];
         pairConfigs?: PairConfig[];
         enabledMarkets?: string[];
+        pinnedPairs?: string[];
         dashboardTimeRange: DashboardTimeRange;
         theme: Theme;
     };
@@ -41,6 +42,7 @@ export async function exportData(): Promise<void> {
                 predefinedPairs: settingsState.predefinedPairs,
                 pairConfigs: settingsState.pairConfigs,
                 enabledMarkets: settingsState.enabledMarkets,
+                pinnedPairs: settingsState.pinnedPairs,
                 dashboardTimeRange: settingsState.dashboardTimeRange,
                 theme: settingsState.theme,
             }
@@ -151,6 +153,9 @@ export async function importData(file: File): Promise<void> {
                     }
                     if (payload.settings.enabledMarkets !== undefined) {
                         useSettingsStore.setState({ enabledMarkets: payload.settings.enabledMarkets });
+                    }
+                    if (payload.settings.pinnedPairs !== undefined) {
+                        useSettingsStore.setState({ pinnedPairs: payload.settings.pinnedPairs });
                     }
                     if (payload.settings.dashboardTimeRange !== undefined) {
                         store.setDashboardTimeRange(payload.settings.dashboardTimeRange);
