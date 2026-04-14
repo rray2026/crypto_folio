@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { TransactionEditForm } from "@/components/transactions/TransactionEditForm"
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
-import { Plus, Trash2, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2 } from "lucide-react"
+import { Plus, Trash2, X, CheckSquare, FolderPlus, AlertCircle, Activity, Calendar, Loader2, ArrowLeft } from "lucide-react"
 import { usePositionStore } from "@/store/usePositionStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -42,6 +42,11 @@ export default function Transactions() {
     useEffect(() => {
         setMobileHeader({
             title: "Transactions",
+            leftAction: (
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+            ),
             rightActions: (
                 <div className="flex items-center gap-0.5">
                     <button
@@ -61,7 +66,7 @@ export default function Transactions() {
                 </div>
             ),
         })
-    }, [setMobileHeader, openAdd, openSelectMode])
+    }, [setMobileHeader, openAdd, openSelectMode, navigate])
     const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean, type: 'single' | 'bulk', targetId?: string }>({ isOpen: false, type: 'single' })
     const [isCreatePositionDialogOpen, setIsCreatePositionDialogOpen] = useState(false)
     const [createPositionError, setCreatePositionError] = useState<string | null>(null)
@@ -209,9 +214,14 @@ export default function Transactions() {
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 md:mb-8 gap-4">
-                <div className="hidden sm:block">
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
-                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
+                <div className="hidden sm:flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transactions</h1>
+                        <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your foundational trade records.</p>
+                    </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3">

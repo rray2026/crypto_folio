@@ -39,7 +39,16 @@ export default function Settings() {
     const posCount  = useLiveQuery(() => db.positions.count(), [])
     const fundCount = useLiveQuery(() => db.funds.count(), [])
     const { setMobileHeader } = useMobileHeader()
-    useEffect(() => { setMobileHeader({ title: "Settings" }) }, [setMobileHeader])
+    useEffect(() => {
+        setMobileHeader({
+            title: "Settings",
+            leftAction: (
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+            ),
+        })
+    }, [setMobileHeader, navigate])
 
     // Debug mode Easter egg: tap version text N times to enter debug page
     const tapCountRef = useRef(0)
@@ -105,9 +114,14 @@ export default function Settings() {
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
-            <div className="hidden md:block">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
+            <div className="hidden md:flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
+                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
+                </div>
             </div>
 
             <div className="bg-card p-6 rounded-xl border shadow-sm">
