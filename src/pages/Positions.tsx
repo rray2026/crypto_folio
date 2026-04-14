@@ -27,12 +27,12 @@ export default function Positions() {
     const openAdd = useCallback(() => setIsAddDialogOpen(true), [])
     useEffect(() => {
         setMobileHeader({
-            title: "Positions",
+            title: "Strategies",
             rightActions: (
                 <button
                     onClick={openAdd}
                     className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="New Position"
+                    aria-label="New Strategy"
                 >
                     <Plus className="h-5 w-5" />
                 </button>
@@ -113,19 +113,19 @@ export default function Positions() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Strategies</h1>
                     <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
                 </div>
                 <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="h-4 w-4" />
-                    New Position
+                    New Strategy
                 </Button>
             </div>
 
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                     <DialogHeader>
-                        <DialogTitle>Create Position</DialogTitle>
+                        <DialogTitle>Create Strategy</DialogTitle>
                         <DialogDescription>
                             Group your trades under a strategy to view its performance.
                         </DialogDescription>
@@ -138,7 +138,7 @@ export default function Positions() {
             {positions && positions.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 mb-6">
                     <div className="bg-card rounded-xl border border-border/40 p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Active Positions</p>
+                        <p className="text-xs text-muted-foreground mb-1">Active Strategies</p>
                         <p className="text-2xl font-bold font-mono">{activePositions.length}</p>
                     </div>
                     <div className="bg-card rounded-xl border border-border/40 p-4">
@@ -157,7 +157,7 @@ export default function Positions() {
                     </div>
                     <h3 className="text-base font-semibold mb-1">No strategies yet</h3>
                     <p className="text-sm text-muted-foreground mb-5 max-w-xs">
-                        A position groups related trades under a strategy so you can track their combined P&L and ROI.
+                        A strategy groups related trades so you can track their combined P&L and ROI.
                     </p>
                     <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
@@ -170,7 +170,7 @@ export default function Positions() {
                         renderPositionGrid(activePositions)
                     ) : (
                         <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50 font-medium">
-                            No active strategies.
+                            No active strategies
                         </div>
                     )}
 
@@ -182,8 +182,8 @@ export default function Positions() {
                                 className="flex items-center gap-3 w-full py-4 group"
                             >
                                 <div className="h-px flex-1 bg-border/40" />
-                                <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
-                                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                                <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors">
+                                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
                                     {archivedPositions.length} more archived
                                 </span>
                                 <div className="h-px flex-1 bg-border/40" />

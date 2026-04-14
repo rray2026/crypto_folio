@@ -369,8 +369,8 @@ export default function Transactions() {
                         <DialogTitle>Confirm Deletion</DialogTitle>
                         <DialogDescription className="pt-2">
                             {confirmDeleteState.type === 'bulk'
-                                ? `Are you sure you want to delete ${selectedIds.size} transaction(s)? This will cascade correctly removing them from any associated active position tracking.`
-                                : `Are you sure you want to delete this transaction? It will be removed from all associated positions.`
+                                ? `Are you sure you want to delete ${selectedIds.size} transaction(s)? This will cascade correctly removing them from any associated active strategy tracking.`
+                                : `Are you sure you want to delete this transaction? It will be removed from all associated strategies.`
                             }
                         </DialogDescription>
                     </DialogHeader>
@@ -388,7 +388,7 @@ export default function Transactions() {
             <Dialog open={isCreatePositionDialogOpen} onOpenChange={setIsCreatePositionDialogOpen}>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[425px] rounded-2xl">
                     <DialogHeader>
-                        <DialogTitle>Create New Position</DialogTitle>
+                        <DialogTitle>Create New Strategy</DialogTitle>
                         {!createPositionError && (
                             <DialogDescription>
                                 Review the performance of the {selectedIds.size} selected trades before creating.
@@ -400,7 +400,7 @@ export default function Transactions() {
                         <div className="flex gap-2 p-3 bg-destructive/5 text-destructive border border-destructive/20 rounded-xl">
                             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-semibold">Cannot Create Position</p>
+                                <p className="text-sm font-semibold">Cannot Create Strategy</p>
                                 <p className="text-xs mt-0.5">{createPositionError}</p>
                             </div>
                         </div>
@@ -460,7 +460,7 @@ export default function Transactions() {
 
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Position Name / Strategy</Label>
+                            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Strategy Name</Label>
                             <Input 
                                 id="name" 
                                 value={newPositionName} 
@@ -479,7 +479,7 @@ export default function Transactions() {
                             onClick={executeCreatePosition}
                             className="rounded-xl font-bold h-11 flex-[2]"
                         >
-                            Create Position
+                            Create Strategy
                         </Button>
                     </div>
                     </div>{/* end hidden wrapper */}
@@ -524,7 +524,7 @@ export default function Transactions() {
                                     ? <Loader2 className="h-4 w-4 animate-spin md:mr-2" />
                                     : <FolderPlus className="h-4 w-4 md:mr-2" />
                                 }
-                                <span className="hidden md:inline">Create Position</span>
+                                <span className="hidden md:inline">Create Strategy</span>
                             </Button>
                             <Button variant="destructive" size="sm" onClick={confirmBulkDelete} className="h-8 rounded-full text-xs md:text-sm px-2 md:px-4 shadow-sm">
                                 <Trash2 className="h-4 w-4 md:mr-2" />

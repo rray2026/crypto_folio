@@ -87,7 +87,7 @@ export default function PositionDetails() {
     }, [id, position, closePosition, openPosition])
 
     const handleDeletePosition = useCallback(async () => {
-        if (!id || !window.confirm("Are you sure you want to delete this position strategy? All transaction links will be removed.")) return;
+        if (!id || !window.confirm("Are you sure you want to delete this strategy? All transaction links will be removed.")) return;
         await deletePosition(id);
         navigate('/positions');
     }, [id, deletePosition, navigate])
@@ -278,7 +278,7 @@ export default function PositionDetails() {
     }, 0);
 
     const generateAiPrompt = () => {
-        const name = position.strategyName || `${position.symbol.split('/')[0]} Position`
+        const name = position.strategyName || `${position.symbol.split('/')[0]} Strategy`
         const startStr = derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'
         const endStr = derivedEndDate ? format(new Date(derivedEndDate), "yyyy/MM/dd") : (position.status === 'OPEN' ? 'Still Open' : 'Unknown')
         const durationDays = differenceInDays(derivedEndDate || now, derivedStartDate || now)
@@ -344,7 +344,7 @@ export default function PositionDetails() {
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Position`}</h1>
+                                        <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{position.strategyName || `${position.symbol.split('/')[0]} Strategy`}</h1>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">

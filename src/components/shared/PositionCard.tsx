@@ -35,8 +35,8 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                 {/* Header */}
                 <div className={`px-4 pt-3 pb-3 ${headerDivider}`}>
                     <div className="flex justify-between items-start gap-2 mb-2">
-                        <h3 className="text-sm font-semibold tracking-tight line-clamp-1 text-foreground" title={position.strategyName || `${base} Position`}>
-                            {position.strategyName || `${base} Position`}
+                        <h3 className="text-sm font-semibold tracking-tight line-clamp-1 text-foreground" title={position.strategyName || `${base} Strategy`}>
+                            {position.strategyName || `${base} Strategy`}
                         </h3>
                         <div className="flex justify-end gap-1 shrink-0 flex-wrap">
                             {fundName && (

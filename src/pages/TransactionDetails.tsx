@@ -241,7 +241,7 @@ export default function TransactionDetails() {
                                     >
                                         <div className="flex justify-between items-start mb-1.5">
                                             <span className="font-bold text-sm truncate pr-2">
-                                                {pos.strategyName || `${pos.symbol.split('/')[0]} Position`}
+                                                {pos.strategyName || `${pos.symbol.split('/')[0]} Strategy`}
                                             </span>
                                             <span className={badge({ color: statusBadgeColor(pos.status) })}>
                                                 <Circle className={`h-1.5 w-1.5 fill-current ${pos.status === 'OPEN' ? 'animate-pulse' : ''}`} aria-hidden="true" />

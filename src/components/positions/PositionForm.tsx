@@ -53,7 +53,7 @@ export function PositionForm({ onSuccess }: { onSuccess: () => void }) {
 
             <div className="pt-4">
                 <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98]">
-                    Create New Position
+                    Create New Strategy
                 </Button>
             </div>
         </form>
