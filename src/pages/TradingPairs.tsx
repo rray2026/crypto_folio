@@ -29,54 +29,81 @@ import { ArrowLeft, Pin, RefreshCw, Trash2, Plus, Loader2, Check, ChevronDown, A
 
 const MUTED_BADGE = "bg-muted/40 text-muted-foreground border-border/50"
 
-interface SelectionDialogProps {
+interface SourceDialogProps {
     open: boolean
     pair: string
-    current: string
-    title: string
-    groups: Record<string, string[]>
-    onSelect: (value: string) => void
+    market: string
+    currentExchange: string
+    currentProvider: string
+    onSelectExchange: (value: string) => void
+    onSelectProvider: (value: string) => void
     onClose: () => void
 }
 
-function SelectionDialog({ open, pair, current, title, groups, onSelect, onClose }: SelectionDialogProps) {
+function SourceDialog({ open, pair, market, currentExchange, currentProvider, onSelectExchange, onSelectProvider, onClose }: SourceDialogProps) {
+    const exchanges = MARKET_EXCHANGES[market] ?? []
+    const providers = MARKET_DATA_PROVIDERS[market] ?? Object.values(DATA_PROVIDER_GROUPS).flat()
+
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="text-base">
-                        {title}
+                        Data Source
                         <span className="ml-2 font-mono text-sm text-muted-foreground">{pair}</span>
                     </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 pt-1">
-                    {Object.entries(groups).map(([groupName, items]) => (
-                        <div key={groupName}>
-                            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-1">
-                                {groupName}
-                            </p>
-                            <div className="grid gap-2">
-                                {items.map((item) => {
-                                    const isCurrent = item === current
-                                    return (
-                                        <button
-                                            key={item}
-                                            onClick={() => onSelect(item)}
-                                            disabled={isCurrent}
-                                            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${
-                                                isCurrent
-                                                    ? 'border-primary/30 bg-primary/5 cursor-default'
-                                                    : 'border-border/50 hover:border-border hover:bg-muted/30 cursor-pointer'
-                                            }`}
-                                        >
-                                            <span className={`font-semibold text-sm ${isCurrent ? 'text-primary' : ''}`}>{item}</span>
-                                            {isCurrent && <Check className="h-4 w-4 text-primary" />}
-                                        </button>
-                                    )
-                                })}
-                            </div>
+                <div className="space-y-5 pt-1">
+                    <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                            Exchange
+                        </p>
+                        <div className="grid gap-2">
+                            {exchanges.map((item) => {
+                                const isCurrent = item === currentExchange
+                                return (
+                                    <button
+                                        key={item}
+                                        onClick={() => onSelectExchange(item)}
+                                        disabled={isCurrent}
+                                        className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${
+                                            isCurrent
+                                                ? 'border-primary/30 bg-primary/5 cursor-default'
+                                                : 'border-border/50 hover:border-border hover:bg-muted/30 cursor-pointer'
+                                        }`}
+                                    >
+                                        <span className={`font-semibold text-sm ${isCurrent ? 'text-primary' : ''}`}>{item}</span>
+                                        {isCurrent && <Check className="h-4 w-4 text-primary" />}
+                                    </button>
+                                )
+                            })}
                         </div>
-                    ))}
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                            Data Provider
+                        </p>
+                        <div className="grid gap-2">
+                            {providers.map((item) => {
+                                const isCurrent = item === currentProvider
+                                return (
+                                    <button
+                                        key={item}
+                                        onClick={() => onSelectProvider(item)}
+                                        disabled={isCurrent}
+                                        className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${
+                                            isCurrent
+                                                ? 'border-primary/30 bg-primary/5 cursor-default'
+                                                : 'border-border/50 hover:border-border hover:bg-muted/30 cursor-pointer'
+                                        }`}
+                                    >
+                                        <span className={`font-semibold text-sm ${isCurrent ? 'text-primary' : ''}`}>{item}</span>
+                                        {isCurrent && <Check className="h-4 w-4 text-primary" />}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
@@ -310,12 +337,9 @@ export default function TradingPairs() {
     const [syncingPairs, setSyncingPairs] = useState<Record<string, boolean>>({})
     const [isSyncingAll, setIsSyncingAll] = useState(false)
 
-    const [validatingExchange, setValidatingExchange] = useState<Record<string, boolean>>({})
-    const [exchangeErrors, setExchangeErrors] = useState<Record<string, string>>({})
-    const [validatingProvider, setValidatingProvider] = useState<Record<string, boolean>>({})
-    const [providerErrors, setProviderErrors] = useState<Record<string, string>>({})
+    const [validatingSource, setValidatingSource] = useState<Record<string, boolean>>({})
+    const [sourceErrors, setSourceErrors] = useState<Record<string, string>>({})
     const [dialogPair, setDialogPair] = useState<string | null>(null)
-    const [dialogProviderPair, setDialogProviderPair] = useState<string | null>(null)
 
     useEffect(() => {
         fetchPrices()
@@ -324,14 +348,13 @@ export default function TradingPairs() {
     }, [fetchPrices])
 
     const handleProviderSelect = async (pair: string, provider: string) => {
-        setDialogProviderPair(null)
-        setValidatingProvider(prev => ({ ...prev, [pair]: true }))
-        setProviderErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
+        setValidatingSource(prev => ({ ...prev, [pair]: true }))
+        setSourceErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
 
         const config = pairConfigs.find(p => p.pair === pair)
         const price = await fetchPriceFromProvider(pair, provider, config?.exchange)
         if (price === null) {
-            setProviderErrors(prev => ({
+            setSourceErrors(prev => ({
                 ...prev,
                 [pair]: `"${pair}" not found on ${provider}`,
             }))
@@ -339,13 +362,12 @@ export default function TradingPairs() {
             updatePairDataProvider(pair, provider)
         }
 
-        setValidatingProvider(prev => ({ ...prev, [pair]: false }))
+        setValidatingSource(prev => ({ ...prev, [pair]: false }))
     }
 
     const handleExchangeSelect = async (pair: string, newExch: string) => {
-        setDialogPair(null)
-        setValidatingExchange(prev => ({ ...prev, [pair]: true }))
-        setExchangeErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
+        setValidatingSource(prev => ({ ...prev, [pair]: true }))
+        setSourceErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
 
         const config = pairConfigs.find(p => p.pair === pair)
         const oldDefault = defaultDataProvider(config?.exchange ?? '')
@@ -355,7 +377,7 @@ export default function TradingPairs() {
         const priceProvider = shouldSyncProvider ? newDefault : (config?.dataProvider ?? newDefault)
         const price = await fetchPriceFromProvider(pair, priceProvider, newExch)
         if (price === null) {
-            setExchangeErrors(prev => ({
+            setSourceErrors(prev => ({
                 ...prev,
                 [pair]: `"${pair}" not found on ${newExch}`,
             }))
@@ -366,7 +388,7 @@ export default function TradingPairs() {
             }
         }
 
-        setValidatingExchange(prev => ({ ...prev, [pair]: false }))
+        setValidatingSource(prev => ({ ...prev, [pair]: false }))
     }
 
     const handleManualSync = async (pair: string) => {
@@ -382,7 +404,6 @@ export default function TradingPairs() {
     }
 
     const dialogConfig = dialogPair ? pairConfigs.find(p => p.pair === dialogPair) : null
-    const dialogProviderConfig = dialogProviderPair ? pairConfigs.find(p => p.pair === dialogProviderPair) : null
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -517,11 +538,8 @@ export default function TradingPairs() {
                                 ? format(new Date(priceData.timestamp), "HH:mm:ss")
                                 : null
                             const isPinned = pinnedPairs.includes(pair)
-                            const isValidatingExch = !!validatingExchange[pair]
-                            const isValidatingProv = !!validatingProvider[pair]
-                            const rowError = exchangeErrors[pair]
-                            const provError = providerErrors[pair]
-                            const providerIsDefault = dataProvider === defaultDataProvider(exchange)
+                            const isValidating = !!validatingSource[pair]
+                            const sourceError = sourceErrors[pair]
 
                             return (
                                 <SwipeActions
@@ -547,7 +565,7 @@ export default function TradingPairs() {
                                                     </span>
                                                 </div>
 
-                                                {/* Meta row: market, exchange, data source, currency */}
+                                                {/* Meta row: market, source, currency */}
                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                     <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                         {market}
@@ -555,41 +573,23 @@ export default function TradingPairs() {
 
                                                     <span className="text-[10px] text-border">&middot;</span>
 
-                                                    {isValidatingExch ? (
+                                                    {isValidating ? (
                                                         <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                             <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                            {exchange}
+                                                            {exchange} · {dataProvider}
                                                         </span>
                                                     ) : (
                                                         <button
                                                             onClick={() => setDialogPair(pair)}
                                                             className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${MUTED_BADGE}`}
-                                                            title="Change exchange"
-                                                        >
-                                                            {exchange}
-                                                            <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-                                                        </button>
-                                                    )}
-
-                                                    <span className="text-[10px] text-border">·</span>
-
-                                                    {isValidatingProv ? (
-                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE} opacity-60`}>
-                                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                            {dataProvider}
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => setDialogProviderPair(pair)}
-                                                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${MUTED_BADGE} ${providerIsDefault ? 'opacity-50' : 'font-semibold'}`}
                                                             title="Change data source"
                                                         >
-                                                            {dataProvider}
+                                                            {exchange} · {dataProvider}
                                                             <ChevronDown className="h-2.5 w-2.5 opacity-50" />
                                                         </button>
                                                     )}
 
-                                                    <span className="text-[10px] text-border">·</span>
+                                                    <span className="text-[10px] text-border">&middot;</span>
 
                                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                         {currency}
@@ -604,29 +604,22 @@ export default function TradingPairs() {
                                                 )}
 
                                                 {/* Errors */}
-                                                {rowError && (
+                                                {sourceError && (
                                                     <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                        {rowError}
-                                                    </p>
-                                                )}
-                                                {provError && (
-                                                    <p className="flex items-center gap-1.5 text-xs text-destructive">
-                                                        {provError}
+                                                        {sourceError}
                                                     </p>
                                                 )}
                                             </div>
 
                                             {/* Actions: pin + sync always visible; delete desktop-only */}
                                             <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                                <button
                                                     onClick={() => togglePinPair(pair)}
-                                                    className={`h-7 w-7 transition-colors ${isPinned ? 'text-primary opacity-100' : 'text-muted-foreground hover:text-primary'}`}
+                                                    className={`h-7 w-7 flex items-center justify-center rounded-md transition-colors ${isPinned ? 'text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
                                                     title={isPinned ? "Unpin from Dashboard" : "Pin to Dashboard"}
                                                 >
                                                     <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
-                                                </Button>
+                                                </button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -660,37 +653,19 @@ export default function TradingPairs() {
             {/* Add pair modal */}
             <AddPairModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
 
-            {/* Trading exchange dialog — scoped to the pair's market */}
+            {/* Source dialog — exchange + data provider in one */}
             {dialogConfig && (
-                <SelectionDialog
+                <SourceDialog
                     open={dialogPair !== null}
                     pair={dialogConfig.pair}
-                    current={dialogConfig.exchange}
-                    title="Change Exchange"
-                    groups={{ [dialogConfig.market]: MARKET_EXCHANGES[dialogConfig.market] ?? [] }}
-                    onSelect={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
+                    market={dialogConfig.market}
+                    currentExchange={dialogConfig.exchange}
+                    currentProvider={dialogConfig.dataProvider}
+                    onSelectExchange={(ex) => handleExchangeSelect(dialogConfig.pair, ex)}
+                    onSelectProvider={(dp) => handleProviderSelect(dialogConfig.pair, dp)}
                     onClose={() => setDialogPair(null)}
                 />
             )}
-
-            {/* Data provider dialog — scoped to the pair's market */}
-            {dialogProviderConfig && (() => {
-                const marketProviders = MARKET_DATA_PROVIDERS[dialogProviderConfig.market]
-                const groups = marketProviders
-                    ? { [dialogProviderConfig.market]: marketProviders }
-                    : DATA_PROVIDER_GROUPS
-                return (
-                    <SelectionDialog
-                        open={dialogProviderPair !== null}
-                        pair={dialogProviderConfig.pair}
-                        current={dialogProviderConfig.dataProvider}
-                        title="Change Data Source"
-                        groups={groups}
-                        onSelect={(dp) => handleProviderSelect(dialogProviderConfig.pair, dp)}
-                        onClose={() => setDialogProviderPair(null)}
-                    />
-                )
-            })()}
         </div>
     )
 }
