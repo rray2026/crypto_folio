@@ -13,6 +13,7 @@ import AssetDetails from "./pages/AssetDetails"
 import Funds from "./pages/Funds"
 import FundDetails from "./pages/FundDetails"
 import TradingSimulator from "./pages/TradingSimulator"
+import Profile from "./pages/Profile"
 import { useEffect } from "react"
 import { useSettingsStore } from "./store/useSettingsStore"
 
@@ -54,6 +55,7 @@ function App() {
           <Route path="/assets/:symbol" element={<AssetDetails />} />
           <Route path="/funds" element={<Funds />} />
           <Route path="/funds/:id" element={<FundDetails />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/trading-pairs" element={<TradingPairs />} />
           <Route path="/glossary" element={<Glossary />} />
