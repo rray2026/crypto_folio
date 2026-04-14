@@ -22,17 +22,17 @@ import {
 
 export default function Positions() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-    const [archivedExpanded, setArchivedExpanded] = useState(false)
+    const [closedExpanded, setClosedExpanded] = useState(false)
     const { setMobileHeader } = useMobileHeader()
     const openAdd = useCallback(() => setIsAddDialogOpen(true), [])
     useEffect(() => {
         setMobileHeader({
-            title: "Strategies",
+            title: "Positions",
             rightActions: (
                 <button
                     onClick={openAdd}
                     className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="New Strategy"
+                    aria-label="New Position"
                 >
                     <Plus className="h-5 w-5" />
                 </button>
@@ -77,12 +77,12 @@ export default function Positions() {
 
     const now = useState(() => Date.now())[0];
 
-    const activePositions = positions?.filter(p => p.status === 'OPEN') ?? []
-    const archivedPositions = positions?.filter(p => p.status === 'CLOSED') ?? []
+    const openPositions = positions?.filter(p => p.status === 'OPEN') ?? []
+    const closedPositions = positions?.filter(p => p.status === 'CLOSED') ?? []
 
-    const totalUnrealizedPnL = activePositions.reduce((sum, pos) => sum + getMetrics(pos).unrealizedPnL, 0)
+    const totalUnrealizedPnL = openPositions.reduce((sum, pos) => sum + getMetrics(pos).unrealizedPnL, 0)
     const portfolioCurrencies = new Set(
-        activePositions.map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
+        openPositions.map(pos => pairConfigs.find(p => p.pair === pos.symbol)?.currency ?? 'USD')
     )
     const singleCurrency = portfolioCurrencies.size === 1 ? [...portfolioCurrencies][0] : 'USD'
     const currSymbol = getCurrencySymbol(singleCurrency)
@@ -113,21 +113,21 @@ export default function Positions() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Strategies</h1>
-                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your trading strategies and group trades.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>
+                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your positions and group trades.</p>
                 </div>
                 <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="h-4 w-4" />
-                    New Strategy
+                    New Position
                 </Button>
             </div>
 
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                     <DialogHeader>
-                        <DialogTitle>Create Strategy</DialogTitle>
+                        <DialogTitle>Create Position</DialogTitle>
                         <DialogDescription>
-                            Group your trades under a strategy to view its performance.
+                            Group your trades under a position to view its performance.
                         </DialogDescription>
                     </DialogHeader>
                     <PositionForm onSuccess={() => setIsAddDialogOpen(false)} />
@@ -138,8 +138,8 @@ export default function Positions() {
             {positions && positions.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 mb-6">
                     <div className="bg-card rounded-xl border border-border/40 p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Active Strategies</p>
-                        <p className="text-2xl font-bold font-mono">{activePositions.length}</p>
+                        <p className="text-xs text-muted-foreground mb-1">Open Positions</p>
+                        <p className="text-2xl font-bold font-mono">{openPositions.length}</p>
                     </div>
                     <div className="bg-card rounded-xl border border-border/40 p-4">
                         <p className="text-xs text-muted-foreground mb-1">Unrealized PnL</p>
@@ -155,40 +155,40 @@ export default function Positions() {
                     <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
                         <Target className="h-7 w-7 text-muted-foreground" />
                     </div>
-                    <h3 className="text-base font-semibold mb-1">No strategies yet</h3>
+                    <h3 className="text-base font-semibold mb-1">No positions yet</h3>
                     <p className="text-sm text-muted-foreground mb-5 max-w-xs">
-                        A strategy groups related trades so you can track their combined P&L and ROI.
+                        A position groups related trades so you can track their combined P&L and ROI.
                     </p>
                     <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
-                        Create Your First Strategy
+                        Create Your First Position
                     </Button>
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {activePositions.length > 0 ? (
-                        renderPositionGrid(activePositions)
+                    {openPositions.length > 0 ? (
+                        renderPositionGrid(openPositions)
                     ) : (
                         <div className="text-center p-8 border border-dashed rounded-xl text-muted-foreground bg-card/50 font-medium">
-                            No active strategies
+                            No open positions
                         </div>
                     )}
 
-                    {archivedPositions.length > 0 && (
+                    {closedPositions.length > 0 && (
                         <div>
                             <button
                                 type="button"
-                                onClick={() => setArchivedExpanded(prev => !prev)}
+                                onClick={() => setClosedExpanded(prev => !prev)}
                                 className="flex items-center gap-3 w-full py-4 group"
                             >
                                 <div className="h-px flex-1 bg-border/40" />
                                 <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors">
-                                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${archivedExpanded ? 'rotate-0' : '-rotate-90'}`} />
-                                    {archivedPositions.length} more archived
+                                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${closedExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                                    {closedPositions.length} more closed
                                 </span>
                                 <div className="h-px flex-1 bg-border/40" />
                             </button>
-                            {archivedExpanded && renderPositionGrid(archivedPositions)}
+                            {closedExpanded && renderPositionGrid(closedPositions)}
                         </div>
                     )}
                 </div>

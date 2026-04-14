@@ -7,7 +7,7 @@ export function MobileNav() {
     const links = [
         { name: "Dashboard", href: "/", icon: LayoutDashboard },
         { name: "Funds", href: "/funds", icon: Layers },
-        { name: "Strategies", href: "/positions", icon: LineChart },
+        { name: "Positions", href: "/positions", icon: LineChart },
         { name: "Txns", href: "/transactions", icon: ReceiptText },
         { name: "Settings", href: "/settings", icon: Settings },
     ]

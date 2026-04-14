@@ -87,7 +87,7 @@ export default function PositionDetails() {
     }, [id, position, closePosition, openPosition])
 
     const handleDeletePosition = useCallback(async () => {
-        if (!id || !window.confirm("Are you sure you want to delete this strategy? All transaction links will be removed.")) return;
+        if (!id || !window.confirm("Are you sure you want to delete this position? All transaction links will be removed.")) return;
         await deletePosition(id);
         navigate('/positions');
     }, [id, deletePosition, navigate])
@@ -365,7 +365,7 @@ export default function PositionDetails() {
                                         : 'text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
-                                        {position.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
+                                        {position.status === 'OPEN' ? 'OPEN' : 'CLOSED'}
                                     </span>
                                 </div>
                             </div>

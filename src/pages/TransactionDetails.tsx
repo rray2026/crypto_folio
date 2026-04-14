@@ -223,7 +223,7 @@ export default function TransactionDetails() {
                 <div className="space-y-6">
                     <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2 px-1">
                         <LinkIcon className="h-4 w-4" />
-                        Linked Strategies
+                        Linked Positions
                     </h2>
                     {linkedPositions.length === 0 ? (
                         <div className="p-6 rounded-xl border border-dashed text-center space-y-2">
@@ -245,7 +245,7 @@ export default function TransactionDetails() {
                                             </span>
                                             <span className={badge({ color: statusBadgeColor(pos.status) })}>
                                                 <Circle className={`h-1.5 w-1.5 fill-current ${pos.status === 'OPEN' ? 'animate-pulse' : ''}`} aria-hidden="true" />
-                                                {pos.status === 'OPEN' ? 'ACTIVE' : 'CLOSED'}
+                                                {pos.status === 'OPEN' ? 'OPEN' : 'CLOSED'}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10">

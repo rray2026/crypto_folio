@@ -51,7 +51,7 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                             </span>
                             <span className={badge({ color: statusBadgeColor(isActive ? 'OPEN' : 'CLOSED') })}>
                                 <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} aria-hidden="true" />
-                                {isActive ? 'ACTIVE' : 'CLOSED'}
+                                {isActive ? 'OPEN' : 'CLOSED'}
                             </span>
                         </div>
                     </div>

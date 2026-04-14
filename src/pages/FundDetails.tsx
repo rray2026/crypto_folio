@@ -208,7 +208,7 @@ export default function FundDetails() {
                     <DialogHeader>
                         <DialogTitle>Delete Fund</DialogTitle>
                         <DialogDescription className="pt-2">
-                            Delete &quot;{fund.name}&quot;? All strategies will be unassigned but not deleted.
+                            Delete &quot;{fund.name}&quot;? All positions will be unassigned but not deleted.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 mt-4">
@@ -268,10 +268,10 @@ export default function FundDetails() {
                 </div>
             </div>
 
-            {/* Linked Strategies */}
+            {/* Linked Positions */}
             <div className="space-y-1.5">
                 <span className={sectionHeader}>
-                    Linked Strategies ({fundPositions.length})
+                    Linked Positions ({fundPositions.length})
                 </span>
                 <div className="space-y-3">
                     {sortedFundPositions.map(({ pos, metrics }) => {
@@ -360,12 +360,12 @@ export default function FundDetails() {
                         className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
                     >
                         <Plus className="h-4 w-4" />
-                        {fundPositions.length === 0 ? 'Link Strategies' : 'Link More'}
+                        {fundPositions.length === 0 ? 'Link Positions' : 'Link More'}
                     </button>
                 </div>
             </div>
 
-            {/* Link Strategies Dialog */}
+            {/* Link Positions Dialog */}
             <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
                 setIsLinkDialogOpen(open)
                 if (!open) setSelectedPosIds(new Set())
@@ -373,7 +373,7 @@ export default function FundDetails() {
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col [&>button.absolute]:hidden">
                     <DialogHeader>
                         <div className="flex items-center justify-between">
-                            <DialogTitle>Link Strategies</DialogTitle>
+                            <DialogTitle>Link Positions</DialogTitle>
                             <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '7D' | '1M' | '6M' | 'ALL')}>
                                 <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
                                     <Calendar className="h-3 w-3 opacity-50" />
@@ -388,7 +388,7 @@ export default function FundDetails() {
                             </Select>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Select unassigned strategies to add to this fund.
+                            Select unassigned positions to add to this fund.
                         </p>
                     </DialogHeader>
 
@@ -459,12 +459,12 @@ export default function FundDetails() {
                                 <div className="border border-dashed border-border/50 rounded-xl p-8 text-center">
                                     <p className="text-sm text-muted-foreground">
                                         {unassignedPositions.length > 0
-                                            ? 'No strategies in this time range.'
-                                            : 'No unassigned strategies available.'}
+                                            ? 'No positions in this time range.'
+                                            : 'No unassigned positions available.'}
                                     </p>
                                     {unassignedPositions.length === 0 && (
                                         <p className="text-xs text-muted-foreground/60 mt-1">
-                                            Create a strategy first, or unlink one from another fund.
+                                            Create a position first, or unlink one from another fund.
                                         </p>
                                     )}
                                 </div>
@@ -480,7 +480,7 @@ export default function FundDetails() {
                                 onClick={handleBulkAssign}
                             >
                                 <LinkIcon className="h-4 w-4" />
-                                Link {selectedPosIds.size} {selectedPosIds.size === 1 ? 'Strategy' : 'Strategies'}
+                                Link {selectedPosIds.size} {selectedPosIds.size === 1 ? 'Position' : 'Positions'}
                             </Button>
                         </div>
                     )}

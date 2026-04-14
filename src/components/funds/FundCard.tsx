@@ -32,7 +32,7 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
                         </h3>
                         <span className={badge({ color: statusBadgeColor(fund.status) })}>
                             <Circle className={`h-1.5 w-1.5 fill-current ${isActive ? 'animate-pulse' : ''}`} />
-                            {isActive ? 'ACTIVE' : 'CLOSED'}
+                            {isActive ? 'OPEN' : 'CLOSED'}
                         </span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 font-mono">

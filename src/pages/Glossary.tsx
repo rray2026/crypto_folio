@@ -118,12 +118,12 @@ export default function Glossary() {
             icon: <ShieldCheck className="h-5 w-5 text-purple-500" />,
             items: [
                 {
-                    term: "ACTIVE (Open)",
-                    definition: "A strategy that is currently in progress. It may have an active balance or simply hasn't been manually closed yet."
+                    term: "OPEN",
+                    definition: "A position that is currently in progress. It may have an active balance or simply hasn't been manually closed yet."
                 },
                 {
-                    term: "ARCHIVED (Closed)",
-                    definition: "A strategy that has been completed or stopped. The results are finalized and historically locked."
+                    term: "CLOSED",
+                    definition: "A position that has been completed or stopped. The results are finalized and historically locked."
                 },
                 {
                     term: "Total Investment",

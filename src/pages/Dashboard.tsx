@@ -153,7 +153,7 @@ export default function Dashboard() {
                                     <LineChart className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Create Strategy</p>
+                                    <p className="text-sm font-medium">Create Position</p>
                                     <p className="text-[11px] text-muted-foreground/70 mt-0.5">Group trades to track P&L</p>
                                 </div>
                             </button>
