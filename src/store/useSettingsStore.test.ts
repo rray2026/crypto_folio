@@ -64,6 +64,35 @@ describe('fetchPriceFromProvider', () => {
         expect(price).toBeNull();
     });
 
+    it('Sina Finance: calls cn-stock-price proxy with exchange param', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '37.80' }),
+        });
+        const price = await fetchPriceFromProvider('600036', 'Sina Finance', 'SSE');
+        expect(price).toBe('37.80');
+        expect(fetch).toHaveBeenCalledWith('/api/cn-stock-price?symbol=600036&exchange=SSE');
+    });
+
+    it('Sina Finance: passes SZSE exchange for Shenzhen stocks', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ price: '15.20' }),
+        });
+        const price = await fetchPriceFromProvider('000001', 'Sina Finance', 'SZSE');
+        expect(price).toBe('15.20');
+        expect(fetch).toHaveBeenCalledWith('/api/cn-stock-price?symbol=000001&exchange=SZSE');
+    });
+
+    it('Sina Finance: returns null on error', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: false,
+            json: async () => ({ error: 'not found' }),
+        });
+        const price = await fetchPriceFromProvider('INVALID', 'Sina Finance', 'SSE');
+        expect(price).toBeNull();
+    });
+
     it('Yahoo Finance: appends .SS suffix for SSE exchange hint', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -150,8 +179,8 @@ describe('fetchPriceFromProvider', () => {
 describe('defaultDataProvider', () => {
     it('returns Yahoo Finance for NYSE', () => expect(defaultDataProvider('NYSE')).toBe('Yahoo Finance'));
     it('returns Yahoo Finance for NASDAQ', () => expect(defaultDataProvider('NASDAQ')).toBe('Yahoo Finance'));
-    it('returns Yahoo Finance for SSE', () => expect(defaultDataProvider('SSE')).toBe('Yahoo Finance'));
-    it('returns Yahoo Finance for SZSE', () => expect(defaultDataProvider('SZSE')).toBe('Yahoo Finance'));
+    it('returns Sina Finance for SSE', () => expect(defaultDataProvider('SSE')).toBe('Sina Finance'));
+    it('returns Sina Finance for SZSE', () => expect(defaultDataProvider('SZSE')).toBe('Sina Finance'));
     it('returns Binance for Binance', () => expect(defaultDataProvider('Binance')).toBe('Binance'));
     it('returns CoinGecko for Other', () => expect(defaultDataProvider('Other')).toBe('CoinGecko'));
     it('returns CoinGecko for unknown exchange', () => expect(defaultDataProvider('SomeExchange')).toBe('CoinGecko'));
@@ -241,8 +270,8 @@ describe('MARKET_DATA_PROVIDERS', () => {
         expect(MARKET_DATA_PROVIDERS['US Stocks']).toEqual(['Yahoo Finance']);
     });
 
-    it('CN Stocks market includes only Yahoo Finance', () => {
-        expect(MARKET_DATA_PROVIDERS['CN Stocks']).toEqual(['Yahoo Finance']);
+    it('CN Stocks market includes Sina Finance and Yahoo Finance', () => {
+        expect(MARKET_DATA_PROVIDERS['CN Stocks']).toEqual(['Sina Finance', 'Yahoo Finance']);
     });
 });
 
@@ -306,11 +335,11 @@ describe('useSettingsStore', () => {
         expect(state.pairConfigs).toContainEqual({ pair: 'AAPL', market: 'US Stocks', exchange: 'NASDAQ', dataProvider: 'Yahoo Finance', currency: 'USD' });
     });
 
-    it('adds SSE pair and infers CNY currency with Yahoo Finance provider', () => {
+    it('adds SSE pair and infers CNY currency with Sina Finance provider', () => {
         const { addPair } = useSettingsStore.getState();
         addPair('600036', 'SSE');
         const state = useSettingsStore.getState();
-        expect(state.pairConfigs).toContainEqual({ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' });
+        expect(state.pairConfigs).toContainEqual({ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Sina Finance', currency: 'CNY' });
     });
 
     it('adds pair with NYSE exchange and infers USD currency with Yahoo Finance provider', () => {
@@ -444,17 +473,17 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().prices['AAPL']?.price).toBe('175.23');
     });
 
-    it('fetchPrices uses Yahoo Finance proxy and appends .SS for SSE pair', async () => {
+    it('fetchPrices uses Sina Finance proxy for SSE pair', async () => {
         useSettingsStore.setState({
             predefinedPairs: ['600036'],
-            pairConfigs: [{ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Yahoo Finance', currency: 'CNY' }],
+            pairConfigs: [{ pair: '600036', market: 'CN Stocks', exchange: 'SSE', dataProvider: 'Sina Finance', currency: 'CNY' }],
         });
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ price: '12.34' }),
+            json: async () => ({ price: '37.80' }),
         });
         await useSettingsStore.getState().fetchPrices(['600036'], true, true);
-        expect(fetch).toHaveBeenCalledWith('/api/stock-price?symbol=600036.SS');
+        expect(fetch).toHaveBeenCalledWith('/api/cn-stock-price?symbol=600036&exchange=SSE');
     });
 
     it('fetchPrices does not update store when price fetch fails', async () => {

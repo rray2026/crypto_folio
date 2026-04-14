@@ -58,31 +58,32 @@ export function cryptoProvidersForExchange(exchange: string): string[] {
     return exchange === 'Binance' ? ['Binance', 'CoinGecko'] : ['CoinGecko'];
 }
 
-// Data providers — distinct from exchanges; stock exchanges all route through Yahoo Finance
-export const DATA_PROVIDERS = ['Binance', 'CoinGecko', 'Yahoo Finance'] as const;
+// Data providers
+export const DATA_PROVIDERS = ['Binance', 'CoinGecko', 'Yahoo Finance', 'Sina Finance'] as const;
 export type DataProvider = typeof DATA_PROVIDERS[number];
 
 export const DATA_PROVIDER_GROUPS: Record<string, string[]> = {
     'Crypto':      ['Binance', 'CoinGecko'],
-    'Stock Data':  ['Yahoo Finance'],
+    'US Stocks':   ['Yahoo Finance'],
+    'CN Stocks':   ['Sina Finance', 'Yahoo Finance'],
 };
 
-/** Data providers available for each market. Crypto exchanges cannot fetch stock data and vice versa. */
+/** Data providers available for each market. */
 export const MARKET_DATA_PROVIDERS: Record<string, string[]> = {
     'Crypto':    ['Binance', 'CoinGecko'],
     'US Stocks': ['Yahoo Finance'],
-    'CN Stocks': ['Yahoo Finance'],
+    'CN Stocks': ['Sina Finance', 'Yahoo Finance'],
 };
 
 /** Stock exchanges that route through Yahoo Finance for price data. */
-const YAHOO_EXCHANGES = new Set(['NYSE', 'NASDAQ', 'SSE', 'SZSE']);
+const YAHOO_EXCHANGES = new Set(['NYSE', 'NASDAQ']);
 
 /**
  * Returns the default data provider for a given trading exchange.
- * Stock exchanges map to Yahoo Finance; crypto exchanges provide their own API.
  */
 export function defaultDataProvider(exchange: string): string {
     if (YAHOO_EXCHANGES.has(exchange)) return 'Yahoo Finance';
+    if (exchange === 'SSE' || exchange === 'SZSE') return 'Sina Finance';
     if (exchange === 'Binance') return 'Binance';
     return 'CoinGecko';
 }
@@ -137,6 +138,13 @@ export async function fetchPriceFromProvider(pair: string, provider: string, exc
                 const data = await res.json();
                 const id = coinGeckoId(base);
                 return data?.[id]?.usd != null ? String(data[id].usd) : null;
+            }
+        } else if (provider === 'Sina Finance') {
+            const exchange = exchangeHint === 'SZSE' ? 'SZSE' : 'SSE';
+            const res = await fetch(`/api/cn-stock-price?symbol=${encodeURIComponent(pair)}&exchange=${exchange}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data?.price ?? null;
             }
         } else if (provider === 'Yahoo Finance') {
             const suffix = exchangeHint === 'SSE' ? '.SS' : exchangeHint === 'SZSE' ? '.SZ' : '';
