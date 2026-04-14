@@ -58,15 +58,15 @@ function SourceDialog({ open, pair, market, currentExchange, currentProvider, on
                 <div className="space-y-5 pt-1">
                     <div>
                         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-1">
-                            Exchange
+                            Data Provider
                         </p>
                         <div className="grid gap-2">
-                            {exchanges.map((item) => {
-                                const isCurrent = item === currentExchange
+                            {providers.map((item) => {
+                                const isCurrent = item === currentProvider
                                 return (
                                     <button
                                         key={item}
-                                        onClick={() => onSelectExchange(item)}
+                                        onClick={() => onSelectProvider(item)}
                                         disabled={isCurrent}
                                         className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${
                                             isCurrent
@@ -83,15 +83,15 @@ function SourceDialog({ open, pair, market, currentExchange, currentProvider, on
                     </div>
                     <div>
                         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-1">
-                            Data Provider
+                            Exchange
                         </p>
                         <div className="grid gap-2">
-                            {providers.map((item) => {
-                                const isCurrent = item === currentProvider
+                            {exchanges.map((item) => {
+                                const isCurrent = item === currentExchange
                                 return (
                                     <button
                                         key={item}
-                                        onClick={() => onSelectProvider(item)}
+                                        onClick={() => onSelectExchange(item)}
                                         disabled={isCurrent}
                                         className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-left transition-all ${
                                             isCurrent
@@ -210,8 +210,28 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                         </div>
                     </div>
 
-                    {/* Exchange + Data source row */}
+                    {/* Data source + Exchange row */}
                     <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium">
+                                Data Source
+                            </label>
+                            <Select
+                                value={newDataProvider}
+                                onValueChange={(val) => { setNewDataProvider(val); setAddError(null) }}
+                                disabled={isValidating}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Data provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableDataProviders.map(dp => (
+                                        <SelectItem key={dp} value={dp}>{dp}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium">
                                 Exchange
@@ -231,26 +251,6 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
                                 <SelectContent>
                                     {availableExchanges.map(ex => (
                                         <SelectItem key={ex} value={ex}>{ex}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium">
-                                Data Source
-                            </label>
-                            <Select
-                                value={newDataProvider}
-                                onValueChange={(val) => { setNewDataProvider(val); setAddError(null) }}
-                                disabled={isValidating}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Data provider" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableDataProviders.map(dp => (
-                                        <SelectItem key={dp} value={dp}>{dp}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -532,7 +532,7 @@ export default function TradingPairs() {
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">
-                        {filteredConfigs.map(({ pair, market, exchange, dataProvider, currency }) => {
+                        {filteredConfigs.map(({ pair, market, dataProvider, currency }) => {
                             const priceData = prices[pair]
                             const priceDisplay = priceData
                                 ? `${getCurrencySymbol(currency)}${parseFloat(priceData.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
@@ -579,7 +579,7 @@ export default function TradingPairs() {
                                                     {isValidating ? (
                                                         <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${MUTED_BADGE}`}>
                                                             <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                                            {exchange} · {dataProvider}
+                                                            {dataProvider}
                                                         </span>
                                                     ) : (
                                                         <button
@@ -587,7 +587,7 @@ export default function TradingPairs() {
                                                             className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border cursor-pointer hover:opacity-80 transition-opacity active:scale-95 ${MUTED_BADGE}`}
                                                             title="Change data source"
                                                         >
-                                                            {exchange} · {dataProvider}
+                                                            {dataProvider}
                                                             <ChevronDown className="h-2.5 w-2.5 opacity-50" />
                                                         </button>
                                                     )}

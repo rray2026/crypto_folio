@@ -22,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, TrendingUp, XCircle, Check } from "lucide-react"
+import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, XCircle, Check } from "lucide-react"
 
 import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
@@ -33,7 +33,7 @@ const DEBUG_TAP_TIMEOUT = 3000
 
 export default function Settings() {
     const navigate = useNavigate()
-    const { predefinedPairs, theme, setTheme, themeColor, setThemeColor } = useSettingsStore()
+    const { theme, setTheme, themeColor, setThemeColor } = useSettingsStore()
 
     const txCount   = useLiveQuery(() => db.transactions.count(), [])
     const posCount  = useLiveQuery(() => db.positions.count(), [])
@@ -110,26 +110,7 @@ export default function Settings() {
                 <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your app preferences and defaults.</p>
             </div>
 
-            <div className="bg-card rounded-xl border shadow-sm hover:border-border transition-all">
-                <Link to="/settings/trading-pairs" className="flex items-center justify-between p-6 group">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                            Trading Pairs
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {predefinedPairs.length} {predefinedPairs.length === 1 ? 'pair' : 'pairs'} configured · quick-select options for transactions
-                        </p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform shrink-0">
-                        <ArrowLeft className="h-5 w-5 rotate-180" />
-                    </Button>
-                </Link>
-            </div>
-
-
-
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
+            <div className="bg-card p-6 rounded-xl border shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="text-xl font-semibold flex items-center gap-2">
