@@ -280,12 +280,12 @@ export default function Transactions() {
                         ))}
                     </div>
                 ) : !transactions?.length ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-muted-foreground" />
+                    <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                        <p className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
                         <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
@@ -337,12 +337,12 @@ export default function Transactions() {
                         ))}
                     </div>
                 ) : !transactions?.length ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                            <Activity className="h-7 w-7 text-muted-foreground" />
+                    <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Activity className="h-7 w-7 text-primary/60" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">No transactions yet</h3>
-                        <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                        <p className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
                             Every buy or sell you make is a transaction — the building block of your portfolio.
                         </p>
                         <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>

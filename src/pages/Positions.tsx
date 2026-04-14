@@ -179,12 +179,12 @@ export default function Positions() {
             )}
 
             {!positions?.length ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center mt-6">
-                    <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                        <Target className="h-7 w-7 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                        <Target className="h-7 w-7 text-primary/60" />
                     </div>
                     <h3 className="text-base font-semibold mb-1">No positions yet</h3>
-                    <p className="text-sm text-muted-foreground mb-5 max-w-xs">
+                    <p className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
                         A position groups related trades so you can track their combined P&L and ROI.
                     </p>
                     <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsAddDialogOpen(true)}>
