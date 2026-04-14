@@ -2,7 +2,8 @@ import { useEffect, useRef, useCallback } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useSettingsStore } from "@/store/useSettingsStore"
-import { Settings, TrendingUp, ReceiptText, ArrowLeft, Lightbulb } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Settings, TrendingUp, ReceiptText, Lightbulb, ChevronRight } from "lucide-react"
 import { version } from "../../package.json"
 
 declare const __BUILD_DATE__: string
@@ -68,19 +69,15 @@ export default function Profile() {
     ]
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
-            <div className="hidden md:flex items-center justify-between">
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            <div className="hidden md:flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Profile</h1>
-                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Quick access and app info.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Quick access and app info.</p>
                 </div>
-                <button
-                    onClick={() => navigate("/settings")}
-                    className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-muted transition-colors"
-                    aria-label="Settings"
-                >
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate("/settings")}>
                     <Settings className="h-5 w-5 text-muted-foreground" />
-                </button>
+                </Button>
             </div>
 
             <div className="rounded-xl border border-border/50 overflow-hidden bg-card">
@@ -103,7 +100,7 @@ export default function Profile() {
                                     <p className="text-xs text-muted-foreground">{item.description}</p>
                                 </div>
                             </div>
-                            <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+                            <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
                         </Link>
                     )
                 })}

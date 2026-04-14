@@ -10,6 +10,7 @@ import type { Position } from "@/lib/types"
 import { format } from "date-fns"
 import { ArrowLeft, Edit, Trash2, X, Layers, Link as LinkIcon, Eye, Check, TrendingUp, TrendingDown, Calendar, EllipsisVertical, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Dialog,
     DialogContent,
@@ -165,50 +166,68 @@ export default function FundDetails() {
     const navUp = fundM.navChangePct >= 0
 
     return (
-        <div className="p-4 md:p-8 max-w-5xl mx-auto">
-            {/* Back nav (desktop only) */}
-            <Button
-                variant="ghost"
-                size="sm"
-                className="hidden md:flex gap-2 mb-4 -ml-2 text-muted-foreground hover:text-foreground"
-                onClick={() => navigate('/funds')}
-            >
-                <ArrowLeft className="h-4 w-4" />
-                Funds
-            </Button>
-
-            {/* Header (desktop only — mobile uses MobileHeader) */}
-            <div className="hidden md:flex items-start justify-between mb-6">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <Layers className="h-5 w-5 text-muted-foreground" />
-                        <h1 className="text-2xl font-bold tracking-tight">{fund.name}</h1>
-                    </div>
-                    {fund.description && (
-                        <p className="text-sm text-muted-foreground">{fund.description}</p>
-                    )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => setIsEditOpen(true)}>
-                        <Edit className="h-3.5 w-3.5" />
-                        Edit
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">
+                    <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 self-start mt-1" onClick={() => navigate('/funds')}>
+                        <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setIsDeleteConfirmOpen(true)}
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
+                    <div className="flex-1 w-full min-w-0">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div className="space-y-1">
+                                <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{fund.name}</h1>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
+                                    fund.status === 'ACTIVE'
+                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                    : 'text-muted-foreground border-border'
+                                }`}>
+                                    <Layers className="h-3 w-3" />
+                                    {fund.status}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Info chips */}
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3 text-xs md:text-sm text-muted-foreground font-mono">
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                                <span>Created: {format(new Date(fund.createdAt), "yyyy/MM/dd")}</span>
+                            </div>
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <Layers className="h-3 w-3 md:h-4 md:w-4" />
+                                <span>{fund.currency}</span>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        {fund.description && (
+                            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-lg border border-border/50 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
+                                <span className="font-semibold text-foreground/80 mr-2">Description:</span>
+                                {fund.description}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Desktop action buttons */}
+                <div className="hidden md:flex items-center gap-2 self-start">
+                    <Button variant="outline" size="icon" className="shrink-0" onClick={() => setIsEditOpen(true)}>
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5" onClick={() => setIsDeleteConfirmOpen(true)}>
+                        <Trash2 className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>Delete Fund</DialogTitle>
+                        <DialogTitle className="text-destructive">Delete Fund?</DialogTitle>
                         <DialogDescription className="pt-2">
-                            Delete &quot;{fund.name}&quot;? All positions will be unassigned but not deleted.
+                            This will permanently delete &quot;{fund.name}&quot;. All positions will be unassigned but not deleted.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 mt-4">
@@ -228,45 +247,48 @@ export default function FundDetails() {
                 </DialogContent>
             </Dialog>
 
-            {/* NAV metrics row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className={`${label} mb-1`}>Initial Amount</p>
-                    <p className="text-xl font-bold font-mono">{fmtNum(fund.initialAmount)}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
-                </div>
-                <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className={`${label} mb-1`}>Current Value</p>
-                    <p className="text-xl font-bold font-mono">{fmtNum(fundM.currentValue)}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</p>
-                    <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
-                        <div className="flex justify-between text-[10px]">
-                            <span className="text-muted-foreground">Assets</span>
-                            <span className="font-mono text-foreground/80">{fmtNum(assetsValue)}</span>
+            {/* NAV Metrics Card */}
+            <Card className="overflow-hidden border-border/50 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 sm:gap-y-6 gap-x-4">
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Initial Amount</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">{fmtNum(fund.initialAmount)}</span>
+                            <span className="text-[10px] text-muted-foreground mt-0.5">{fund.currency}</span>
                         </div>
-                        <div className="flex justify-between text-[10px]">
-                            <span className="text-muted-foreground">Cash</span>
-                            <span className="font-mono text-foreground/80">{fmtNum(cashValue)}</span>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Current Value</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">{fmtNum(fundM.currentValue)}</span>
+                            <div className="mt-1.5 pt-1.5 border-t border-border/30 space-y-0.5">
+                                <div className="flex justify-between text-[10px]">
+                                    <span className="text-muted-foreground">Assets</span>
+                                    <span className="font-mono text-foreground/80">{fmtNum(assetsValue)}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                    <span className="text-muted-foreground">Cash</span>
+                                    <span className="font-mono text-foreground/80">{fmtNum(cashValue)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>NAV / Share</span>
+                            <span className="text-base sm:text-xl font-bold font-mono">{fundM.currentNAV.toFixed(4)}</span>
+                            <span className="text-[10px] text-muted-foreground mt-0.5">
+                                Initial: {fundM.initialNAV.toFixed(4)}
+                            </span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>NAV Change</span>
+                            <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(navUp ? 1 : -1)}`}>
+                                {navUp ? '+' : ''}{fundM.navChangePct.toFixed(2)}%
+                            </span>
+                            <span className={`text-[10px] mt-0.5 font-mono ${pnlColor(fundM.totalPnL)}`}>
+                                {fundM.totalPnL >= 0 ? '+' : ''}{fmtNum(fundM.totalPnL)} PnL
+                            </span>
                         </div>
                     </div>
-                </div>
-                <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className={`${label} mb-1`}>NAV / Share</p>
-                    <p className="text-xl font-bold font-mono">{fundM.currentNAV.toFixed(4)}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Initial: {fundM.initialNAV.toFixed(4)}
-                    </p>
-                </div>
-                <div className="bg-card rounded-xl border border-border/50 p-4">
-                    <p className={`${label} mb-1`}>NAV Change</p>
-                    <p className={`text-xl font-bold font-mono ${pnlColor(navUp ? 1 : -1)}`}>
-                        {navUp ? '+' : ''}{fundM.navChangePct.toFixed(2)}%
-                    </p>
-                    <p className={`text-[10px] mt-0.5 font-mono ${pnlColor(fundM.totalPnL)}`}>
-                        {fundM.totalPnL >= 0 ? '+' : ''}{fmtNum(fundM.totalPnL)} PnL
-                    </p>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* Linked Positions */}
             <div className="space-y-1.5">

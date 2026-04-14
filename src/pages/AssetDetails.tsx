@@ -3,9 +3,8 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
 import { differenceInDays } from "date-fns"
-import { ArrowLeft, Activity, Clock } from "lucide-react"
+import { ArrowLeft, Activity, Clock, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getPositionMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 import { useEffect, useState } from "react"
@@ -73,21 +72,23 @@ export default function AssetDetails() {
     }).sort(comparePositionsByMetrics)
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-            {/* Header section (desktop: full; mobile: price/stats only, title in MobileHeader) */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden md:inline-flex shrink-0">
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    <div>
-                        <h1 className="hidden md:block text-3xl font-bold tracking-tight">{base} <span className="text-muted-foreground text-xl">/ {quote}</span></h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-2xl font-mono font-bold text-foreground">
-                                {Number(currentPrice) > 0 ? `${currencySymbol}${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
-                            </span>
-                            <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-0.5 rounded font-bold tracking-tighter">Live Price</span>
-                        </div>
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
+            {/* Header */}
+            <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">
+                <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 self-start mt-1" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div className="flex-1 w-full min-w-0">
+                    <h1 className="hidden md:block text-2xl md:text-3xl font-bold tracking-tight">{base} <span className="text-muted-foreground text-xl">/ {quote}</span></h1>
+                    {/* Info chips */}
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1.5 md:mt-2.5">
+                        <span className="text-sm md:text-lg text-foreground font-mono font-bold tracking-wider">
+                            {Number(currentPrice) > 0 ? `${currencySymbol}${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] md:text-xs text-primary font-semibold uppercase tracking-wider bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/20">
+                            <Activity className="h-2.5 w-2.5" />
+                            Live
+                        </span>
                     </div>
                 </div>
             </div>
@@ -95,7 +96,7 @@ export default function AssetDetails() {
             <Tabs defaultValue="positions" className="w-full">
                 <TabsList>
                     <TabsTrigger value="positions">
-                        <Activity className="h-3.5 w-3.5" /> Positions ({positions?.length || 0})
+                        <Target className="h-3.5 w-3.5" /> Positions ({positions?.length || 0})
                     </TabsTrigger>
                     <TabsTrigger value="transactions">
                         <Clock className="h-3.5 w-3.5" /> Transactions ({transactions?.length || 0})
@@ -105,11 +106,9 @@ export default function AssetDetails() {
                 <TabsContent value="positions" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {enrichedPositions.length === 0 ? (
-                            <Card className="md:col-span-2 lg:col-span-3 border-dashed bg-muted/20">
-                                <CardContent className="h-40 flex flex-col items-center justify-center text-muted-foreground">
-                                    <p>No positions linked to {decodedSymbol} yet.</p>
-                                </CardContent>
-                            </Card>
+                            <div className="md:col-span-2 lg:col-span-3 p-6 rounded-xl border border-dashed border-border/50 text-center">
+                                <p className="text-sm text-muted-foreground">No positions linked to {decodedSymbol} yet.</p>
+                            </div>
                         ) : (
                             enrichedPositions.map(({ pos, metrics }) => {
                                 const duration = differenceInDays(metrics.derivedEndDate || now, metrics.derivedStartDate || now)
@@ -132,8 +131,8 @@ export default function AssetDetails() {
                     <TransactionListHeader showAsset={false} />
                     
                     {transactions?.length === 0 ? (
-                        <div className="p-12 text-center text-muted-foreground border border-dashed rounded-xl bg-muted/20">
-                            No transactions found for {decodedSymbol}
+                        <div className="p-6 rounded-xl border border-dashed border-border/50 text-center">
+                            <p className="text-sm text-muted-foreground">No transactions found for {decodedSymbol}</p>
                         </div>
                     ) : (
                         transactions?.map(tx => (

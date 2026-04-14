@@ -8,7 +8,9 @@ import type { Position, PositionMetrics } from "@/lib/types"
 import { PositionForm } from "@/components/positions/PositionForm"
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog"
 
+import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Target, ChevronDown, LineChart, ReceiptText } from "lucide-react"
+import { label, pnlColor } from "@/lib/styles"
 import { differenceInDays } from "date-fns"
 import { getPositionMetrics, comparePositionsByMetrics } from "@/lib/metrics"
 
@@ -164,18 +166,22 @@ export default function Positions() {
 
             {/* Summary bar */}
             {positions && positions.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-card rounded-xl border border-border/40 p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Open Positions</p>
-                        <p className="text-2xl font-bold font-mono">{openPositions.length}</p>
-                    </div>
-                    <div className="bg-card rounded-xl border border-border/40 p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Unrealized PnL</p>
-                        <p className={`text-2xl font-bold font-mono ${totalUnrealizedPnL > 0 ? 'text-pnl-up' : totalUnrealizedPnL < 0 ? 'text-pnl-down' : 'text-foreground'}`}>
-                            {currSymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                    </div>
-                </div>
+                <Card className="overflow-hidden border-border/50 shadow-sm mb-6">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="grid grid-cols-2 gap-x-4">
+                            <div className="flex flex-col">
+                                <span className={`${label} sm:text-xs mb-1`}>Open Positions</span>
+                                <span className="text-xl sm:text-2xl font-bold font-mono">{openPositions.length}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className={`${label} sm:text-xs mb-1`}>Unrealized PnL</span>
+                                <span className={`text-xl sm:text-2xl font-bold font-mono ${pnlColor(totalUnrealizedPnL)}`}>
+                                    {currSymbol}{totalUnrealizedPnL > 0 ? '+' : ''}{totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {!positions?.length ? (
