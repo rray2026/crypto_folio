@@ -11,12 +11,13 @@ This document maps user actions to their technical implementation and data state
   2. Persists to `db.transactions`.
   3. Updates `TransactionStore` state.
 
-### UC1.2: Binance Bulk Import
-- **Action**: User uploads Excel.
+### UC1.2: AI-Assisted Import
+- **Action**: User copies a pre-built prompt from the app, sends it along with a trade screenshot to any AI assistant (ChatGPT, Claude, etc.), then pastes the AI's JSON response back into the app.
 - **System**: 
-  1. `xlsx` library parses rows into JSON.
-  2. **Fee Aggregation**: Child rows (Trades) are summed into the parent Order row.
-  3. **ID Mapping**: Binance Order IDs are used to prevent duplicates via IndexedDB unique indexes.
+  1. Displays a hardcoded `AI_PROMPT` with strict JSON schema (orderId, symbol, type, date, price, quantity, amount, fee).
+  2. **Parsing**: Strips markdown code fences, parses JSON, validates required fields, coerces types (uppercase symbol, numeric values).
+  3. **Preview**: Renders a read-only confirmation table of all extracted transactions for user review.
+  4. **Save**: On confirmation, calls `addTransaction()` for each entry, converting date strings to timestamps.
 
 ---
 
