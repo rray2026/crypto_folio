@@ -41,19 +41,19 @@ export default function Positions() {
                             <Plus className="h-5 w-5" />
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-48 p-1" align="end">
+                    <PopoverContent className="w-auto min-w-48 p-1" align="end">
                         <button
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left whitespace-nowrap"
                             onClick={() => { setIsMenuOpen(false); setIsAddDialogOpen(true) }}
                         >
-                            <LineChart className="h-4 w-4 text-muted-foreground" />
-                            New Empty Position
+                            <LineChart className="h-4 w-4 text-muted-foreground shrink-0" />
+                            Empty Position
                         </button>
                         <button
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left whitespace-nowrap"
                             onClick={() => { setIsMenuOpen(false); setIsAddTxDialogOpen(true) }}
                         >
-                            <ReceiptText className="h-4 w-4 text-muted-foreground" />
+                            <ReceiptText className="h-4 w-4 text-muted-foreground shrink-0" />
                             New Transaction
                         </button>
                     </PopoverContent>
@@ -145,7 +145,7 @@ export default function Positions() {
                     </Button>
                     <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
-                        New Empty Position
+                        Empty Position
                     </Button>
                 </div>
             </div>
