@@ -4,6 +4,8 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { Plus, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { label } from "@/lib/styles"
 import {
     Dialog,
     DialogContent,
@@ -89,18 +91,22 @@ export default function Funds() {
 
             {/* Summary bar */}
             {funds && funds.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-card rounded-xl border border-border/40 p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Total Funds</p>
-                        <p className="text-2xl font-bold font-mono">{funds.length}</p>
-                    </div>
-                    <div className="bg-card rounded-xl border border-border/40 p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Combined AUM</p>
-                        <p className="text-2xl font-bold font-mono">
-                            {totalAUM.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                    </div>
-                </div>
+                <Card className="overflow-hidden border-border/50 shadow-sm mb-6">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="grid grid-cols-2 gap-x-4">
+                            <div className="flex flex-col">
+                                <span className={`${label} sm:text-xs mb-1`}>Total Funds</span>
+                                <span className="text-xl sm:text-2xl font-bold font-mono">{funds.length}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className={`${label} sm:text-xs mb-1`}>Combined AUM</span>
+                                <span className="text-xl sm:text-2xl font-bold font-mono">
+                                    {totalAUM.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Fund grid */}
