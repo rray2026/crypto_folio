@@ -173,8 +173,7 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     }
 
     const placeholder =
-        newExchange === 'SSE'  ? 'e.g. 601818' :
-        newExchange === 'SZSE' ? 'e.g. 000001' :
+        newMarket === 'CN Stocks' ? (newExchange === 'SZSE' ? 'e.g. 000001' : 'e.g. 601818') :
         newMarket === 'US Stocks' ? 'e.g. AAPL' :
         'e.g. BTC/USDT'
 
