@@ -14,13 +14,13 @@ export const badge = cva(
     {
         variants: {
             color: {
-                buy:    "text-pnl-up border-pnl-up/20",
-                sell:   "text-pnl-down border-pnl-down/20",
-                long:   "text-pnl-up border-pnl-up/20",
-                short:  "text-pnl-down border-pnl-down/20",
-                active: "text-primary border-primary/20",
+                buy:    "bg-pnl-up/8 text-pnl-up border-pnl-up/20",
+                sell:   "bg-pnl-down/8 text-pnl-down border-pnl-down/20",
+                long:   "bg-pnl-up/8 text-pnl-up border-pnl-up/20",
+                short:  "bg-pnl-down/8 text-pnl-down border-pnl-down/20",
+                active: "bg-primary/8 text-primary border-primary/20",
                 closed: "text-muted-foreground border-border",
-                fund:   "text-primary border-primary/20",
+                fund:   "bg-primary/8 text-primary border-primary/20",
             },
         },
     }

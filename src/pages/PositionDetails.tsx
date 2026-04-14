@@ -351,8 +351,8 @@ export default function PositionDetails() {
                                     {/* Direction Badge */}
                                     <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         positionType === 'LONG'
-                                        ? 'text-pnl-up border-pnl-up/20'
-                                        : 'text-pnl-down border-pnl-down/20'
+                                        ? 'bg-pnl-up/8 text-pnl-up border-pnl-up/20'
+                                        : 'bg-pnl-down/8 text-pnl-down border-pnl-down/20'
                                     }`}>
                                         {positionType === 'LONG' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {positionType}
@@ -361,7 +361,7 @@ export default function PositionDetails() {
                                     {/* Status Badge */}
                                     <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] md:text-xs font-semibold border ${
                                         position.status === 'OPEN'
-                                        ? 'text-primary border-primary/20'
+                                        ? 'bg-primary/8 text-primary border-primary/20'
                                         : 'text-muted-foreground border-border'
                                     }`}>
                                         <Circle className={`h-1.5 w-1.5 fill-current ${position.status === 'OPEN' ? 'animate-pulse' : ''}`} />
