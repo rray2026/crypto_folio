@@ -5,7 +5,7 @@ import { useMobileHeader } from "@/hooks/useMobileHeader"
 import {
     useSettingsStore,
     SUPPORTED_MARKETS, MARKET_EXCHANGES, MARKET_DEFAULT_EXCHANGE, MARKET_DATA_PROVIDERS,
-    DATA_PROVIDER_GROUPS,
+    DATA_PROVIDER_GROUPS, cryptoProvidersForExchange,
     fetchPriceFromProvider, defaultDataProvider, getCurrencySymbol, inferCurrency,
 } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
@@ -42,7 +42,9 @@ interface SourceDialogProps {
 
 function SourceDialog({ open, pair, market, currentExchange, currentProvider, onSelectExchange, onSelectProvider, onClose }: SourceDialogProps) {
     const exchanges = MARKET_EXCHANGES[market] ?? []
-    const providers = MARKET_DATA_PROVIDERS[market] ?? Object.values(DATA_PROVIDER_GROUPS).flat()
+    const providers = market === 'Crypto'
+        ? cryptoProvidersForExchange(currentExchange)
+        : (MARKET_DATA_PROVIDERS[market] ?? Object.values(DATA_PROVIDER_GROUPS).flat())
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -126,7 +128,9 @@ function AddPairModal({ open, onClose }: AddPairModalProps) {
     const [isValidating, setIsValidating] = useState(false)
 
     const availableExchanges = MARKET_EXCHANGES[newMarket] ?? []
-    const availableDataProviders = MARKET_DATA_PROVIDERS[newMarket] ?? []
+    const availableDataProviders = newMarket === 'Crypto'
+        ? cryptoProvidersForExchange(newExchange)
+        : (MARKET_DATA_PROVIDERS[newMarket] ?? [])
     const inferredCurrency = inferCurrency(newPair.trim().toUpperCase(), newExchange)
 
     const handleClose = () => {
@@ -370,11 +374,11 @@ export default function TradingPairs() {
         setSourceErrors(prev => { const next = { ...prev }; delete next[pair]; return next })
 
         const config = pairConfigs.find(p => p.pair === pair)
-        const oldDefault = defaultDataProvider(config?.exchange ?? '')
         const newDefault = defaultDataProvider(newExch)
-        const shouldSyncProvider = config?.dataProvider === oldDefault
+        const allowedProviders = config?.market === 'Crypto' ? cryptoProvidersForExchange(newExch) : null
+        const needsProviderSwitch = allowedProviders && !allowedProviders.includes(config?.dataProvider ?? '')
+        const priceProvider = needsProviderSwitch ? newDefault : (config?.dataProvider ?? newDefault)
 
-        const priceProvider = shouldSyncProvider ? newDefault : (config?.dataProvider ?? newDefault)
         const price = await fetchPriceFromProvider(pair, priceProvider, newExch)
         if (price === null) {
             setSourceErrors(prev => ({
@@ -383,8 +387,8 @@ export default function TradingPairs() {
             }))
         } else {
             updatePairExchange(pair, newExch)
-            if (shouldSyncProvider && config?.dataProvider !== newDefault) {
-                updatePairDataProvider(pair, newDefault)
+            if (priceProvider !== config?.dataProvider) {
+                updatePairDataProvider(pair, priceProvider)
             }
         }
 
