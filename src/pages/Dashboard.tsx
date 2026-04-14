@@ -84,12 +84,12 @@ export default function Dashboard() {
                             return (
                                 <button
                                     key={pair}
-                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-md transition-all duration-200 group cursor-pointer text-left"
+                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-200 group cursor-pointer text-left"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                            <span className="text-[10px] font-bold text-foreground">
+                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-bold text-primary">
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
                                         </div>
