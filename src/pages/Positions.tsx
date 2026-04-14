@@ -47,7 +47,7 @@ export default function Positions() {
                             onClick={() => { setIsMenuOpen(false); setIsAddDialogOpen(true) }}
                         >
                             <LineChart className="h-4 w-4 text-muted-foreground" />
-                            New Position
+                            New Empty Position
                         </button>
                         <button
                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors text-left"
@@ -145,7 +145,7 @@ export default function Positions() {
                     </Button>
                     <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
-                        New Position
+                        New Empty Position
                     </Button>
                 </div>
             </div>
@@ -153,9 +153,9 @@ export default function Positions() {
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogContent className="w-[95vw] max-w-lg rounded-xl sm:max-w-[425px] p-4 sm:p-6">
                     <DialogHeader>
-                        <DialogTitle>Create Position</DialogTitle>
+                        <DialogTitle>Create Empty Position</DialogTitle>
                         <DialogDescription>
-                            Group your trades under a position to view its performance.
+                            Create a placeholder position. You can link trades to it later.
                         </DialogDescription>
                     </DialogHeader>
                     <PositionForm onSuccess={() => setIsAddDialogOpen(false)} />
