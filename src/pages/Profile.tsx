@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { Button } from "@/components/ui/button"
-import { Settings, TrendingUp, ReceiptText, ArrowLeft, Lightbulb, ChevronRight } from "lucide-react"
+import { Settings, TrendingUp, ReceiptText, Lightbulb, ChevronRight } from "lucide-react"
 import { version } from "../../package.json"
 
 declare const __BUILD_DATE__: string
@@ -69,16 +69,11 @@ export default function Profile() {
     ]
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
-            <div className="hidden md:flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Profile</h1>
-                        <p className="text-muted-foreground mt-1 text-sm">Quick access and app info.</p>
-                    </div>
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            <div className="hidden sm:flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Quick access and app info.</p>
                 </div>
                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate("/settings")}>
                     <Settings className="h-5 w-5 text-muted-foreground" />
