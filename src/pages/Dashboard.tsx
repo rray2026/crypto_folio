@@ -110,18 +110,18 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
-                            <TrendingUp className="h-7 w-7 text-primary" />
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <TrendingUp className="h-7 w-7 text-primary/60" />
                         </div>
-                        <h2 className="text-xl font-semibold mb-1.5">Welcome to Folio</h2>
-                        <p className="text-sm text-muted-foreground mb-6 max-w-sm leading-relaxed">
+                        <h3 className="text-base font-semibold mb-1">Welcome to Folio</h3>
+                        <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
                             A privacy-first portfolio tracker. All your data stays in this browser — nothing is sent to any server.
                         </p>
 
                         <div className="flex flex-col gap-2.5 w-full max-w-sm">
                             <button
                                 onClick={() => navigate('/settings/trading-pairs')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <Settings className="h-4 w-4 text-primary" />
@@ -134,7 +134,7 @@ export default function Dashboard() {
 
                             <button
                                 onClick={() => navigate('/transactions')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <ReceiptText className="h-4 w-4 text-primary" />
@@ -147,7 +147,7 @@ export default function Dashboard() {
 
                             <button
                                 onClick={() => navigate('/positions')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <LineChart className="h-4 w-4 text-primary" />
@@ -160,7 +160,7 @@ export default function Dashboard() {
 
                             <button
                                 onClick={() => navigate('/funds')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <Layers className="h-4 w-4 text-primary" />
