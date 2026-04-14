@@ -8,11 +8,15 @@ Uses React Router v7 (browser mode). Routes are configured in `src/App.tsx`:
 /                           → Dashboard
 /positions                  → Positions list
 /positions/:id              → PositionDetails
+/positions/:id/simulator    → TradingSimulator
 /transactions               → Transactions list
 /transactions/:id           → TransactionDetails
 /assets/:symbol             → AssetDetails
 /funds                      → Funds list
 /funds/:id                  → FundDetails
+/profile                    → Profile
+/strategies                 → Strategies list
+/strategies/:id             → StrategyDetails
 /settings                   → Settings
 /settings/trading-pairs     → TradingPairs
 /glossary                   → Glossary
@@ -173,7 +177,7 @@ function PositionDetails() {
 **Data flow:**
 1. Read `pinnedPairs` and `prices` from `useSettingsStore`.
 2. Call `fetchPrices()` on mount.
-3. Read all PRIMARY positions from IndexedDB; call `getPortfolioMetrics()`.
+3. Read all positions from IndexedDB; display pinned pair prices.
 4. Pull-to-refresh triggers `fetchPrices({ force: true })`.
 
 ### 4.2 Positions (`/positions`)
@@ -232,7 +236,33 @@ const linkedTxs = useLiveQuery(
 - Linked positions list.
 - Assign positions to the fund (`assignPositionToFund`).
 
-### 4.7 Settings (`/settings`)
+### 4.7 Profile (`/profile`)
+
+**Features:**
+- Quick-access menu: links to Trading Pairs, Strategies, and Transactions.
+- App version and build date display.
+- Hidden debug mode (tap version 5 times).
+
+### 4.8 Strategies (`/strategies`)
+
+**Features:**
+- Strategy list grouped by status (ACTIVE / ARCHIVED).
+- Create a new strategy (opens `StrategyForm` dialog).
+- Each row shows: strategy name, linked position count, description preview.
+- Archived toggle with collapsible section.
+
+### 4.9 StrategyDetails (`/strategies/:id`)
+
+**Features:**
+- Strategy header with name, status badge, and created date chip.
+- Stats card: Total PnL, Realized PnL, Unrealized PnL, Win Rate, Avg ROI, Closed/Total count.
+- Linked positions list with SwipeActions (unlink on swipe).
+- Link more positions via popover on dashed button.
+- Edit strategy (name, description) via dialog.
+- Archive/Activate toggle.
+- Delete with confirmation dialog.
+
+### 4.10 Settings (`/settings`)
 
 **Features:**
 - Theme switcher (dark / light / system).
@@ -241,7 +271,7 @@ const linkedTxs = useLiveQuery(
 - Database version info and compatibility status.
 - App version and build date.
 
-### 4.8 TradingPairs (`/settings/trading-pairs`)
+### 4.11 TradingPairs (`/settings/trading-pairs`)
 
 **Features:**
 - Manage the predefined trading pair list.
@@ -250,17 +280,17 @@ const linkedTxs = useLiveQuery(
 - Pin / unpin pairs to the dashboard.
 - Live test price fetching (refresh button per pair).
 
-### 4.9 AssetDetails (`/assets/:symbol`)
+### 4.12 AssetDetails (`/assets/:symbol`)
 
 **Features:**
 - All positions filtered by the given symbol.
 - Symbol-level aggregate metrics.
 
-### 4.10 Glossary (`/glossary`)
+### 4.13 Glossary (`/glossary`)
 
 - Static page showing definitions and calculation formula explanations.
 
-### 4.11 Debug (`/debug`)
+### 4.14 Debug (`/debug`)
 
 **Features:**
 - View database statistics (record counts per table).

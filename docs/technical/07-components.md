@@ -8,6 +8,7 @@ src/components/
 ├── layout/         # Application shell (navigation, headers)
 ├── positions/      # Position-related forms
 ├── shared/         # Cross-page reusable display components
+├── strategies/     # Strategy-related forms
 ├── transactions/   # Transaction forms and import flows
 └── ui/             # Shadcn/UI base component library (do not hand-edit)
 ```
@@ -74,8 +75,7 @@ interface PositionCardProps {
 ```
 
 **Displayed content:**
-- Asset symbol + strategy name
-- PRIMARY / SHADOW type indicator
+- Asset symbol + strategy name (from linked Strategy or manual strategyName)
 - OPEN / CLOSED status indicator
 - Key metrics: ROI, total P&L, current price
 - Open date / close date
@@ -190,7 +190,6 @@ Form for creating a new position. Can be triggered by selecting multiple transac
 **Fields:**
 - Symbol (required; dropdown with predefined pairs or custom input)
 - Strategy name (optional)
-- Position type (PRIMARY / SHADOW toggle)
 - Associated fund (optional dropdown)
 - Notes (optional)
 
@@ -208,7 +207,25 @@ Form for editing an existing position. Fields are similar to `PositionForm`, wit
 
 ---
 
-## 7. Transaction Components (`src/components/transactions/`)
+## 7. Strategy Components (`src/components/strategies/`)
+
+### 7.1 StrategyForm
+
+Form for creating or editing a strategy (rendered inside a Dialog).
+
+**Fields:**
+- Strategy name (required)
+- Description (optional, textarea with minimum 120px height)
+
+**Logic:**
+- Submit button is disabled when name is empty.
+- Enter key in name field moves focus to description field.
+- Supports both create mode (no `initialValues`) and edit mode (with `initialValues`).
+- On submit: calls `useStrategyStore.createStrategy()` or `updateStrategy()`.
+
+---
+
+## 8. Transaction Components (`src/components/transactions/`)
 
 ### 7.1 TransactionForm
 
@@ -265,7 +282,7 @@ AI-assisted import flow (multi-step Dialog):
 
 ---
 
-## 8. Style Conventions
+## 9. Style Conventions
 
 ### Semantic color usage
 
@@ -302,7 +319,7 @@ Or use CSS variables (from `src/index.css`):
 
 ---
 
-## 9. Adding New Components
+## 10. Adding New Components
 
 ### Adding a feature component
 

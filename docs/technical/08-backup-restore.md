@@ -16,12 +16,13 @@ The backup and restore feature is implemented in `src/lib/backup.ts`. It is the 
 
 ```typescript
 interface BackupPayload {
-  version: number;         // Backup version (current: 5, synced with DB_VERSION)
+  version: number;         // Backup version (current: 7, synced with DB_VERSION)
   timestamp: number;       // Unix timestamp of the export
   appName: string;         // 'Folio' (also accepts legacy 'CryptoFolio' on import)
   transactions: Transaction[];
   positions: Position[];
   funds: Fund[];
+  strategies: Strategy[];
   settings: {
     predefinedPairs: string[];
     pairConfigs?: PairConfig[];    // includes market, exchange, dataProvider, currency per pair
@@ -49,10 +50,11 @@ Example: `folio-backup-2026-04-06.json`
 ```typescript
 async function exportData(): Promise<void> {
   // 1. Read all data from IndexedDB
-  const [transactions, positions, funds] = await Promise.all([
+  const [transactions, positions, funds, strategies] = await Promise.all([
     db.transactions.toArray(),
     db.positions.toArray(),
     db.funds.toArray(),
+    db.strategies.toArray(),
   ]);
 
   // 2. Read settings from the Zustand store
@@ -60,12 +62,13 @@ async function exportData(): Promise<void> {
 
   // 3. Build the payload
   const payload: BackupPayload = {
-    version: DB_VERSION,      // current: 5
+    version: DB_VERSION,      // current: 7
     timestamp: Date.now(),
     appName: 'Folio',
     transactions,
     positions,
     funds,
+    strategies,
     settings: {
       predefinedPairs: settingsState.predefinedPairs,
       pairConfigs: settingsState.pairConfigs,
@@ -122,6 +125,7 @@ async function importData(file: File): Promise<void> {
     db.transactions.clear(),
     db.positions.clear(),
     db.funds.clear(),
+    db.strategies.clear(),
   ]);
 
   // 5. Bulk-insert the new data
@@ -129,6 +133,7 @@ async function importData(file: File): Promise<void> {
     db.transactions.bulkAdd(payload.transactions),
     db.positions.bulkAdd(payload.positions),
     db.funds.bulkAdd(payload.funds ?? []),
+    db.strategies.bulkAdd(payload.strategies ?? []),
   ]);
 
   // 6. Restore settings via the Zustand store
@@ -204,7 +209,7 @@ All exceptions are caught by the UI layer (Settings page) and surfaced as toast 
 
 ### Maintaining backup compatibility when changing data structures
 
-Every time `Transaction`, `Position`, `Fund`, or Settings structure changes, you must:
+Every time `Transaction`, `Position`, `Fund`, `Strategy`, or Settings structure changes, you must:
 
 1. Add a new Migration to `src/lib/migrations.ts` (implement `upgradePayload`).
 2. Increment `DB_VERSION` in `src/lib/db.ts` (backup version is derived from `DB_VERSION`).
