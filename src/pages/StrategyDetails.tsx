@@ -270,7 +270,7 @@ export default function StrategyDetails() {
                             <div key={pos.id}>
                                 <SwipeActions
                                     actions={[
-                                        { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => unassignPositionFromStrategy(pos.id) },
+                                        { icon: <X className="h-4 w-4" />, bg: "bg-muted-foreground", onAction: () => unassignPositionFromStrategy(pos.id) },
                                     ]}
                                 >
                                     <div

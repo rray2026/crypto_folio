@@ -678,7 +678,7 @@ export default function PositionDetails() {
                                 <div key={tx.id}>
                                 <SwipeActions
                                     actions={[
-                                        { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => handleRemove(tx.id) },
+                                        { icon: <X className="h-4 w-4" />, bg: "bg-muted-foreground", onAction: () => handleRemove(tx.id) },
                                     ]}
                                 >
                                     <div
