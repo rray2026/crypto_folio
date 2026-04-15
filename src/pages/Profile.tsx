@@ -80,19 +80,19 @@ export default function Profile() {
                 </Button>
             </div>
 
-            <div className="rounded-xl border border-border/50 overflow-hidden bg-card">
+            <div className="rounded-2xl border border-border/20 overflow-hidden bg-card shadow-ambient impressionist-card">
                 {menuItems.map((item, i) => {
                     const Icon = item.icon
                     return (
                         <Link
                             key={item.href}
                             to={item.href}
-                            className={`flex items-center justify-between p-4 group hover:bg-muted/30 transition-colors ${
-                                i < menuItems.length - 1 ? 'border-b border-border/30' : ''
+                            className={`flex items-center justify-between p-4 group hover:bg-primary/5 transition-all duration-300 ease-out ${
+                                i < menuItems.length - 1 ? 'border-b border-border/15' : ''
                             }`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 shadow-[0_0_8px_hsl(var(--primary)/0.1)]">
                                     <Icon className="h-4.5 w-4.5 text-primary" />
                                 </div>
                                 <div>

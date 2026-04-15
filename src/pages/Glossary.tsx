@@ -179,7 +179,7 @@ export default function Glossary() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {section.items.map((item, iIdx) => (
-                                <Card key={iIdx} className="bg-card/40 border-border/40 hover:border-border transition-colors shadow-sm overflow-hidden group">
+                                <Card key={iIdx} className="bg-card/40 border-border/20 hover:border-border/40 hover:shadow-elevated transition-all duration-300 ease-out shadow-ambient overflow-hidden group impressionist-card">
                                     <CardHeader className="pb-2 space-y-1">
                                         <CardTitle className="text-base font-bold group-hover:text-foreground transition-colors flex items-center justify-between">
                                             {item.term}
@@ -191,7 +191,7 @@ export default function Glossary() {
                                             {item.definition}
                                         </p>
                                         {item.formula && (
-                                            <div className="flex items-start gap-2 p-2 bg-muted/30 rounded-lg border border-border/10">
+                                            <div className="flex items-start gap-2 p-2 bg-muted/30 rounded-xl border border-border/15">
                                                 <Info className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
                                                 <code className="text-[11px] font-mono font-bold text-foreground/80 break-words min-w-0">
                                                     {item.formula}
@@ -207,8 +207,8 @@ export default function Glossary() {
             </div>
 
             {/* Footer Note */}
-            <div className="pt-12 border-t border-border/40">
-                <div className="p-6 bg-muted/30 rounded-2xl border border-border text-center space-y-2">
+            <div className="pt-12 border-t border-border/15">
+                <div className="p-6 bg-muted/30 rounded-2xl border border-border/20 shadow-ambient text-center space-y-2 impressionist-card">
                     <p className="text-sm font-medium text-foreground">Need more help?</p>
                     <p className="text-xs text-muted-foreground max-w-md mx-auto">
                         This glossary covers the primary logic used to calculate your portfolio performance. 

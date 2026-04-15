@@ -126,7 +126,7 @@ export default function Settings() {
                 </div>
             </div>
 
-            <Card className="overflow-hidden border-border/50 shadow-sm">
+            <Card className="overflow-hidden border-border/20 shadow-ambient rounded-2xl impressionist-card">
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <Palette className="h-5 w-5 text-muted-foreground" />
@@ -185,7 +185,7 @@ export default function Settings() {
                 </CardContent>
             </Card>
 
-            <Card className="overflow-hidden border-border/50 shadow-sm">
+            <Card className="overflow-hidden border-border/20 shadow-ambient rounded-2xl impressionist-card">
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center gap-2 mb-1">
                         <Database className="h-5 w-5 text-muted-foreground" />
@@ -222,7 +222,7 @@ export default function Settings() {
                 </CardContent>
             </Card>
 
-            <Card className="overflow-hidden border-border/50 shadow-sm">
+            <Card className="overflow-hidden border-border/20 shadow-ambient rounded-2xl impressionist-card">
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <Database className="h-5 w-5 text-muted-foreground" />
@@ -248,7 +248,7 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/30">
+                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/15">
                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
                     </div>
@@ -293,11 +293,11 @@ export default function Settings() {
 
             <Link
                 to="/glossary"
-                className="flex items-center justify-between p-4 sm:p-6 rounded-xl border border-border/50 bg-card hover:bg-card/80 transition-colors group shadow-sm"
+                className="flex items-center justify-between p-4 sm:p-6 rounded-2xl border border-border/20 bg-card impressionist-card hover:bg-card/80 hover:shadow-elevated transition-all duration-300 ease-out group shadow-ambient"
             >
                 <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <BookOpen className="h-4.5 w-4.5 text-primary" />
+                    <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 shadow-[0_0_8px_hsl(var(--primary)/0.1)]">
+                        <BookOpen className="h-4.5 w-4.5 text-primary drop-shadow-[0_0_4px_hsl(var(--primary)/0.2)]" />
                     </div>
                     <div>
                         <p className="text-sm font-semibold">Investment Glossary</p>
