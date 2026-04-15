@@ -16,6 +16,11 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
+  		boxShadow: {
+  			'ambient': 'var(--shadow-ambient)',
+  			'elevated': 'var(--shadow-elevated)',
+  			'glow': 'var(--shadow-glow)',
+  		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

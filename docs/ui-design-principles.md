@@ -1,41 +1,51 @@
 # UI Design Principles
 
-This document captures the design system and UI principles established in the premium fintech redesign. All new UI work should follow these conventions for visual consistency.
+This document captures the design system and UI principles established in the premium fintech redesign, now enhanced with **Impressionist-inspired design language**. The Impressionist treatment adds warmth, luminosity, organic texture, and atmospheric layering while preserving readability and usability for financial data.
+
+---
+
+## Impressionist Design Philosophy
+
+The UI translates six core Impressionist art principles into a modern fintech interface:
+
+| Impressionist Principle | UI Translation |
+|---|---|
+| **Light as Subject** | Warm ambient gradients, glowing accents, primary-hue light diffusion |
+| **Pure Color / No Black Shadows** | Primary-hue-tinted shadows, warmer color palette, complementary shadow colors |
+| **Visible Brushwork / Texture** | Subtle SVG fractal noise grain overlay on backgrounds |
+| **Soft Dissolved Edges** | Gradient-fading accent bars, reduced border opacity, blur effects |
+| **Atmospheric Depth** | Layered translucency, backdrop-blur with saturation boost, gradient backgrounds |
+| **Spontaneity / Organic Motion** | Slow breathing grain animation, languid transition timing |
 
 ---
 
 ## Color Palette
 
-### Primary Accent: Teal
+### Primary Accent: Theme-selectable (8 options)
 
-The primary accent color is **teal**, replacing the default shadcn gray palette.
+The primary accent is selectable via `data-theme-color` attribute (default: Blue). All 8 themes carry matching `--shadow-color` for harmonized colored shadows.
 
-| Token | Light Mode (HSL) | Dark Mode (HSL) |
-|---|---|---|
-| `--primary` | `173 58% 38%` | `173 58% 48%` |
-| `--accent` | `173 58% 94%` (bg) / `173 58% 30%` (fg) | `222 14% 15%` (bg) / `173 58% 48%` (fg) |
-| `--ring` | `173 58% 38%` | `173 58% 48%` |
+### Background — Warm Impressionist Tones
 
-### Background
-
-- **Light mode**: Cool-tinted white (`210 20% 98%`), not pure white
-- **Dark mode**: Deep navy (`222 14% 7%`, approximately `#0c1018`), not pure black
+- **Light mode**: Warm ivory (`38 18% 97%`), not cool gray-white — evokes natural warm light
+- **Dark mode**: Warm indigo (`230 12% 8%`), not pure navy — a touch of blue-violet warmth
 
 ### Cards & Surfaces
 
-- **Light**: Pure white cards (`0 0% 100%`) on cool-tinted background
-- **Dark**: Slightly lighter navy (`222 14% 10%`) for card surfaces
+- **Light**: Cream-tinted white cards (`40 20% 99%`) on warm ivory background
+- **Dark**: Warm indigo cards (`232 11% 11%`) for atmospheric layering
 
-### PnL Colors
+### PnL Colors — Impressionist Saturation
 
-Use **emerald/red** consistently for profit/loss — never `text-green-500`/`text-destructive`:
+Use **emerald/rose** consistently for profit/loss, with slightly boosted saturation for Impressionist vibrancy:
+
+- `--pnl-up`: `168 66% 38%` (light) / `168 55% 55%` (dark) — warm saturated emerald
+- `--pnl-down`: `350 70% 54%` (light) / `350 58% 68%` (dark) — cadmium rose
 
 ```tsx
-// Correct
-const pnlColor = (v: number) =>
-    v > 0 ? 'text-emerald-500 dark:text-emerald-400'
-  : v < 0 ? 'text-red-500 dark:text-red-400'
-  : 'text-foreground';
+// Correct — use pnlColor() from styles.ts
+import { pnlColor } from '@/lib/styles'
+// pnlColor(value) → "text-pnl-up" | "text-pnl-down" | "text-foreground"
 
 // Incorrect — do not use
 'text-green-500'       // too bright, inconsistent
@@ -128,12 +138,38 @@ Badge color assignments:
 - **Fund**: violet — `bg-violet-500/10 text-violet-600`
 - **SHADOW**: muted — `bg-muted text-muted-foreground border-border`
 
+### Colored Shadow System (Impressionist)
+
+Three shadow tokens replace generic gray drop shadows. Each uses `--shadow-color` which is overridden per theme color variant:
+
+| Token | Usage | Light Mode | Dark Mode |
+|---|---|---|---|
+| `shadow-ambient` | Default card shadow (via `cardBorder`) | Warm 15% opacity | Primary-hue 8% opacity |
+| `shadow-elevated` | Hover / interactive state | Layered warm shadow | Primary-hue glow |
+| `shadow-glow` | Accent / decorative glow | 15% primary halo | 20% primary halo |
+
+```css
+/* Defined in :root and .dark */
+--shadow-ambient: 0 2px 8px -2px hsl(var(--shadow-color) / 0.15);
+--shadow-elevated: 0 8px 24px -4px hsl(var(--shadow-color) / 0.12), ...;
+--shadow-glow: 0 0 20px -4px hsl(var(--primary) / 0.15);
+```
+
+### Canvas Grain Texture (Impressionist)
+
+A faint SVG `feTurbulence` noise overlay creates the "visible brushwork" sensation:
+- Applied via `body::before` pseudo-element at `z-index: 1`
+- Light mode: 2.5% opacity, dark mode: 3% opacity
+- `mix-blend-mode: overlay` for soft blending
+- Breathing animation: 20-second opacity cycle (`light-breathe` keyframe)
+- `pointer-events: none` — does not interfere with interaction
+
 ### Cards (PositionCard)
 
 - Use plain `<div>` with `rounded-xl border` instead of shadcn `<Card>` for position cards
-- Top accent bar: `h-0.5 w-full` colored by PnL state (emerald/red/primary/border)
-- Hover: `hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5`
-- Transition: `transition-all duration-200`
+- Top accent bar: `h-0.5 w-full` with **gradient fade** — `bg-gradient-to-r from-transparent via-{color} to-transparent` (Impressionist soft stroke)
+- Hover: `hover:border-border hover:shadow-elevated hover:-translate-y-0.5`
+- Transition: `transition-all duration-300 ease-out` (slower, organic Impressionist timing)
 - Shadow positions: `border-dashed border-border/60`
 
 ### Dashboard Price Ticker
@@ -153,22 +189,27 @@ Badge color assignments:
 
 ## Navigation
 
-### Sidebar (Desktop)
+### Sidebar (Desktop) — Impressionist Gradient
 
-- Active state: `bg-primary/10 text-primary` (teal tint, not solid fill)
+- Background: `bg-gradient-to-b from-card via-card to-card/95` (subtle vertical gradient, natural light effect)
+- Border: `border-r border-border/30` (softened from solid)
+- Active state: `bg-primary/10 text-primary shadow-[inset_0_0_12px_hsl(var(--primary)/0.08)]` (inner glow — "emits light")
 - Inactive state: `text-muted-foreground hover:bg-secondary hover:text-foreground`
-- Transition: `duration-150`
-- Logo: `TrendingUp` icon in teal container + "Folio" (foreground)
+- Transition: `duration-250` (languid, organic timing)
+- Logo: `TrendingUp` icon in primary container + "Folio" (foreground)
 - Footer: privacy tagline — `text-[10px] text-muted-foreground/50 uppercase tracking-widest`
 
-### Mobile Bottom Nav
+### Mobile Bottom Nav — Enhanced Glassmorphism
 
-- Active: `text-primary` with a top accent bar (`h-0.5 w-6 rounded-full bg-primary`)
+- Active: `text-primary` with a top accent bar
 - Inactive: `text-muted-foreground hover:text-foreground`
+- Backdrop: `bg-card/95 backdrop-blur-lg backdrop-saturate-150` (atmospheric translucency)
+- Border: `border-t border-border/30` (softened)
 
-### Mobile Header
+### Mobile Header — Enhanced Glassmorphism
 
-- Backdrop: `bg-card/98 backdrop-blur-md` (stronger blur, higher opacity than default)
+- Backdrop: `bg-card/95 backdrop-blur-lg backdrop-saturate-150` (increased blur, saturation boost, more translucent)
+- Border: `border-b border-border/30` (softened)
 
 ---
 
@@ -185,12 +226,15 @@ Custom webkit scrollbar for a refined look:
 
 ---
 
-## Interaction & Motion
+## Interaction & Motion — Impressionist Timing
 
 - Card hover lift: `hover:-translate-y-0.5` (subtle, 2px)
-- Transition duration: `duration-200` for cards, `duration-150` for nav items
+- Card transition: `duration-300 ease-out` (slower, organic Impressionist flow)
+- Nav item transition: `duration-250` (languid sidebar), `transition-colors` (mobile)
 - Active indicator pulse: `animate-pulse` on the status circle dot
 - Color transitions: `transition-colors` on links and interactive text
+- Grain breathing: `light-breathe` keyframe — 20s opacity cycle on canvas texture
+- Shimmer utility: `.shimmer-accent` — 8s gradient animation for decorative containers
 
 ---
 
@@ -269,13 +313,15 @@ The Dashboard shows a guided onboarding state when the user has no data, with 3 
 
 ## Key Principles Summary
 
-1. **Teal-anchored palette** — primary accent is teal across light and dark modes
-2. **Emerald/Red for PnL** — never use generic green or `destructive` for financial values
-3. **Cool-tinted neutrals** — backgrounds have a subtle blue/navy tint, not pure gray
-4. **Consistent label style** — `10px uppercase tracking-wider` for all metric labels
-5. **Monospace for numbers** — all financial values use `font-mono` for alignment
-6. **Subtle card elevation** — accent bars, soft shadows, gentle hover lifts
-7. **Refined badge system** — `rounded-md` with color-coded bg/text/border per semantic role
-8. **Tight, intentional spacing** — smaller icons, tighter nav, more padding in content areas
-9. **Privacy-first branding** — sidebar footer, minimal chrome, no unnecessary decoration
-10. **Dark mode first** — deep navy base, brighter accent variants for dark mode readability
+1. **Impressionist warmth** — warm ivory (light) and warm indigo (dark) backgrounds, not cool neutrals
+2. **Colored shadows** — primary-hue-tinted `shadow-ambient` / `shadow-elevated` / `shadow-glow`, never generic gray
+3. **Canvas grain texture** — subtle SVG noise overlay with breathing animation for organic feel
+4. **Gradient accent bars** — `from-transparent via-{color} to-transparent` for soft Impressionist strokes
+5. **Atmospheric glassmorphism** — `backdrop-blur-lg backdrop-saturate-150` on mobile chrome
+6. **Organic motion** — 300ms ease-out card transitions, 250ms nav transitions, 20s breathing grain
+7. **Emerald/Rose for PnL** — boosted saturation for Impressionist vibrancy, never `destructive`
+8. **Consistent label style** — `10px uppercase tracking-wider` for all metric labels
+9. **Monospace for numbers** — all financial values use `font-mono` for alignment
+10. **Dissolved edges** — reduced border opacity (20-30%) with soft shadows replacing hard lines
+11. **Privacy-first branding** — sidebar footer, minimal chrome, no unnecessary decoration
+12. **Theme-aware shadows** — every theme color variant overrides `--shadow-color` for harmony

@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    /* Light mode — neutral slate primary, data speaks through emerald/rose */
-    --background: 210 20% 98%;
+    /* Light mode — warm ivory tones (Impressionist warmth) */
+    --background: 38 18% 97%;
     --foreground: 222 47% 11%;
 
-    --card: 0 0% 100%;
+    --card: 40 20% 99%;
     --card-foreground: 222 47% 11%;
 
-    --popover: 0 0% 100%;
+    --popover: 40 20% 99%;
     --popover-foreground: 222 47% 11%;
 
     --primary: 220 55% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 20% 93%;
+    --secondary: 35 14% 93%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 214 20% 93%;
+    --muted: 35 14% 93%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 220 14% 95%;
+    --accent: 38 12% 95%;
     --accent-foreground: 220 14% 35%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 89%;
-    --input: 214 32% 89%;
+    --border: 35 18% 88%;
+    --input: 35 18% 88%;
     --ring: 220 55% 48%;
 
     --radius: 0.625rem;
@@ -41,8 +41,14 @@
     --chart-4: 38 92% 55%;
     --chart-5: 0 72% 51%;
 
-    --pnl-up: 172 60% 38%;
-    --pnl-down: 347 65% 55%;
+    --pnl-up: 168 66% 38%;
+    --pnl-down: 350 70% 54%;
+
+    /* Impressionist colored shadows */
+    --shadow-color: 220 40% 80%;
+    --shadow-ambient: 0 2px 8px -2px hsl(var(--shadow-color) / 0.15);
+    --shadow-elevated: 0 8px 24px -4px hsl(var(--shadow-color) / 0.12), 0 2px 8px -2px hsl(var(--shadow-color) / 0.08);
+    --shadow-glow: 0 0 20px -4px hsl(var(--primary) / 0.15);
   }
 
   /* ---- Theme color overrides ---- */
@@ -53,72 +59,79 @@
     --primary-foreground: 0 0% 100%;
     --ring: 235 60% 55%;
     --chart-1: 235 60% 55%;
+    --shadow-color: 235 40% 80%;
   }
   :root[data-theme-color="violet"] {
     --primary: 262 55% 55%;
     --primary-foreground: 0 0% 100%;
     --ring: 262 55% 55%;
     --chart-1: 262 55% 55%;
+    --shadow-color: 262 35% 80%;
   }
   :root[data-theme-color="rose"] {
     --primary: 347 65% 55%;
     --primary-foreground: 0 0% 100%;
     --ring: 347 65% 55%;
     --chart-1: 347 65% 55%;
+    --shadow-color: 347 45% 80%;
   }
   :root[data-theme-color="amber"] {
     --primary: 35 92% 50%;
     --primary-foreground: 35 10% 10%;
     --ring: 35 92% 50%;
     --chart-1: 35 92% 50%;
+    --shadow-color: 35 60% 80%;
   }
   :root[data-theme-color="teal"] {
     --primary: 172 60% 38%;
     --primary-foreground: 0 0% 100%;
     --ring: 172 60% 38%;
     --chart-1: 172 60% 38%;
+    --shadow-color: 172 40% 78%;
   }
   :root[data-theme-color="emerald"] {
     --primary: 158 55% 40%;
     --primary-foreground: 0 0% 100%;
     --ring: 158 55% 40%;
     --chart-1: 158 55% 40%;
+    --shadow-color: 158 35% 78%;
   }
   :root[data-theme-color="slate"] {
     --primary: 220 14% 40%;
     --primary-foreground: 0 0% 100%;
     --ring: 220 14% 40%;
     --chart-1: 220 14% 40%;
+    --shadow-color: 220 10% 78%;
   }
 
   .dark {
-    /* Dark mode — steel blue default */
-    --background: 222 14% 7%;
+    /* Dark mode — warm indigo tones (Impressionist night atmosphere) */
+    --background: 230 12% 8%;
     --foreground: 213 31% 91%;
 
-    --card: 222 14% 10%;
+    --card: 232 11% 11%;
     --card-foreground: 213 31% 91%;
 
-    --popover: 222 14% 10%;
+    --popover: 232 11% 11%;
     --popover-foreground: 213 31% 91%;
 
     --primary: 215 45% 65%;
-    --primary-foreground: 222 14% 7%;
+    --primary-foreground: 230 12% 8%;
 
-    --secondary: 222 14% 15%;
+    --secondary: 230 10% 15%;
     --secondary-foreground: 213 31% 91%;
 
-    --muted: 222 14% 15%;
+    --muted: 230 10% 15%;
     --muted-foreground: 215 16% 55%;
 
-    --accent: 222 14% 15%;
+    --accent: 230 10% 15%;
     --accent-foreground: 215 20% 70%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 14% 17%;
-    --input: 222 14% 15%;
+    --border: 230 10% 18%;
+    --input: 230 10% 15%;
     --ring: 215 45% 65%;
 
     --chart-1: 215 45% 65%;
@@ -127,8 +140,14 @@
     --chart-4: 38 92% 58%;
     --chart-5: 0 72% 58%;
 
-    --pnl-up: 172 50% 55%;
-    --pnl-down: 347 55% 68%;
+    --pnl-up: 168 55% 55%;
+    --pnl-down: 350 58% 68%;
+
+    /* Impressionist colored shadows — dark mode */
+    --shadow-color: var(--primary);
+    --shadow-ambient: 0 2px 8px -2px hsl(var(--shadow-color) / 0.08);
+    --shadow-elevated: 0 8px 24px -4px hsl(var(--shadow-color) / 0.1), 0 2px 8px -2px hsl(var(--shadow-color) / 0.06);
+    --shadow-glow: 0 0 24px -4px hsl(var(--primary) / 0.2);
   }
 
   .dark[data-theme-color="indigo"] {
@@ -136,42 +155,49 @@
     --primary-foreground: 235 60% 10%;
     --ring: 235 50% 70%;
     --chart-1: 235 50% 70%;
+    --shadow-color: 235 50% 70%;
   }
   .dark[data-theme-color="violet"] {
     --primary: 262 45% 72%;
     --primary-foreground: 262 55% 10%;
     --ring: 262 45% 72%;
     --chart-1: 262 45% 72%;
+    --shadow-color: 262 45% 72%;
   }
   .dark[data-theme-color="rose"] {
     --primary: 347 55% 68%;
     --primary-foreground: 347 65% 10%;
     --ring: 347 55% 68%;
     --chart-1: 347 55% 68%;
+    --shadow-color: 347 55% 68%;
   }
   .dark[data-theme-color="amber"] {
     --primary: 35 82% 58%;
     --primary-foreground: 35 92% 8%;
     --ring: 35 82% 58%;
     --chart-1: 35 82% 58%;
+    --shadow-color: 35 82% 58%;
   }
   .dark[data-theme-color="teal"] {
     --primary: 172 50% 55%;
     --primary-foreground: 172 60% 7%;
     --ring: 172 50% 55%;
     --chart-1: 172 50% 55%;
+    --shadow-color: 172 50% 55%;
   }
   .dark[data-theme-color="emerald"] {
     --primary: 158 45% 55%;
     --primary-foreground: 158 55% 7%;
     --ring: 158 45% 55%;
     --chart-1: 158 45% 55%;
+    --shadow-color: 158 45% 55%;
   }
   .dark[data-theme-color="slate"] {
     --primary: 215 20% 65%;
     --primary-foreground: 222 14% 7%;
     --ring: 215 20% 65%;
     --chart-1: 215 20% 65%;
+    --shadow-color: 215 20% 65%;
   }
 }
 
@@ -181,8 +207,58 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.03) 0%, transparent 70%),
+      hsl(var(--background));
+  }
+
+  .dark body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.05) 0%, transparent 70%),
+      hsl(var(--background));
+  }
+
+  /* Impressionist canvas grain texture — breathing animation */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    mix-blend-mode: overlay;
+    animation: light-breathe 20s ease-in-out infinite;
+  }
+
+  .dark body::before {
+    opacity: 0.03;
+  }
+
+  @keyframes light-breathe {
+    0%, 100% { opacity: 0.025; }
+    50% { opacity: 0.045; }
+  }
+
+  /* Impressionist shimmer utility — opt-in for decorative containers */
+  .shimmer-accent {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0) 0%,
+      hsl(var(--primary) / 0.06) 50%,
+      hsl(var(--primary) / 0) 100%
+    );
+    background-size: 200% 200%;
+    animation: shimmer 8s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
   /* Custom scrollbar */

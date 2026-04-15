@@ -82,14 +82,14 @@ export const formLabel = "text-xs font-semibold uppercase tracking-wider text-mu
 // Layout tokens
 // ---------------------------------------------------------------------------
 
-/** Card container border (lists, cards). */
-export const cardBorder = "border border-border/50"
+/** Card container border (lists, cards) — softened with colored ambient shadow. */
+export const cardBorder = "border border-border/30 shadow-ambient"
 
-/** Divider inside a card section. */
-export const divider = "border-t border-border/30"
+/** Divider inside a card section — dissolved Impressionist edge. */
+export const divider = "border-t border-border/20"
 
-/** Divider between card header and body. */
-export const headerDivider = "border-b border-border/40"
+/** Divider between card header and body — dissolved Impressionist edge. */
+export const headerDivider = "border-b border-border/25"
 
 /** List item container — inline row with swipe support. */
 export const listItem = "p-3 bg-card hover:bg-card/80 transition-colors cursor-pointer group"

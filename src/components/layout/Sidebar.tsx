@@ -13,7 +13,7 @@ export function Sidebar() {
     ]
 
     return (
-        <div className="hidden md:flex h-full w-60 flex-col border-r bg-card">
+        <div className="hidden md:flex h-full w-60 flex-col border-r border-border/30 bg-gradient-to-b from-card via-card to-card/95">
             {/* Logo */}
             <div className="flex h-16 items-center border-b px-5 gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -35,9 +35,9 @@ export function Sidebar() {
                         <Link
                             key={link.name}
                             to={link.href}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-250 ${
                                 isActive
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-primary/10 text-primary shadow-[inset_0_0_12px_hsl(var(--primary)/0.08)]"
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                             }`}
                         >
