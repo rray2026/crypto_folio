@@ -134,7 +134,7 @@ export default function Positions() {
     )
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto">
+        <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
             <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Positions</h1>

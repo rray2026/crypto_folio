@@ -108,7 +108,7 @@ export default function TransactionDetails() {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
+        <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">

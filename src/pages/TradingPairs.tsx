@@ -409,7 +409,7 @@ export default function TradingPairs() {
     const dialogConfig = dialogPair ? pairConfigs.find(p => p.pair === dialogPair) : null
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+        <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
             {/* Desktop header */}
             <div className="hidden md:flex items-center justify-between">
                 <div className="flex items-center gap-3">
