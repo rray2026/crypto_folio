@@ -22,15 +22,12 @@ export function MobileNav() {
                     <Link
                         key={link.name}
                         to={link.href}
-                        className={`flex h-full flex-1 flex-col items-center justify-center gap-1 transition-colors relative ${
+                        className={`flex h-full flex-1 flex-col items-center justify-center gap-1 transition-colors ${
                             isActive
                                 ? "text-primary"
                                 : "text-muted-foreground hover:text-foreground"
                         }`}
                     >
-                        {isActive && (
-                            <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-primary" />
-                        )}
                         <Icon className="h-5 w-5" />
                         <span className="text-[10px] font-medium leading-none">{link.name}</span>
                     </Link>
