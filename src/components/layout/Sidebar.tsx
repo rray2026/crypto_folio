@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, ReceiptText, LineChart, Settings, Layers, TrendingUp } from "lucide-react"
+import { LayoutDashboard, LineChart, Layers, User, TrendingUp } from "lucide-react"
 
 export function Sidebar() {
     const location = useLocation()
@@ -8,8 +8,7 @@ export function Sidebar() {
         { name: "Dashboard", href: "/", icon: LayoutDashboard },
         { name: "Funds", href: "/funds", icon: Layers },
         { name: "Positions", href: "/positions", icon: LineChart },
-        { name: "Transactions", href: "/transactions", icon: ReceiptText },
-        { name: "Settings", href: "/settings", icon: Settings },
+        { name: "Profile", href: "/profile", icon: User },
     ]
 
     return (
