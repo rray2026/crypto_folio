@@ -33,7 +33,7 @@
     --input: 35 18% 88%;
     --ring: 220 55% 48%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
     --chart-1: 220 55% 48%;
     --chart-2: 221 83% 53%;
@@ -44,11 +44,14 @@
     --pnl-up: 168 66% 38%;
     --pnl-down: 350 70% 54%;
 
-    /* Impressionist colored shadows */
+    /* Impressionist colored shadows — bold */
     --shadow-color: 220 40% 80%;
-    --shadow-ambient: 0 2px 8px -2px hsl(var(--shadow-color) / 0.15);
-    --shadow-elevated: 0 8px 24px -4px hsl(var(--shadow-color) / 0.12), 0 2px 8px -2px hsl(var(--shadow-color) / 0.08);
-    --shadow-glow: 0 0 20px -4px hsl(var(--primary) / 0.15);
+    --shadow-ambient: 0 2px 12px -2px hsl(var(--shadow-color) / 0.22);
+    --shadow-elevated: 0 12px 32px -4px hsl(var(--shadow-color) / 0.2), 0 4px 12px -2px hsl(var(--shadow-color) / 0.12);
+    --shadow-glow: 0 0 28px -2px hsl(var(--primary) / 0.25);
+
+    /* Impressionist warm card gradient */
+    --card-gradient: linear-gradient(145deg, hsl(40 25% 99.5%) 0%, hsl(35 15% 98%) 100%);
   }
 
   /* ---- Theme color overrides ---- */
@@ -143,11 +146,14 @@
     --pnl-up: 168 55% 55%;
     --pnl-down: 350 58% 68%;
 
-    /* Impressionist colored shadows — dark mode */
+    /* Impressionist colored shadows — dark mode, bold */
     --shadow-color: var(--primary);
-    --shadow-ambient: 0 2px 8px -2px hsl(var(--shadow-color) / 0.08);
-    --shadow-elevated: 0 8px 24px -4px hsl(var(--shadow-color) / 0.1), 0 2px 8px -2px hsl(var(--shadow-color) / 0.06);
-    --shadow-glow: 0 0 24px -4px hsl(var(--primary) / 0.2);
+    --shadow-ambient: 0 2px 12px -2px hsl(var(--shadow-color) / 0.15);
+    --shadow-elevated: 0 12px 32px -4px hsl(var(--shadow-color) / 0.18), 0 4px 12px -2px hsl(var(--shadow-color) / 0.1);
+    --shadow-glow: 0 0 32px -2px hsl(var(--primary) / 0.3);
+
+    /* Impressionist dark card gradient */
+    --card-gradient: linear-gradient(145deg, hsl(232 12% 12%) 0%, hsl(228 10% 10%) 100%);
   }
 
   .dark[data-theme-color="indigo"] {
@@ -209,56 +215,106 @@
   body {
     @apply text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Dappled light — multiple radial gradients simulate sunlight through foliage */
     background:
-      radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.03) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 40% at 30% 5%, hsl(var(--primary) / 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 35% at 75% 10%, hsl(38 80% 65% / 0.05) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 50% at 50% 80%, hsl(var(--primary) / 0.03) 0%, transparent 70%),
       hsl(var(--background));
   }
 
   .dark body {
     background:
-      radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.05) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 40% at 30% 5%, hsl(var(--primary) / 0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 35% at 75% 10%, hsl(262 50% 60% / 0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 50% at 50% 80%, hsl(var(--primary) / 0.05) 0%, transparent 70%),
       hsl(var(--background));
   }
 
-  /* Impressionist canvas grain texture — breathing animation */
+  /* Impressionist canvas grain texture — bold, breathing */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    opacity: 0.025;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-repeat: repeat;
-    background-size: 256px 256px;
+    background-size: 200px 200px;
     mix-blend-mode: overlay;
-    animation: light-breathe 20s ease-in-out infinite;
+    animation: light-breathe 15s ease-in-out infinite;
   }
 
   .dark body::before {
-    opacity: 0.03;
+    opacity: 0.055;
   }
 
   @keyframes light-breathe {
-    0%, 100% { opacity: 0.025; }
-    50% { opacity: 0.045; }
+    0%, 100% { opacity: 0.045; }
+    50% { opacity: 0.07; }
   }
 
-  /* Impressionist shimmer utility — opt-in for decorative containers */
+  /* Dappled light play — slow-moving warm light spots */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle 300px at 20% 30%, hsl(38 70% 70% / 0.04) 0%, transparent 100%),
+      radial-gradient(circle 250px at 80% 20%, hsl(var(--primary) / 0.04) 0%, transparent 100%);
+    animation: dappled-light 25s ease-in-out infinite alternate;
+  }
+
+  .dark body::after {
+    background:
+      radial-gradient(circle 300px at 20% 30%, hsl(var(--primary) / 0.06) 0%, transparent 100%),
+      radial-gradient(circle 250px at 80% 20%, hsl(262 50% 65% / 0.05) 0%, transparent 100%);
+  }
+
+  @keyframes dappled-light {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(3%, 2%) scale(1.05); }
+    66% { transform: translate(-2%, 1%) scale(0.97); }
+    100% { transform: translate(1%, -1%) scale(1.02); }
+  }
+
+  /* Impressionist shimmer — for decorative containers */
   .shimmer-accent {
     background: linear-gradient(
       135deg,
       hsl(var(--primary) / 0) 0%,
-      hsl(var(--primary) / 0.06) 50%,
+      hsl(var(--primary) / 0.1) 50%,
       hsl(var(--primary) / 0) 100%
     );
     background-size: 200% 200%;
-    animation: shimmer 8s ease-in-out infinite;
+    animation: shimmer 6s ease-in-out infinite;
   }
 
   @keyframes shimmer {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
+  }
+
+  /* Impressionist warm card surface */
+  .impressionist-card {
+    background: var(--card-gradient);
+  }
+
+  /* PnL text glow — hero numbers emit light */
+  .pnl-glow-up {
+    text-shadow: 0 0 16px hsl(168 66% 38% / 0.35);
+  }
+  .pnl-glow-down {
+    text-shadow: 0 0 16px hsl(350 70% 54% / 0.3);
+  }
+  .dark .pnl-glow-up {
+    text-shadow: 0 0 20px hsl(168 55% 55% / 0.45);
+  }
+  .dark .pnl-glow-down {
+    text-shadow: 0 0 20px hsl(350 58% 68% / 0.4);
   }
 
   /* Custom scrollbar */

@@ -10,17 +10,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 // Usage: <span className={badge({ color: "buy" })}>{tx.type}</span>
 
 export const badge = cva(
-    "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider border",
+    "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider border backdrop-blur-sm",
     {
         variants: {
             color: {
-                buy:    "bg-pnl-up/10 text-pnl-up border-pnl-up/20",
-                sell:   "bg-pnl-down/10 text-pnl-down border-pnl-down/20",
-                long:   "bg-pnl-up/10 text-pnl-up border-pnl-up/20",
-                short:  "bg-pnl-down/10 text-pnl-down border-pnl-down/20",
-                open:   "bg-primary/10 text-primary border-primary/20",
-                closed: "text-muted-foreground border-border",
-                fund:   "bg-primary/10 text-primary border-primary/20",
+                buy:    "bg-pnl-up/12 text-pnl-up border-pnl-up/25 shadow-[0_0_6px_hsl(168_66%_38%/0.1)]",
+                sell:   "bg-pnl-down/12 text-pnl-down border-pnl-down/25 shadow-[0_0_6px_hsl(350_70%_54%/0.1)]",
+                long:   "bg-pnl-up/12 text-pnl-up border-pnl-up/25 shadow-[0_0_6px_hsl(168_66%_38%/0.1)]",
+                short:  "bg-pnl-down/12 text-pnl-down border-pnl-down/25 shadow-[0_0_6px_hsl(350_70%_54%/0.1)]",
+                open:   "bg-primary/12 text-primary border-primary/25 shadow-[0_0_6px_hsl(var(--primary)/0.1)]",
+                closed: "text-muted-foreground border-border/50",
+                fund:   "bg-primary/12 text-primary border-primary/25 shadow-[0_0_6px_hsl(var(--primary)/0.1)]",
             },
         },
     }
@@ -82,22 +82,22 @@ export const formLabel = "text-xs font-semibold uppercase tracking-wider text-mu
 // Layout tokens
 // ---------------------------------------------------------------------------
 
-/** Card container border (lists, cards) — softened with colored ambient shadow. */
-export const cardBorder = "border border-border/30 shadow-ambient"
+/** Card container border — bold Impressionist: minimal border + rich colored shadow. */
+export const cardBorder = "border border-border/20 shadow-ambient"
 
-/** Divider inside a card section — dissolved Impressionist edge. */
-export const divider = "border-t border-border/20"
+/** Divider inside a card section — nearly dissolved. */
+export const divider = "border-t border-border/15"
 
-/** Divider between card header and body — dissolved Impressionist edge. */
-export const headerDivider = "border-b border-border/25"
+/** Divider between card header and body — nearly dissolved. */
+export const headerDivider = "border-b border-border/15"
 
-/** List item container — inline row with swipe support. */
-export const listItem = "p-3 bg-card hover:bg-card/80 transition-colors cursor-pointer group"
+/** List item container — warm Impressionist surface. */
+export const listItem = "p-3 impressionist-card hover:bg-card/80 transition-all duration-300 ease-out cursor-pointer group"
 
-/** Dialog list item — selectable with ring highlight. */
+/** Dialog list item — selectable with glow highlight. */
 export const dialogItem = (selected: boolean) =>
-    `w-full p-3 rounded-lg border transition-colors text-left ${
+    `w-full p-3 rounded-xl border transition-all duration-300 ease-out text-left ${
         selected
-            ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20"
-            : "border-border/50 hover:bg-muted/30"
+            ? "bg-primary/8 border-primary/25 ring-1 ring-primary/20 shadow-[0_0_16px_hsl(var(--primary)/0.1)]"
+            : "border-border/30 hover:bg-primary/5 hover:shadow-ambient"
     }`

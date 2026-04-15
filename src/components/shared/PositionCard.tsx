@@ -19,17 +19,17 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
     return (
         <Link to={`/positions/${position.id}`} className="block group">
             <div
-                className={`h-full flex flex-col relative overflow-hidden rounded-xl ${cardBorder} transition-all duration-300 ease-out
-                    bg-card hover:bg-card
-                    hover:border-border hover:shadow-elevated
-                    hover:-translate-y-0.5
+                className={`h-full flex flex-col relative overflow-hidden rounded-2xl ${cardBorder} transition-all duration-300 ease-out
+                    impressionist-card
+                    hover:shadow-elevated hover:shadow-glow
+                    hover:-translate-y-1 hover:scale-[1.01]
                 `}
             >
-                {/* Accent bar — gradient fade for Impressionist soft edges */}
-                <div className={`h-0.5 w-full bg-gradient-to-r from-transparent ${
+                {/* Accent bar — bold Impressionist brushstroke */}
+                <div className={`h-1 w-full bg-gradient-to-r from-transparent ${
                     isActive
                         ? (metrics.unrealizedPnL > 0 ? 'via-pnl-up' : metrics.unrealizedPnL < 0 ? 'via-pnl-down' : 'via-muted-foreground/30')
-                        : (metrics.realizedPnL > 0 ? 'via-pnl-up/60' : metrics.realizedPnL < 0 ? 'via-pnl-down/60' : 'via-border')
+                        : (metrics.realizedPnL > 0 ? 'via-pnl-up/70' : metrics.realizedPnL < 0 ? 'via-pnl-down/70' : 'via-border')
                 } to-transparent`} />
 
                 {/* Header */}
@@ -109,13 +109,13 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                             <div className={`flex justify-between items-end pt-2.5 ${divider}`}>
                                 <div>
                                     <p className={`${label} mb-1.5`}>Unrealized PnL</p>
-                                    <p className={`${valueHero} ${pnlColor(metrics.unrealizedPnL)}`}>
+                                    <p className={`${valueHero} ${pnlColor(metrics.unrealizedPnL)} ${metrics.unrealizedPnL > 0 ? 'pnl-glow-up' : metrics.unrealizedPnL < 0 ? 'pnl-glow-down' : ''}`}>
                                         {currencySymbol}{metrics.unrealizedPnL > 0 ? '+' : ''}{metrics.unrealizedPnL.toFixed(2)}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className={`${label} mb-1.5`}>ROI</p>
-                                    <p className={`${valueHero} ${pnlColor(metrics.roi)}`}>
+                                    <p className={`${valueHero} ${pnlColor(metrics.roi)} ${metrics.roi > 0 ? 'pnl-glow-up' : metrics.roi < 0 ? 'pnl-glow-down' : ''}`}>
                                         {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
                                     </p>
                                 </div>
@@ -141,13 +141,13 @@ export function PositionCard({ position, metrics, isActive, duration, fundName, 
                             <div className={`flex justify-between items-end pt-2.5 ${divider}`}>
                                 <div>
                                     <p className={`${label} mb-1.5`}>Realized PnL</p>
-                                    <p className={`${valueHero} ${pnlColor(metrics.realizedPnL)}`}>
+                                    <p className={`${valueHero} ${pnlColor(metrics.realizedPnL)} ${metrics.realizedPnL > 0 ? 'pnl-glow-up' : metrics.realizedPnL < 0 ? 'pnl-glow-down' : ''}`}>
                                         {currencySymbol}{metrics.realizedPnL > 0 ? '+' : ''}{metrics.realizedPnL.toFixed(2)}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className={`${label} mb-1.5`}>ROI</p>
-                                    <p className={`${valueHero} ${pnlColor(metrics.roi)}`}>
+                                    <p className={`${valueHero} ${pnlColor(metrics.roi)} ${metrics.roi > 0 ? 'pnl-glow-up' : metrics.roi < 0 ? 'pnl-glow-down' : ''}`}>
                                         {metrics.roi > 0 ? '+' : ''}{metrics.roi.toFixed(2)}%
                                     </p>
                                 </div>

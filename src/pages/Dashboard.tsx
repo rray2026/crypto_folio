@@ -84,11 +84,11 @@ export default function Dashboard() {
                             return (
                                 <button
                                     key={pair}
-                                    className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-200 group cursor-pointer text-left"
+                                    className="w-full flex items-center justify-between p-4 rounded-2xl impressionist-card border border-border/30 hover:border-primary/30 hover:shadow-elevated hover:shadow-glow hover:-translate-y-0.5 hover:scale-[1.01] transition-all duration-300 ease-out group cursor-pointer text-left"
                                     onClick={() => navigate(`/assets/${pair.replace('/', '_')}`)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                        <div className="h-8 w-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 shadow-[0_0_12px_hsl(var(--primary)/0.15)]">
                                             <span className="text-[10px] font-bold text-primary">
                                                 {pair.split('/')[0].slice(0, 3)}
                                             </span>
@@ -110,8 +110,8 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                            <TrendingUp className="h-7 w-7 text-primary/60" />
+                        <div className="h-14 w-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4 shadow-glow shimmer-accent">
+                            <TrendingUp className="h-7 w-7 text-primary/70 drop-shadow-[0_0_6px_hsl(var(--primary)/0.3)]" />
                         </div>
                         <h3 className="text-base font-semibold mb-1">Welcome to Folio</h3>
                         <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
@@ -121,7 +121,7 @@ export default function Dashboard() {
                         <div className="flex flex-col gap-2.5 w-full max-w-sm">
                             <button
                                 onClick={() => navigate('/settings/trading-pairs')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <Settings className="h-4 w-4 text-primary" />
@@ -134,7 +134,7 @@ export default function Dashboard() {
 
                             <button
                                 onClick={() => navigate('/transactions')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <ReceiptText className="h-4 w-4 text-primary" />
@@ -147,7 +147,7 @@ export default function Dashboard() {
 
                             <button
                                 onClick={() => navigate('/positions')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <LineChart className="h-4 w-4 text-primary" />
@@ -160,7 +160,7 @@ export default function Dashboard() {
 
                             <button
                                 onClick={() => navigate('/funds')}
-                                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                                className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out group text-left"
                             >
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                                     <Layers className="h-4 w-4 text-primary" />
