@@ -154,7 +154,7 @@ export default function Glossary() {
     ]
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-8 pb-20">
+        <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto flex flex-col gap-8 pb-20">
             {/* Header (desktop only — mobile uses MobileHeader) */}
             <div className="hidden md:flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">

@@ -347,7 +347,7 @@ export default function TradingSimulator() {
     const deltaRoi = hasAnyChange ? sub(simMetrics.roi, currentMetrics.roi) : 0
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto space-y-4 min-h-full">
+        <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto flex flex-col gap-4 min-h-full">
             {/* Desktop header */}
             <div className="hidden md:flex items-center justify-between">
                 <div className="flex items-center gap-3">

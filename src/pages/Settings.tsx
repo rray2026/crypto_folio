@@ -115,7 +115,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
+        <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto flex flex-col gap-6 md:gap-8">
             <div className="hidden md:flex items-center gap-3">
                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
                     <ArrowLeft className="h-4 w-4" />
