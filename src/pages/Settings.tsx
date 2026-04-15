@@ -7,6 +7,8 @@ import { THEME_COLORS } from "@/lib/themeColors"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { label } from "@/lib/styles"
 import {
     Select,
     SelectContent,
@@ -22,7 +24,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, XCircle, Check } from "lucide-react"
+import { Palette, BookOpen, Download, Upload, Database, AlertTriangle, ArrowLeft, XCircle, Check, ChevronRight } from "lucide-react"
 
 import { exportData, importData } from "@/lib/backup"
 import { DB_VERSION } from "@/lib/db"
@@ -124,139 +126,134 @@ export default function Settings() {
                 </div>
             </div>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <Palette className="h-5 w-5 text-muted-foreground" />
-                            Appearance
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Customize the visual theme of the application.
-                        </p>
+            <Card className="overflow-hidden border-border/50 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Palette className="h-5 w-5 text-muted-foreground" />
+                        <h2 className="text-base font-semibold">Appearance</h2>
                     </div>
-                </div>
 
-                <div className="space-y-5">
-                    <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Mode</p>
-                        <div className="max-w-[200px]">
-                            <Select value={theme} onValueChange={(val: Theme) => setTheme(val)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Theme" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="light">Light</SelectItem>
-                                    <SelectItem value="dark">Dark</SelectItem>
-                                    <SelectItem value="system">System</SelectItem>
-                                </SelectContent>
-                            </Select>
+                    <div className="space-y-5">
+                        <div>
+                            <p className={`${label} mb-2`}>Mode</p>
+                            <div className="max-w-[200px]">
+                                <Select value={theme} onValueChange={(val: Theme) => setTheme(val)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Theme" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="light">Light</SelectItem>
+                                        <SelectItem value="dark">Dark</SelectItem>
+                                        <SelectItem value="system">System</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-3">Accent Color</p>
-                        <div className="flex flex-wrap gap-3">
-                            {THEME_COLORS.map(color => (
-                                <button
-                                    key={color.id}
-                                    onClick={() => setThemeColor(color.id)}
-                                    className="group flex flex-col items-center gap-1.5"
-                                    title={color.name}
-                                >
-                                    <div
-                                        className={`relative w-9 h-9 rounded-full transition-all ${
-                                            themeColor === color.id
-                                                ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110"
-                                                : "hover:scale-105 opacity-80 hover:opacity-100"
-                                        }`}
-                                        style={{ backgroundColor: color.swatch }}
+                        <div>
+                            <p className={`${label} mb-3`}>Accent Color</p>
+                            <div className="flex flex-wrap gap-3">
+                                {THEME_COLORS.map(color => (
+                                    <button
+                                        key={color.id}
+                                        onClick={() => setThemeColor(color.id)}
+                                        className="group flex flex-col items-center gap-1.5"
+                                        title={color.name}
                                     >
-                                        {themeColor === color.id && (
-                                            <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-sm" />
-                                        )}
-                                    </div>
-                                    <span className={`text-[10px] transition-colors ${
-                                        themeColor === color.id ? "text-foreground font-medium" : "text-muted-foreground/60"
-                                    }`}>
-                                        {color.name}
-                                    </span>
-                                </button>
-                            ))}
+                                        <div
+                                            className={`relative w-9 h-9 rounded-full transition-all ${
+                                                themeColor === color.id
+                                                    ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110"
+                                                    : "hover:scale-105 opacity-80 hover:opacity-100"
+                                            }`}
+                                            style={{ backgroundColor: color.swatch }}
+                                        >
+                                            {themeColor === color.id && (
+                                                <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-sm" />
+                                            )}
+                                        </div>
+                                        <span className={`text-[10px] transition-colors ${
+                                            themeColor === color.id ? "text-foreground font-medium" : "text-muted-foreground/60"
+                                        }`}>
+                                            {color.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <Database className="h-5 w-5 text-muted-foreground" />
-                            Data Backup & Restore
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Export your entire portfolio locally for safekeeping, or migrate it between devices.
-                        </p>
+            <Card className="overflow-hidden border-border/50 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Database className="h-5 w-5 text-muted-foreground" />
+                        <h2 className="text-base font-semibold">Data Backup & Restore</h2>
                     </div>
-                </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                        Export your portfolio locally, or migrate between devices.
+                    </p>
 
-                <div className="flex items-center gap-4 mt-6">
-                    <Button onClick={handleExport} disabled={isProcessingBackup} variant="outline" className="gap-2">
-                        <Download className="h-4 w-4" />
-                        Export Backup
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button onClick={handleExport} disabled={isProcessingBackup} variant="outline" className="gap-2">
+                            <Download className="h-4 w-4" />
+                            Export
+                        </Button>
 
-                    <input
-                        type="file"
-                        accept=".json"
-                        ref={fileInputRef}
-                        onChange={handleFileSelect}
-                        className="hidden"
-                    />
+                        <input
+                            type="file"
+                            accept=".json"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            className="hidden"
+                        />
 
-                    <Button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isProcessingBackup}
-                        variant="secondary"
-                        className="gap-2"
-                    >
-                        <Upload className="h-4 w-4" />
-                        Import Data
-                    </Button>
-                </div>
-            </div>
-
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8">
-                <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
-                    <Database className="h-5 w-5 text-muted-foreground" />
-                    Data Integrity & Upgrade
-                </h2>
-
-                <div className="grid grid-cols-4 gap-3">
-                    <div className="bg-muted/40 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Transactions</p>
-                        <p className="text-2xl font-bold font-mono">{txCount ?? '—'}</p>
+                        <Button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isProcessingBackup}
+                            variant="secondary"
+                            className="gap-2"
+                        >
+                            <Upload className="h-4 w-4" />
+                            Import
+                        </Button>
                     </div>
-                    <div className="bg-muted/40 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Positions</p>
-                        <p className="text-2xl font-bold font-mono">{posCount ?? '—'}</p>
-                    </div>
-                    <div className="bg-muted/40 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Funds</p>
-                        <p className="text-2xl font-bold font-mono">{fundCount ?? '—'}</p>
-                    </div>
-                    <div className="bg-muted/40 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground mb-1">Schema</p>
-                        <p className="text-2xl font-bold font-mono">v{DB_VERSION}</p>
-                    </div>
-                </div>
+                </CardContent>
+            </Card>
 
-                <div className="flex items-center gap-2 mt-4">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
-                </div>
-            </div>
+            <Card className="overflow-hidden border-border/50 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Database className="h-5 w-5 text-muted-foreground" />
+                        <h2 className="text-base font-semibold">Data Integrity</h2>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-4">
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Transactions</span>
+                            <span className="text-xl sm:text-2xl font-bold font-mono">{txCount ?? '—'}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Positions</span>
+                            <span className="text-xl sm:text-2xl font-bold font-mono">{posCount ?? '—'}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Funds</span>
+                            <span className="text-xl sm:text-2xl font-bold font-mono">{fundCount ?? '—'}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`${label} sm:text-xs mb-1`}>Schema</span>
+                            <span className="text-xl sm:text-2xl font-bold font-mono">v{DB_VERSION}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/30">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <p className="text-xs text-muted-foreground">Schema is up to date. Migrations run automatically on startup.</p>
+                    </div>
+                </CardContent>
+            </Card>
 
             <Dialog open={isImportConfirmOpen} onOpenChange={setIsImportConfirmOpen}>
                 <DialogContent>
@@ -294,22 +291,21 @@ export default function Settings() {
                 </DialogContent>
             </Dialog>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm mt-8 group hover:border-border transition-all">
-                <Link to="/glossary" className="flex items-center justify-between group">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                            Investment Glossary
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Common terminology and formulas used throughout this application.
-                        </p>
+            <Link
+                to="/glossary"
+                className="flex items-center justify-between p-4 sm:p-6 rounded-xl border border-border/50 bg-card hover:bg-card/80 transition-colors group shadow-sm"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <BookOpen className="h-4.5 w-4.5 text-primary" />
                     </div>
-                    <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform">
-                        <ArrowLeft className="h-5 w-5 rotate-180" />
-                    </Button>
-                </Link>
-            </div>
+                    <div>
+                        <p className="text-sm font-semibold">Investment Glossary</p>
+                        <p className="text-xs text-muted-foreground">Terminology and formulas used in the app.</p>
+                    </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+            </Link>
 
             <div className="pt-8 pb-4 text-center">
                 <p
