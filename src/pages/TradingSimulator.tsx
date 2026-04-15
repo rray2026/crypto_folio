@@ -2,9 +2,14 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { ArrowLeft, RotateCcw, PlusCircle, X } from "lucide-react"
+import { ArrowLeft, RotateCcw, PlusCircle, X, Sparkles, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+    Dialog, DialogContent, DialogDescription,
+    DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { getPositionMetrics } from "@/lib/metrics"
@@ -150,6 +155,10 @@ export default function TradingSimulator() {
 
     // Pending committed sim trades (in-memory only)
     const [pendingTrades, setPendingTrades] = useState<SimTrade[]>([])
+
+    // Ask AI dialog
+    const [askAiOpen, setAskAiOpen] = useState(false)
+    const [aiQuestion, setAiQuestion] = useState("")
 
     useEffect(() => {
         if (position?.status === "OPEN") fetchPrices([position.symbol])
@@ -315,13 +324,22 @@ export default function TradingSimulator() {
                 </button>
             ),
             rightActions: (
-                <button
-                    onClick={resetSim}
-                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
-                    aria-label="Reset"
-                >
-                    <RotateCcw className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setAskAiOpen(true)}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Ask AI"
+                    >
+                        <Sparkles className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={resetSim}
+                        className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                        aria-label="Reset"
+                    >
+                        <RotateCcw className="h-4 w-4" />
+                    </button>
+                </div>
             ),
         })
     }, [setMobileHeader, navigate, id, resetSim])
@@ -346,6 +364,37 @@ export default function TradingSimulator() {
     const deltaUnrealizedPnL = hasAnyChange ? sub(simMetrics.unrealizedPnL, currentMetrics.unrealizedPnL) : 0
     const deltaRoi = hasAnyChange ? sub(simMetrics.roi, currentMetrics.roi) : 0
 
+    const handleAskAiCopy = () => {
+        if (!aiQuestion.trim()) return
+        const lines: string[] = []
+        lines.push(`Question:\n${aiQuestion.trim()}`)
+        lines.push(`\nPosition: ${position.symbol}`)
+        if (position.strategyName) lines.push(`Strategy: ${position.strategyName}`)
+        lines.push(`Status: ${position.status}`)
+        lines.push(`Current Price: ${currencySymbol}${formatNum(currentMetrics.currentPrice)}`)
+        lines.push(`Avg Buy: ${currencySymbol}${formatNum(currentMetrics.avgBuyPrice)}`)
+        if (currentMetrics.avgSellPrice > 0) lines.push(`Avg Sell: ${currencySymbol}${formatNum(currentMetrics.avgSellPrice)}`)
+        lines.push(`Holding: ${formatNum(currentMetrics.totalRemaining, 0, 8)} ${baseAsset}`)
+        lines.push(`Realized PnL: ${currentMetrics.realizedPnL >= 0 ? "+" : ""}${currencySymbol}${formatNum(currentMetrics.realizedPnL, 2, 2)}`)
+        if (currentMetrics.totalRemaining !== 0) {
+            lines.push(`Unrealized PnL: ${currentMetrics.unrealizedPnL >= 0 ? "+" : ""}${currencySymbol}${formatNum(currentMetrics.unrealizedPnL, 2, 2)}`)
+        }
+        lines.push(`ROI: ${currentMetrics.roi >= 0 ? "+" : ""}${currentMetrics.roi.toFixed(2)}%`)
+        if (currentMetrics.breakevenPrice > 0 && currentMetrics.totalRemaining !== 0) {
+            lines.push(`Breakeven: ${currencySymbol}${formatNum(currentMetrics.breakevenPrice)}`)
+        }
+        if (totalFee > 0) lines.push(`Total Fee: ${currencySymbol}${formatNum(totalFee, 2, 2)}`)
+        if (pendingTrades.length > 0) {
+            lines.push(`\nSimulated Trades:`)
+            pendingTrades.forEach((t, i) => {
+                lines.push(`${i + 1}. ${t.side} ${formatNum(t.qty, 0, 8)} ${baseAsset} @ ${currencySymbol}${formatNum(t.price)} = ${currencySymbol}${formatNum(mul(t.price, t.qty))}`)
+            })
+        }
+        navigator.clipboard.writeText(lines.join("\n"))
+        setAskAiOpen(false)
+        setAiQuestion("")
+    }
+
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto flex flex-col gap-4 min-h-full">
             {/* Desktop header */}
@@ -359,10 +408,16 @@ export default function TradingSimulator() {
                         <p className="text-sm text-muted-foreground font-mono">{position.strategyName || position.symbol}</p>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={resetSim}>
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Reset
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setAskAiOpen(true)}>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Ask AI
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={resetSim}>
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Reset
+                    </Button>
+                </div>
             </div>
 
             {/* Metrics Grid */}
@@ -658,6 +713,34 @@ export default function TradingSimulator() {
                     </div>
                 </div>
             )}
+
+            <Dialog open={askAiOpen} onOpenChange={(open) => { setAskAiOpen(open); if (!open) setAiQuestion("") }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            Ask AI
+                        </DialogTitle>
+                        <DialogDescription>
+                            Enter your question. Position data will be included automatically and copied to clipboard.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        value={aiQuestion}
+                        onChange={e => setAiQuestion(e.target.value)}
+                        placeholder="e.g. How to design a sell strategy to achieve 20% ROI?"
+                        rows={3}
+                        autoFocus
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAskAiOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAskAiCopy} disabled={!aiQuestion.trim()} className="gap-1.5">
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
