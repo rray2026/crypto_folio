@@ -112,7 +112,7 @@ export default function StrategyDetails() {
 
     if (!strategy) {
         return (
-            <div className="p-4 md:p-8 max-w-4xl mx-auto">
+            <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
                 <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
                     {strategy === undefined ? "Loading..." : "Strategy not found."}
                 </div>
@@ -147,7 +147,7 @@ export default function StrategyDetails() {
     const totalUnrealizedPnL = positionMetrics.reduce((sum, p) => sum + p.metrics.unrealizedPnL, 0)
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 min-h-full">
+        <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto flex flex-col gap-6 md:gap-8 min-h-full">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div className="flex items-start gap-2 md:gap-4 flex-col sm:flex-row w-full">
@@ -270,7 +270,7 @@ export default function StrategyDetails() {
                             <div key={pos.id}>
                                 <SwipeActions
                                     actions={[
-                                        { icon: <X className="h-4 w-4" />, bg: "bg-rose-500", onAction: () => unassignPositionFromStrategy(pos.id) },
+                                        { icon: <X className="h-4 w-4" />, bg: "bg-muted-foreground", onAction: () => unassignPositionFromStrategy(pos.id) },
                                     ]}
                                 >
                                     <div

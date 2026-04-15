@@ -212,7 +212,7 @@ export default function Transactions() {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto">
+        <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 md:mb-8 gap-4">
                 <div className="hidden sm:flex items-center gap-3">
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>

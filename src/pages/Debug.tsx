@@ -44,7 +44,7 @@ export default function Debug() {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
+        <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto flex flex-col gap-6 md:gap-8">
             <div className="hidden md:block">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
                     <Bug className="h-7 w-7" />
