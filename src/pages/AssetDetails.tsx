@@ -85,7 +85,7 @@ export default function AssetDetails() {
                         <span className="text-sm md:text-lg text-foreground font-mono font-bold tracking-wider">
                             {Number(currentPrice) > 0 ? `${currencySymbol}${Number(currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : '---'}
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] md:text-xs text-primary font-semibold uppercase tracking-wider bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/20">
+                        <span className="flex items-center gap-1 text-[10px] md:text-xs text-primary font-semibold uppercase tracking-wider bg-primary/12 px-1.5 py-0.5 rounded-lg border border-primary/25 shadow-[0_0_6px_hsl(var(--primary)/0.1)]">
                             <Activity className="h-2.5 w-2.5" />
                             Live
                         </span>
@@ -106,7 +106,7 @@ export default function AssetDetails() {
                 <TabsContent value="positions" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {enrichedPositions.length === 0 ? (
-                            <div className="md:col-span-2 lg:col-span-3 p-6 rounded-xl border border-dashed border-border/50 text-center">
+                            <div className="md:col-span-2 lg:col-span-3 p-6 rounded-2xl border border-dashed border-border/30 text-center">
                                 <p className="text-sm text-muted-foreground">No positions linked to {decodedSymbol} yet.</p>
                             </div>
                         ) : (
@@ -131,7 +131,7 @@ export default function AssetDetails() {
                     <TransactionListHeader showAsset={false} />
                     
                     {transactions?.length === 0 ? (
-                        <div className="p-6 rounded-xl border border-dashed border-border/50 text-center">
+                        <div className="p-6 rounded-2xl border border-dashed border-border/30 text-center">
                             <p className="text-sm text-muted-foreground">No transactions found for {decodedSymbol}</p>
                         </div>
                     ) : (

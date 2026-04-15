@@ -388,11 +388,11 @@ export default function PositionDetails() {
                                 )}
                             </div>
                             <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3 text-xs md:text-sm text-muted-foreground font-mono">
-                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-lg px-1.5 md:px-2 py-1 border border-border/20">
                                     <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                     <span>Opened: {derivedStartDate ? format(new Date(derivedStartDate), "yyyy/MM/dd") : 'Unknown'}</span>
                                 </div>
-                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-lg px-1.5 md:px-2 py-1 border border-border/20">
                                     <Clock className="h-3 w-3 md:h-4 md:w-4" />
                                     <span>Duration: {differenceInDays(derivedEndDate || now, derivedStartDate || now)} days</span>
                                 </div>
@@ -515,7 +515,7 @@ export default function PositionDetails() {
                             </div>
 
                             {position.notes && (
-                                <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-lg border border-border/50 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
+                                <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-xl border border-border/20 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
                                     <span className="font-semibold text-foreground/80 mr-2">Notes:</span>
                                     {position.notes}
                                 </div>
@@ -595,13 +595,13 @@ export default function PositionDetails() {
 
 
 
-                <Card className="overflow-hidden border-border/50 shadow-sm">
+                <Card className="overflow-hidden border-border/20 shadow-ambient rounded-2xl impressionist-card">
                     <CardContent className="p-4 sm:p-6">
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
                             {/* Realized PnL */}
                             <div className="flex flex-col">
                                 <span className={`${label} sm:text-xs mb-1`}>Realized PnL</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(realizedPnL)}`}>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(realizedPnL)} ${realizedPnL > 0 ? 'pnl-glow-up' : realizedPnL < 0 ? 'pnl-glow-down' : ''}`}>
                                     {currencySymbol}{realizedPnL > 0 ? '+' : ''}{realizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
@@ -641,7 +641,7 @@ export default function PositionDetails() {
                             {/* ROI */}
                             <div className="flex flex-col">
                                 <span className={`${label} sm:text-xs mb-1`}>ROI</span>
-                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(roi)}`}>
+                                <span className={`text-base sm:text-xl font-bold font-mono ${pnlColor(roi)} ${roi > 0 ? 'pnl-glow-up' : roi < 0 ? 'pnl-glow-down' : ''}`}>
                                     {roi > 0 ? '+' : ''}{roi.toFixed(2)}%
                                 </span>
                             </div>
@@ -682,7 +682,7 @@ export default function PositionDetails() {
                                     ]}
                                 >
                                     <div
-                                        className="flex items-center justify-between p-3 border border-border/50 bg-card hover:bg-card/80 transition-colors group cursor-pointer"
+                                        className="flex items-center justify-between p-3 border border-border/20 bg-card impressionist-card hover:bg-card/80 transition-all duration-300 ease-out group cursor-pointer"
                                         onClick={() => navigate(`/transactions/${tx.id}`)}
                                     >
                                         <div className="flex gap-3 md:gap-4 items-center min-w-0">
@@ -753,7 +753,7 @@ export default function PositionDetails() {
                                 setLinkTimeFilter('ALL')
                                 setIsLinkDialogOpen(true)
                             }}
-                            className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-muted/30 transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/40 rounded-2xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out"
                         >
                             <Plus className="h-4 w-4" />
                             {linkedTxs.length === 0 ? 'Link Trades' : 'Link More'}

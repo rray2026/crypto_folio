@@ -55,7 +55,7 @@ export default function Debug() {
                 </p>
             </div>
 
-            <div className="bg-card p-6 rounded-xl border shadow-sm">
+            <div className="bg-card p-6 rounded-2xl border border-border/20 shadow-ambient impressionist-card">
                 <h2 className="text-xl font-semibold flex items-center gap-2 mb-2">
                     <Database className="h-5 w-5 text-muted-foreground" />
                     Current Data
@@ -80,7 +80,7 @@ export default function Debug() {
                 </div>
             </div>
 
-            <div className="bg-card p-6 rounded-xl border border-destructive/20 shadow-sm">
+            <div className="bg-card p-6 rounded-2xl border border-destructive/20 shadow-ambient">
                 <h2 className="text-xl font-semibold flex items-center gap-2 mb-2">
                     <Trash2 className="h-5 w-5 text-destructive" />
                     Factory Reset

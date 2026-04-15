@@ -21,9 +21,9 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
 
     return (
         <Link to={`/funds/${fund.id}`} className="block group">
-            <div className={`h-full flex flex-col relative overflow-hidden rounded-xl ${cardBorder} transition-all duration-200 bg-card hover:border-border hover:shadow-lg hover:-translate-y-0.5`}>
-                {/* Accent bar */}
-                <div className={`h-px w-full ${navUp ? 'bg-pnl-up' : 'bg-pnl-down'}`} />
+            <div className={`h-full flex flex-col relative overflow-hidden rounded-2xl ${cardBorder} transition-all duration-300 ease-out impressionist-card hover:shadow-elevated hover:shadow-glow hover:-translate-y-1 hover:scale-[1.01]`}>
+                {/* Accent bar — bold Impressionist brushstroke */}
+                <div className={`h-1 w-full bg-gradient-to-r from-transparent ${navUp ? 'via-pnl-up' : 'via-pnl-down'} to-transparent`} />
 
                 <div className={`px-4 pt-3 pb-3 ${headerDivider}`}>
                     <div className="flex justify-between items-start gap-2 mb-2">
@@ -69,7 +69,7 @@ export function FundCard({ fund, positionCount, metrics }: FundCardProps) {
                         </div>
                         <div className="text-right">
                             <p className={`${label} mb-1.5`}>NAV Change</p>
-                            <p className={`${valueHero} ${pnlColor(navUp ? 1 : -1)}`}>
+                            <p className={`${valueHero} ${pnlColor(navUp ? 1 : -1)} ${navUp ? 'pnl-glow-up' : 'pnl-glow-down'}`}>
                                 {navUp ? '+' : ''}{metrics.navChangePct.toFixed(2)}%
                             </p>
                         </div>

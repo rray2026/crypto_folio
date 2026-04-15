@@ -123,16 +123,16 @@ export default function TransactionDetails() {
                             <span className={`${badge({ color: txBadgeColor(transaction.type) })} px-2 text-[10px] md:text-xs tracking-widest`}>
                                 {transaction.type}
                             </span>
-                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-lg px-1.5 md:px-2 py-1 border border-border/20">
                                 <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                 <span>{format(new Date(transaction.date), "yyyy/MM/dd")}</span>
                             </div>
-                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-lg px-1.5 md:px-2 py-1 border border-border/20">
                                 <Clock className="h-3 w-3 md:h-4 md:w-4" />
                                 <span>{format(new Date(transaction.date), "HH:mm:ss")}</span>
                             </div>
                             {(transaction.orderId || transaction.id) && (
-                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-md px-1.5 md:px-2 py-1 border border-border/50">
+                                <div className="flex items-center gap-1 md:gap-1.5 bg-background/50 rounded-lg px-1.5 md:px-2 py-1 border border-border/20">
                                     <Hash className="h-3 w-3 md:h-4 md:w-4" />
                                     <span className="truncate max-w-[120px] md:max-w-[200px]" title={transaction.orderId ?? transaction.id}>
                                         {transaction.orderId ?? transaction.id.slice(0, 8)}
@@ -143,7 +143,7 @@ export default function TransactionDetails() {
 
                         {/* Notes */}
                         {transaction.notes && (
-                            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-lg border border-border/50 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
+                            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted/30 rounded-xl border border-border/20 text-xs md:text-sm text-muted-foreground w-full max-w-2xl break-words">
                                 <span className="font-semibold text-foreground/80 mr-2">Notes:</span>
                                 {transaction.notes}
                             </div>
@@ -163,7 +163,7 @@ export default function TransactionDetails() {
             </div>
 
             {/* Metrics Card */}
-            <Card className="overflow-hidden border-border/50 shadow-sm">
+            <Card className="overflow-hidden border-border/20 shadow-ambient rounded-2xl impressionist-card">
                 <CardContent className="p-4 sm:p-6">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 sm:gap-y-6 gap-x-4">
                         <div className="flex flex-col">
@@ -202,7 +202,7 @@ export default function TransactionDetails() {
                 </span>
                 <div className="space-y-3">
                     {linkedPositions.length === 0 ? (
-                        <div className="p-6 rounded-xl border border-dashed border-border/50 text-center">
+                        <div className="p-6 rounded-2xl border border-dashed border-border/30 text-center">
                             <p className="text-sm text-muted-foreground">Not linked to any positions.</p>
                         </div>
                     ) : (
@@ -211,12 +211,12 @@ export default function TransactionDetails() {
                             return (
                                 <div
                                     key={pos.id}
-                                    className="flex items-center justify-between p-3 border border-border/50 rounded-xl bg-card hover:bg-card/80 transition-colors cursor-pointer group"
+                                    className="flex items-center justify-between p-3 border border-border/20 rounded-2xl bg-card impressionist-card hover:bg-card/80 hover:shadow-elevated transition-all duration-300 ease-out cursor-pointer group"
                                     onClick={() => navigate(`/positions/${pos.id}`)}
                                 >
                                     <div className="flex gap-3 md:gap-4 items-center min-w-0">
-                                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                            <Target className="h-3.5 w-3.5 text-primary" />
+                                        <div className="h-8 w-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 shadow-[0_0_8px_hsl(var(--primary)/0.1)]">
+                                            <Target className="h-3.5 w-3.5 text-primary drop-shadow-[0_0_4px_hsl(var(--primary)/0.2)]" />
                                         </div>
                                         <div className="flex flex-col min-w-0">
                                             <p className="text-sm font-semibold truncate">{getPositionDisplayName(pos)}</p>

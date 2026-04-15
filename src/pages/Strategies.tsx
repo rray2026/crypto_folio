@@ -83,8 +83,8 @@ export default function Strategies() {
 
             {!strategies ? null : strategies.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                        <Lightbulb className="h-7 w-7 text-primary/60" />
+                    <div className="h-14 w-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4 shadow-glow shimmer-accent">
+                        <Lightbulb className="h-7 w-7 text-primary/70 drop-shadow-[0_0_6px_hsl(var(--primary)/0.3)]" />
                     </div>
                     <h3 className="text-base font-semibold mb-1">No strategies yet</h3>
                     <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
@@ -92,9 +92,9 @@ export default function Strategies() {
                     </p>
                     <button
                         onClick={openAdd}
-                        className="flex items-center gap-3.5 p-3.5 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left w-full max-w-sm"
+                        className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out group text-left w-full max-w-sm"
                     >
-                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                        <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0 shadow-[0_0_8px_hsl(var(--primary)/0.1)]">
                             <Plus className="h-4 w-4 text-primary" />
                         </div>
                         <div>
@@ -106,7 +106,7 @@ export default function Strategies() {
             ) : (
                 <div className="space-y-4">
                     {/* Active strategies */}
-                    <div className="rounded-xl border border-border/50 overflow-hidden bg-card">
+                    <div className="rounded-2xl border border-border/20 overflow-hidden bg-card shadow-ambient impressionist-card">
                         {activeStrategies.length === 0 ? (
                             <div className="p-6 text-center text-sm text-muted-foreground">
                                 No active strategies.
@@ -118,12 +118,12 @@ export default function Strategies() {
                                     <button
                                         key={strategy.id}
                                         onClick={() => navigate(`/strategies/${strategy.id}`)}
-                                        className={`w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left ${
+                                        className={`w-full flex items-center justify-between p-4 hover:bg-primary/5 transition-all duration-300 ease-out text-left ${
                                             i < activeStrategies.length - 1 ? 'border-b border-border/30' : ''
                                         }`}
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
-                                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                            <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 shadow-[0_0_8px_hsl(var(--primary)/0.1)]">
                                                 <Lightbulb className="h-4 w-4 text-primary" />
                                             </div>
                                             <div className="min-w-0">
@@ -154,14 +154,14 @@ export default function Strategies() {
                     )}
 
                     {showArchived && archivedStrategies.length > 0 && (
-                        <div className="rounded-xl border border-border/50 overflow-hidden bg-card opacity-70">
+                        <div className="rounded-2xl border border-border/20 overflow-hidden bg-card opacity-70 shadow-ambient">
                             {archivedStrategies.map((strategy, i) => {
                                 const posCount = getPositionCount(strategy.id)
                                 return (
                                     <button
                                         key={strategy.id}
                                         onClick={() => navigate(`/strategies/${strategy.id}`)}
-                                        className={`w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left ${
+                                        className={`w-full flex items-center justify-between p-4 hover:bg-primary/5 transition-all duration-300 ease-out text-left ${
                                             i < archivedStrategies.length - 1 ? 'border-b border-border/30' : ''
                                         }`}
                                     >

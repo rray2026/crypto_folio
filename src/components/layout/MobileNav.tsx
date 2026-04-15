@@ -12,7 +12,7 @@ export function MobileNav() {
     ]
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex h-16 w-full items-center justify-around border-t bg-card/98 backdrop-blur-md md:hidden pb-safe">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex h-16 w-full items-center justify-around border-t border-primary/10 bg-card/90 backdrop-blur-xl backdrop-saturate-[1.8] md:hidden pb-safe shadow-[0_-1px_12px_hsl(var(--primary)/0.06)]">
             {links.map((link) => {
                 const Icon = link.icon
                 const isActive = link.href === '/'
