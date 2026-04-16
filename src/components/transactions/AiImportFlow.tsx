@@ -1,7 +1,9 @@
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useTransactionStore } from "@/store/useTransactionStore"
+import { usePositionStore } from "@/store/usePositionStore"
 import { Copy, Check, ArrowRight, AlertCircle, Sparkles, ClipboardPaste } from "lucide-react"
 
 const AI_PROMPT = `You are a trading record parser. Extract the trade details from the screenshot and return ONLY a JSON object in the exact format below, with no extra text, markdown, or explanation.
@@ -48,6 +50,10 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
     const [parsed, setParsed] = useState<ParsedTx | null>(null)
     const [parseError, setParseError] = useState("")
     const addTransaction = useTransactionStore((state) => state.addTransaction)
+    const createPosition = usePositionStore((state) => state.createPosition)
+    const addTransactionToPosition = usePositionStore((state) => state.addTransactionToPosition)
+    const [alsoCreatePosition, setAlsoCreatePosition] = useState(false)
+    const [positionName, setPositionName] = useState("")
 
     const handlePasteFromClipboard = () => {
         setPastedJson("")
@@ -106,7 +112,8 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
 
     const handleConfirm = async () => {
         if (!parsed) return
-        await addTransaction({
+        const txDate = new Date(parsed.date).getTime()
+        const txId = await addTransaction({
             orderId: parsed.orderId,
             symbol: parsed.symbol,
             type: parsed.type,
@@ -114,8 +121,21 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
             quantity: parsed.quantity,
             amount: parsed.amount,
             fee: parsed.fee,
-            date: new Date(parsed.date).getTime(),
+            date: txDate,
         })
+
+        if (alsoCreatePosition) {
+            const posId = await createPosition({
+                symbol: parsed.symbol,
+                strategyName: positionName || undefined,
+                startDate: txDate,
+            })
+            await addTransactionToPosition(posId, {
+                transactionId: txId,
+                allocatedAmount: parsed.amount,
+            })
+        }
+
         onSuccess()
     }
 
@@ -214,6 +234,25 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                                 <span className="font-mono font-semibold text-xs">{String(value)}</span>
                             </div>
                         ))}
+                    </div>
+                    <div className="space-y-3">
+                        <label className="flex items-center gap-2.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={alsoCreatePosition}
+                                onChange={e => setAlsoCreatePosition(e.target.checked)}
+                                className="h-4 w-4 rounded border-border accent-primary"
+                            />
+                            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Also create a position</span>
+                        </label>
+                        {alsoCreatePosition && (
+                            <Input
+                                placeholder="Position name (optional)"
+                                value={positionName}
+                                onChange={e => setPositionName(e.target.value)}
+                                className="rounded-xl border-border/50 h-11 font-medium"
+                            />
+                        )}
                     </div>
                     <div className="flex gap-3 pt-1">
                         <Button
