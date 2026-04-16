@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SymbolSelector } from "./SymbolSelector"
 import { DateTimePicker } from "@/components/ui/DateTimePicker"
+import { Target, Check } from "lucide-react"
 
 function focusNextInput(formRef: React.RefObject<HTMLFormElement | null>, current: EventTarget) {
     if (!formRef.current) return
@@ -170,25 +171,51 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
                 <Input placeholder="Optional — used for duplicate detection" value={orderId} onChange={e => setOrderId(e.target.value)} onKeyDown={handleKeyDown} className="rounded-xl border-border/50 h-11 font-mono" />
             </div>
 
-            <div className="space-y-3 pt-1">
-                <label className="flex items-center gap-2.5 cursor-pointer group">
-                    <input
-                        type="checkbox"
-                        checked={alsoCreatePosition}
-                        onChange={e => setAlsoCreatePosition(e.target.checked)}
-                        className="h-4 w-4 rounded border-border accent-primary"
-                    />
-                    <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Also create a position</span>
-                </label>
-
+            <div
+                className={`rounded-xl border transition-all duration-300 ease-out overflow-hidden ${
+                    alsoCreatePosition
+                        ? 'bg-primary/6 border-primary/25 ring-1 ring-primary/15 shadow-[0_0_16px_hsl(var(--primary)/0.08)]'
+                        : 'border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5'
+                }`}
+            >
+                <button
+                    type="button"
+                    onClick={() => setAlsoCreatePosition(!alsoCreatePosition)}
+                    className="w-full flex items-center gap-3 p-3 text-left"
+                >
+                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300 ${
+                        alsoCreatePosition
+                            ? 'bg-primary/15 text-primary shadow-[0_0_8px_hsl(var(--primary)/0.1)]'
+                            : 'bg-muted/50 text-muted-foreground'
+                    }`}>
+                        <Target className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold transition-colors duration-300 ${alsoCreatePosition ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            Create Position
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                            Link this trade to a new position
+                        </p>
+                    </div>
+                    <div className={`h-5 w-5 rounded-md flex items-center justify-center transition-all duration-300 ${
+                        alsoCreatePosition
+                            ? 'bg-primary text-primary-foreground'
+                            : 'border border-border/50 bg-background'
+                    }`}>
+                        {alsoCreatePosition && <Check className="h-3 w-3" />}
+                    </div>
+                </button>
                 {alsoCreatePosition && (
-                    <Input
-                        placeholder="Position name (optional)"
-                        value={positionName}
-                        onChange={e => setPositionName(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        className="rounded-xl border-border/50 h-11 font-medium"
-                    />
+                    <div className="px-3 pb-3 pt-0">
+                        <Input
+                            placeholder="Position name (optional)"
+                            value={positionName}
+                            onChange={e => setPositionName(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="rounded-lg border-primary/15 bg-background/80 h-10 text-sm font-medium placeholder:text-muted-foreground/50"
+                        />
+                    </div>
                 )}
             </div>
 

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { usePositionStore } from "@/store/usePositionStore"
-import { Copy, Check, ArrowRight, AlertCircle, Sparkles, ClipboardPaste } from "lucide-react"
+import { Copy, Check, ArrowRight, AlertCircle, Sparkles, ClipboardPaste, Target } from "lucide-react"
 
 const AI_PROMPT = `You are a trading record parser. Extract the trade details from the screenshot and return ONLY a JSON object in the exact format below, with no extra text, markdown, or explanation.
 
@@ -217,43 +217,96 @@ export function AiImportFlow({ onSuccess }: { onSuccess: () => void }) {
                 </>
             ) : (
                 <>
-                    <p className="text-sm text-muted-foreground">Please confirm the trade details below. They will be saved automatically upon confirmation.</p>
-                    <div className="rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30 text-sm">
-                        {[
-                            ...(parsed.orderId ? [{ label: "Order ID", value: parsed.orderId }] : []),
-                            { label: "Symbol", value: parsed.symbol },
-                            { label: "Side", value: parsed.type },
-                            { label: "Date", value: parsed.date },
-                            { label: "Price", value: parsed.price },
-                            { label: "Quantity", value: parsed.quantity },
-                            { label: "Amount", value: parsed.amount },
-                            { label: "Fee", value: parsed.fee },
-                        ].map(({ label, value }) => (
-                            <div key={label} className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-muted-foreground text-xs">{label}</span>
-                                <span className="font-mono font-semibold text-xs">{String(value)}</span>
+                    {/* Parsed data summary */}
+                    <div className="rounded-xl border border-border/30 bg-muted/10 overflow-hidden">
+                        {/* Header row — symbol + side */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-border/15">
+                            <span className="font-bold text-sm tracking-tight">{parsed.symbol}</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${
+                                parsed.type === 'BUY'
+                                    ? 'bg-pnl-up/12 text-pnl-up border-pnl-up/25'
+                                    : 'bg-pnl-down/12 text-pnl-down border-pnl-down/25'
+                            }`}>
+                                {parsed.type}
+                            </span>
+                        </div>
+                        {/* Metrics grid */}
+                        <div className="grid grid-cols-2 divide-x divide-border/15">
+                            <div className="px-4 py-2.5">
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Price</span>
+                                <p className="font-mono font-bold text-sm mt-0.5">{parsed.price.toLocaleString(undefined, { maximumFractionDigits: 8 })}</p>
                             </div>
-                        ))}
+                            <div className="px-4 py-2.5">
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Quantity</span>
+                                <p className="font-mono font-bold text-sm mt-0.5">{parsed.quantity.toLocaleString(undefined, { maximumFractionDigits: 8 })}</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 divide-x divide-border/15 border-t border-border/15">
+                            <div className="px-4 py-2.5">
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Amount</span>
+                                <p className="font-mono font-bold text-sm mt-0.5">{parsed.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            </div>
+                            <div className="px-4 py-2.5">
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Fee</span>
+                                <p className="font-mono text-sm mt-0.5 text-muted-foreground">{parsed.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</p>
+                            </div>
+                        </div>
+                        {/* Date + Order ID footer */}
+                        <div className="px-4 py-2 border-t border-border/15 flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+                            <span>{parsed.date}</span>
+                            {parsed.orderId && <span className="truncate ml-3 max-w-[120px]">#{parsed.orderId}</span>}
+                        </div>
                     </div>
-                    <div className="space-y-3">
-                        <label className="flex items-center gap-2.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={alsoCreatePosition}
-                                onChange={e => setAlsoCreatePosition(e.target.checked)}
-                                className="h-4 w-4 rounded border-border accent-primary"
-                            />
-                            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Also create a position</span>
-                        </label>
+
+                    {/* Create position toggle card */}
+                    <div
+                        className={`rounded-xl border transition-all duration-300 ease-out overflow-hidden ${
+                            alsoCreatePosition
+                                ? 'bg-primary/6 border-primary/25 ring-1 ring-primary/15 shadow-[0_0_16px_hsl(var(--primary)/0.08)]'
+                                : 'border-dashed border-border/40 hover:border-primary/30 hover:bg-primary/5'
+                        }`}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setAlsoCreatePosition(!alsoCreatePosition)}
+                            className="w-full flex items-center gap-3 p-3 text-left"
+                        >
+                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300 ${
+                                alsoCreatePosition
+                                    ? 'bg-primary/15 text-primary shadow-[0_0_8px_hsl(var(--primary)/0.1)]'
+                                    : 'bg-muted/50 text-muted-foreground'
+                            }`}>
+                                <Target className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold transition-colors duration-300 ${alsoCreatePosition ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                    Create Position
+                                </p>
+                                <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                                    Link this trade to a new position
+                                </p>
+                            </div>
+                            <div className={`h-5 w-5 rounded-md flex items-center justify-center transition-all duration-300 ${
+                                alsoCreatePosition
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'border border-border/50 bg-background'
+                            }`}>
+                                {alsoCreatePosition && <Check className="h-3 w-3" />}
+                            </div>
+                        </button>
                         {alsoCreatePosition && (
-                            <Input
-                                placeholder="Position name (optional)"
-                                value={positionName}
-                                onChange={e => setPositionName(e.target.value)}
-                                className="rounded-xl border-border/50 h-11 font-medium"
-                            />
+                            <div className="px-3 pb-3 pt-0">
+                                <Input
+                                    placeholder="Position name (optional)"
+                                    value={positionName}
+                                    onChange={e => setPositionName(e.target.value)}
+                                    className="rounded-lg border-primary/15 bg-background/80 h-10 text-sm font-medium placeholder:text-muted-foreground/50"
+                                    autoFocus
+                                />
+                            </div>
                         )}
                     </div>
+
                     <div className="flex gap-3 pt-1">
                         <Button
                             variant="outline"
