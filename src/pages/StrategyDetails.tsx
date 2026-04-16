@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useMobileHeader } from "@/hooks/useMobileHeader"
 import { useLiveQuery } from "dexie-react-hooks"
 import { db } from "@/lib/db"
 import { useStrategyStore } from "@/store/useStrategyStore"
 import { useSettingsStore, getCurrencySymbolForPair } from "@/store/useSettingsStore"
-import { getPositionMetrics } from "@/lib/metrics"
+import { getPositionMetrics, comparePositionsByMetrics } from "@/lib/metrics"
+import type { Position } from "@/lib/types"
 import { StrategyForm } from "@/components/strategies/StrategyForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,9 +21,16 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { SwipeActions } from "@/components/shared/SwipeActions"
-import { ArrowLeft, Archive, Play, Pencil, Trash2, LinkIcon, X, AlertCircle, Target, Calendar, Circle, EllipsisVertical, Plus } from "lucide-react"
-import { label, pnlColor, sectionHeader } from "@/lib/styles"
+import { ArrowLeft, Archive, Play, Pencil, Trash2, LinkIcon, X, Target, Calendar, Circle, EllipsisVertical, Plus, Check, TrendingUp, TrendingDown } from "lucide-react"
+import { badge, dirBadgeColor, statusBadgeColor, label, pnlColor, sectionHeader, dialogItem } from "@/lib/styles"
 import { format } from "date-fns"
 
 export default function StrategyDetails() {
@@ -43,6 +51,9 @@ export default function StrategyDetails() {
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+    const [selectedPosIds, setSelectedPosIds] = useState<Set<string>>(new Set())
+    const [linkTimeFilter, setLinkTimeFilter] = useState<'7D' | '1M' | '6M' | 'ALL'>('ALL')
 
     const toggleStatus = useCallback(async () => {
         if (!strategy) return
@@ -56,6 +67,32 @@ export default function StrategyDetails() {
         await deleteStrategy(strategy.id)
         navigate('/strategies', { replace: true })
     }, [strategy, deleteStrategy, navigate])
+
+    const getPosMetrics = useCallback((pos: Position) => {
+        const linkedTxIds = new Set(pos.entries.map((e) => e.transactionId))
+        const linkedTxs = allTransactions?.filter(tx => linkedTxIds.has(tx.id)) ?? []
+        return getPositionMetrics(pos, linkedTxs, prices)
+    }, [allTransactions, prices])
+
+    const toggleSelectPos = useCallback((posId: string) => {
+        setSelectedPosIds(prev => {
+            const next = new Set(prev)
+            if (next.has(posId)) next.delete(posId)
+            else next.add(posId)
+            return next
+        })
+    }, [])
+
+    const handleBulkAssign = useCallback(async () => {
+        if (!id || selectedPosIds.size === 0) return
+        for (const posId of selectedPosIds) {
+            await assignPositionToStrategy(posId, id)
+        }
+        setSelectedPosIds(new Set())
+        setIsLinkDialogOpen(false)
+    }, [id, selectedPosIds, assignPositionToStrategy])
+
+    const now = useState(() => Date.now())[0]
 
     useEffect(() => {
         setMobileHeader({
@@ -110,6 +147,25 @@ export default function StrategyDetails() {
         })
     }, [setMobileHeader, navigate, strategy?.name, strategy?.status, isMobileMenuOpen, toggleStatus])
 
+    // Positions not linked to any strategy (available to link)
+    const unassignedPositions = useMemo(
+        () => allPositions?.filter(p => !p.strategyId) ?? [],
+        [allPositions]
+    )
+
+    const filteredUnassigned = useMemo(() => {
+        if (linkTimeFilter === 'ALL') return unassignedPositions
+        const cutoff = {
+            '7D': now - 7 * 24 * 60 * 60 * 1000,
+            '1M': now - 30 * 24 * 60 * 60 * 1000,
+            '6M': now - 180 * 24 * 60 * 60 * 1000,
+        }[linkTimeFilter]
+        return unassignedPositions.filter(pos => {
+            const m = getPosMetrics(pos)
+            return (m.derivedStartDate || pos.startDate) >= cutoff
+        })
+    }, [unassignedPositions, linkTimeFilter, now, getPosMetrics])
+
     if (!strategy) {
         return (
             <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -119,9 +175,6 @@ export default function StrategyDetails() {
             </div>
         )
     }
-
-    // Positions not linked to any strategy (available to link)
-    const unlinkedPositions = allPositions?.filter(p => !p.strategyId && p.status === 'OPEN') ?? []
 
     // Metrics for linked positions
     const positionMetrics = (linkedPositions ?? []).map(pos => {
@@ -318,41 +371,143 @@ export default function StrategyDetails() {
                         )
                     })}
 
-                    {/* Link more / empty state */}
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <button
-                                type="button"
-                                className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/40 rounded-2xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out"
-                            >
-                                <Plus className="h-4 w-4" />
-                                {totalPositions === 0 ? 'Link Position' : 'Link More'}
-                            </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-2" align="center">
-                            {unlinkedPositions.length === 0 ? (
-                                <p className="text-xs text-muted-foreground flex items-center gap-2 px-2 py-1.5">
-                                    <AlertCircle className="h-3.5 w-3.5" />
-                                    No unlinked open positions.
-                                </p>
-                            ) : (
-                                <div className="max-h-60 overflow-y-auto space-y-0.5">
-                                    {unlinkedPositions.map(p => (
-                                        <button
-                                            key={p.id}
-                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors text-left"
-                                            onClick={() => assignPositionToStrategy(p.id, strategy.id)}
-                                        >
-                                            <LinkIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                            <span className="truncate">{p.strategyName || p.symbol}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </PopoverContent>
-                    </Popover>
+                    {/* Link More */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSelectedPosIds(new Set())
+                            setLinkTimeFilter('ALL')
+                            setIsLinkDialogOpen(true)
+                        }}
+                        className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-border/40 rounded-2xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 hover:shadow-ambient transition-all duration-300 ease-out"
+                    >
+                        <Plus className="h-4 w-4" />
+                        {totalPositions === 0 ? 'Link Positions' : 'Link More'}
+                    </button>
                 </div>
             </div>
+
+            {/* Link Positions Dialog */}
+            <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
+                setIsLinkDialogOpen(open)
+                if (!open) setSelectedPosIds(new Set())
+            }}>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[480px] h-[70vh] flex flex-col [&>button.absolute]:hidden">
+                    <DialogHeader>
+                        <div className="flex items-center justify-between">
+                            <DialogTitle>Link Positions</DialogTitle>
+                            <Select value={linkTimeFilter} onValueChange={(val) => setLinkTimeFilter(val as '7D' | '1M' | '6M' | 'ALL')}>
+                                <SelectTrigger className="h-8 w-[130px] bg-muted/40 rounded-full border-border/50 text-xs shadow-sm hover:bg-muted/60 transition-colors">
+                                    <Calendar className="h-3 w-3 opacity-50" />
+                                    <SelectValue placeholder="Range" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="7D">Last 7 Days</SelectItem>
+                                    <SelectItem value="1M">Last 1 Month</SelectItem>
+                                    <SelectItem value="6M">Last 6 Months</SelectItem>
+                                    <SelectItem value="ALL">All Time</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Select unassigned positions to add to this strategy.
+                        </p>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-1">
+                        {filteredUnassigned.length > 0 ? (
+                            filteredUnassigned
+                                .map(pos => ({ pos, metrics: getPosMetrics(pos) }))
+                                .sort(comparePositionsByMetrics)
+                                .map(({ pos, metrics }) => {
+                                    const isSelected = selectedPosIds.has(pos.id)
+                                    const isLong = metrics.positionType === 'LONG'
+                                    const posCurrencySymbol = getCurrencySymbolForPair(pos.symbol, pairConfigs)
+                                    return (
+                                        <button
+                                            key={pos.id}
+                                            type="button"
+                                            onClick={() => toggleSelectPos(pos.id)}
+                                            className={dialogItem(isSelected)}
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <span className={`shrink-0 ${badge({ color: statusBadgeColor(pos.status) })}`}>
+                                                        {pos.status}
+                                                    </span>
+                                                    <span className={`shrink-0 ${badge({ color: dirBadgeColor(metrics.positionType) })}`}>
+                                                        {isLong ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                                                        {metrics.positionType}
+                                                    </span>
+                                                    <p className="font-semibold text-sm truncate">{pos.strategyName || pos.symbol}</p>
+                                                </div>
+                                                {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
+                                            </div>
+                                            {/* Metrics row */}
+                                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                                                <span className="font-mono text-muted-foreground">{pos.symbol}</span>
+                                                <span className="text-muted-foreground/40">•</span>
+                                                <span className="text-muted-foreground">{pos.entries.length} trade{pos.entries.length !== 1 ? 's' : ''}</span>
+                                                <span className="text-muted-foreground/40">•</span>
+                                                <span className={`font-semibold font-mono ${pnlColor(metrics.totalPnL)}`}>
+                                                    PnL {metrics.totalPnL >= 0 ? '+' : ''}{metrics.totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                                <span className={`font-mono ${pnlColor(metrics.roi)}`}>
+                                                    ({metrics.roi >= 0 ? '+' : ''}{metrics.roi.toFixed(2)}%)
+                                                </span>
+                                            </div>
+                                            {/* Price info */}
+                                            {metrics.avgBuyPrice > 0 && (
+                                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground font-mono">
+                                                    <span>Avg Buy <span className="text-foreground/70">{posCurrencySymbol}{metrics.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>
+                                                    {metrics.avgSellPrice > 0 && <span>Avg Sell <span className="text-foreground/70">{posCurrencySymbol}{metrics.avgSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span></span>}
+                                                    {metrics.totalRemaining !== 0 && <span>Holding <span className="text-foreground/70">{metrics.totalRemaining.toLocaleString()}</span></span>}
+                                                </div>
+                                            )}
+                                            {/* Dates */}
+                                            <div className="mt-1 flex items-center gap-x-3 text-[10px] text-muted-foreground font-mono">
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" />
+                                                    {metrics.derivedStartDate ? format(new Date(metrics.derivedStartDate), "yyyy/MM/dd") : '—'}
+                                                </span>
+                                                <span className="text-muted-foreground/40">→</span>
+                                                <span>{metrics.derivedEndDate ? format(new Date(metrics.derivedEndDate), "yyyy/MM/dd") : <span className="text-foreground font-medium">Open</span>}</span>
+                                            </div>
+                                        </button>
+                                    )
+                                })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full">
+                                <div className="border border-dashed border-border/30 rounded-2xl p-8 text-center">
+                                    <p className="text-sm text-muted-foreground">
+                                        {unassignedPositions.length > 0
+                                            ? 'No positions in this time range.'
+                                            : 'No unassigned positions available.'}
+                                    </p>
+                                    {unassignedPositions.length === 0 && (
+                                        <p className="text-xs text-muted-foreground/60 mt-1">
+                                            Create a position first, or unlink one from another strategy.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Confirm footer */}
+                    {selectedPosIds.size > 0 && (
+                        <div className="pt-3 border-t border-border/40">
+                            <Button
+                                className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg"
+                                onClick={handleBulkAssign}
+                            >
+                                <LinkIcon className="h-4 w-4" />
+                                Link {selectedPosIds.size} {selectedPosIds.size === 1 ? 'Position' : 'Positions'}
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Edit Dialog */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
